@@ -1,0 +1,240 @@
+.mobile-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-button:active {
+  transform: scale(0.98);
+}
+
+.mobile-button-primary {
+  background-color: #3182ce;
+  color: #ffffff;
+}
+
+.mobile-button-primary:active {
+  background-color: #2b6cb0;
+}
+
+.mobile-button-secondary {
+  background-color: #2d3748;
+  color: #ffffff;
+}
+
+.mobile-button-secondary:active {
+  background-color: #1a202c;
+}
+
+.mobile-button-outline {
+  background-color: transparent;
+  color: #3182ce;
+  border: 1px solid #3182ce;
+}
+
+.mobile-button-outline:active {
+  background-color: #ebf8ff;
+}
+
+.mobile-button-ghost {
+  background-color: transparent;
+  color: #2d3748;
+}
+
+.mobile-button-ghost:active {
+  background-color: #edf2f7;
+}
+
+.mobile-button-danger {
+  background-color: #e53e3e;
+  color: #ffffff;
+}
+
+.mobile-button-danger:active {
+  background-color: #c53030;
+}
+
+.mobile-button-success {
+  background-color: #38a169;
+  color: #ffffff;
+}
+
+.mobile-button-success:active {
+  background-color: #2f855a;
+}
+
+.mobile-button-warning {
+  background-color: #d69e2e;
+  color: #ffffff;
+}
+
+.mobile-button-warning:active {
+  background-color: #b7791f;
+}
+
+.mobile-button-sm {
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.mobile-button-lg {
+  padding: 16px 32px;
+  font-size: 18px;
+}
+
+.mobile-button-block {
+  display: flex;
+  width: 100%;
+}
+
+.mobile-button-round {
+  border-radius: 9999px;
+}
+
+.mobile-button-circle {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.mobile-button-circle.mobile-button-sm {
+  width: 36px;
+  height: 36px;
+}
+
+.mobile-button-circle.mobile-button-lg {
+  width: 60px;
+  height: 60px;
+}
+
+.mobile-button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.mobile-button-icon .mobile-icon {
+  font-size: 18px;
+}
+
+.mobile-button-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.mobile-button-loading::before {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: mobile-button-spin 0.8s linear infinite;
+}
+
+.mobile-button-outline.mobile-button-loading::before,
+.mobile-button-ghost.mobile-button-loading::before {
+  border-color: rgba(49, 130, 206, 0.3);
+  border-top-color: #3182ce;
+}
+
+@keyframes mobile-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mobile-button-group {
+  display: flex;
+  gap: 12px;
+}
+
+.mobile-button-group-vertical {
+  flex-direction: column;
+}
+
+.mobile-button-fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  background-color: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  z-index: 100;
+}
+
+.mobile-button-fixed-bottom .mobile-button {
+  width: 100%;
+}
+
+.mobile-button-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.mobile-button-fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.mobile-button-fab.mobile-button-sm {
+  width: 48px;
+  height: 48px;
+  bottom: 20px;
+  right: 20px;
+}
+
+.mobile-button-fab.mobile-button-lg {
+  width: 64px;
+  height: 64px;
+  bottom: 28px;
+  right: 28px;
+}
+
+.mobile-button-link {
+  background: none;
+  border: none;
+  color: #3182ce;
+  padding: 0;
+  font-size: inherit;
+}
+
+.mobile-button-link:active {
+  opacity: 0.7;
+}
+
+.mobile-button-text {
+  background: none;
+  border: none;
+  color: #2d3748;
+  padding: 0;
+  font-size: inherit;
+}
+
+.mobile-button-text:active {
+  opacity: 0.7;
+}

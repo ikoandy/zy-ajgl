@@ -1,0 +1,9 @@
+<!--logs.wxml-->
+<view class="container log-list">
+  <block wx:for="{{logs}}" wx:for-item="log">
+    <view class="log-item">
+      <text class="log-date">{{log.date}}</text>
+      <text class="log-time">{{log.time}}</text>
+    </view>
+  </block>
+</view>

@@ -1,0 +1,154 @@
+<!--pages/cases/create/create.wxml-->
+<view class="case-form-container">
+  <!-- 表单内容 -->
+  <form class="case-form">
+    <!-- 案件标题 -->
+    <view class="form-item">
+      <view class="label">案件标题</view>
+      <input 
+        class="input" 
+        placeholder="请输入案件标题" 
+        placeholder-class="placeholder" 
+        value="{{formData.title}}" 
+        bindinput="handleInputChange" 
+        data-field="title"
+      ></input>
+    </view>
+    
+    <!-- 案件类型 -->
+    <view class="form-item">
+      <view class="label">案件类型</view>
+      <picker 
+        class="picker" 
+        mode="selector" 
+        range="{{caseTypes}}" 
+        range-key="label"
+        value="{{caseTypesIndex}}" 
+        bindchange="handleTypeChange"
+      >
+        <view class="picker-content">
+          {{caseTypes[caseTypesIndex].label || '请选择案件类型'}}
+        </view>
+      </picker>
+    </view>
+    
+    <!-- 案件描述 -->
+    <view class="form-item">
+      <view class="label">案件描述</view>
+      <textarea 
+        class="textarea" 
+        placeholder="请输入案件详细描述" 
+        placeholder-class="placeholder" 
+        value="{{formData.description}}" 
+        bindinput="handleInputChange" 
+        data-field="description"
+        auto-height
+        maxlength="500"
+      ></textarea>
+    </view>
+    
+    <!-- 案件优先级 -->
+    <view class="form-item">
+      <view class="label">案件优先级</view>
+      <view class="priority-selector">
+        <view 
+          wx:for="{{priorityOptions}}" 
+          wx:key="value" 
+          class="priority-option {{formData.priority === item.value ? 'active' : ''}}" 
+          bindtap="handlePriorityChange" 
+          data-priority="{{item.value}}"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+    
+    <!-- 预计完成时间 -->
+    <view class="form-item">
+      <view class="label">预计完成时间</view>
+      <picker 
+        class="picker" 
+        mode="date" 
+        value="{{formData.expectedEndTime}}" 
+        start="{{currentDate}}" 
+        bindchange="handleDateChange"
+      >
+        <view class="picker-content">
+          {{formData.expectedEndTime || '请选择预计完成时间'}}
+        </view>
+      </picker>
+      <!-- 快速选择时间 -->
+      <view class="quick-date-options">
+        <view 
+          wx:for="{{quickDateOptions}}" 
+          wx:key="label" 
+          class="quick-date-option" 
+          bindtap="handleQuickDateSelect" 
+          data-days="{{item.days}}"
+        >
+          {{item.label}}
+        </view>
+      </view>
+    </view>
+    
+    <!-- 案件状态 -->
+    <view class="form-item">
+      <view class="label">案件状态</view>
+      <picker 
+        class="picker" 
+        mode="selector" 
+        range="{{statusOptions}}" 
+        range-key="label" 
+        value="{{statusIndex}}" 
+        bindchange="handleStatusChange"
+      >
+        <view class="picker-content">
+          {{statusText || '请选择案件状态'}}
+        </view>
+      </picker>
+    </view>
+    
+    <!-- 负责人 -->
+    <view class="form-item">
+      <view class="label">负责人</view>
+      <input 
+        class="input" 
+        placeholder="请输入负责人姓名" 
+        placeholder-class="placeholder" 
+        value="{{formData.responsiblePerson}}" 
+        bindinput="handleInputChange" 
+        data-field="responsiblePerson"
+      ></input>
+    </view>
+    
+    <!-- 案件进度 -->
+    <view class="form-item">
+      <view class="label">案件进度</view>
+      <view class="progress-input">
+        <slider 
+          class="slider" 
+          value="{{formData.progress}}" 
+          min="0" 
+          max="100" 
+          step="5" 
+          activeColor="#1a365d" 
+          backgroundColor="#e2e8f0" 
+          block-size="24" 
+          bindchange="handleProgressChange"
+        ></slider>
+        <view class="progress-value">{{formData.progress}}%</view>
+      </view>
+    </view>
+  </form>
+  
+  <!-- 提交按钮 -->
+  <view class="button-container">
+    <button 
+      class="submit-button" 
+      bindtap="handleSubmit" 
+      loading="{{loading}}"
+    >
+      {{caseId ? '保存修改' : '创建案件'}}
+    </button>
+  </view>
+</view>

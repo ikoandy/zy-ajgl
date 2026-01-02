@@ -1,0 +1,70 @@
+<!-- pages/messages/list/list.wxml -->
+<view class="messages-container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input">
+      <view class="search-icon">搜</view>
+      <input 
+        class="input" 
+        placeholder="搜索消息..." 
+        placeholder-class="placeholder" 
+        value="{{keyword}}" 
+        bindinput="handleSearch"
+        bindconfirm="handleSearchConfirm"
+      ></input>
+      <view 
+        wx:if="{{keyword}}" 
+        class="clear-icon" 
+        bindtap="handleClearSearch"
+      >×</view>
+    </view>
+  </view>
+
+  <!-- 消息列表 -->
+  <view class="message-list">
+    <block wx:if="{{loading && messages.length === 0}}">
+      <view class="loading">
+        <van-loading type="spinner" size="36px" color="#1a365d" />
+        <text>加载中...</text>
+      </view>
+    </block>
+    <block wx:elif="{{messages.length === 0}}">
+      <view class="empty">
+        <image src="/images/empty-message.png" mode="aspectFit"></image>
+        <text>暂无消息</text>
+      </view>
+    </block>
+    <block wx:else>
+      <view 
+        wx:for="{{messages}}" 
+        wx:key="id" 
+        class="message-item" 
+        bindtap="goToDetail" 
+        data-id="{{item.id}}" 
+        data-client-id="{{item.clientId}}"
+      >
+        <view class="message-avatar">
+          <text class="avatar-text">{{item.clientName.charAt(0)}}</text>
+        </view>
+        <view class="message-content">
+          <view class="message-header">
+            <view class="sender-info">
+              <text class="sender-name">{{item.clientName}}</text>
+              <view wx:if="{{!item.isRead}}" class="unread-badge"></view>
+            </view>
+            <text class="message-time">{{item.createTime}}</text>
+          </view>
+          <text class="message-preview">{{item.content}}</text>
+        </view>
+      </view>
+      
+      <view wx:if="{{loading && messages.length > 0}}" class="loading-more">
+        <van-loading type="spinner" size="28px" color="#1a365d" />
+        <text>加载更多...</text>
+      </view>
+      <view wx:else-if="{{!hasMore}}" class="no-more">
+        <text>没有更多了</text>
+      </view>
+    </block>
+  </view>
+</view>

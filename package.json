@@ -1,0 +1,25 @@
+{
+  "name": "law-firm-management-system",
+  "version": "1.0.0",
+  "description": "大型律师事务所智能管理系统",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:lawyer\" \"npm run dev:admin\" \"npm run dev:mobile\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:lawyer": "cd lawyer-pc && npm run dev",
+    "dev:admin": "cd admin-pc && npm run dev",
+    "dev:mobile": "cd mobile-h5 && npm run dev",
+    "build": "npm run build:backend && npm run build:lawyer && npm run build:admin && npm run build:mobile",
+    "build:backend": "cd backend && npm run build",
+    "build:lawyer": "cd lawyer-pc && npm run build",
+    "build:admin": "cd admin-pc && npm run build",
+    "build:mobile": "cd mobile-h5 && npm run build",
+    "deploy": "cd deploy && npm run deploy"
+  },
+  "keywords": ["律师事务所", "管理系统", "微信小程序", "腾讯云"],
+  "author": "LawTech Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}

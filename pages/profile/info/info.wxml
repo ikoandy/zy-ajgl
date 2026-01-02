@@ -1,0 +1,110 @@
+<!--pages/profile/info/info.wxml-->
+<view class="profile-container">
+  <!-- 加载状态 -->
+  <block wx:if="{{loading}}">
+    <view class="loading">
+      <van-loading type="spinner" size="36px" color="#1a365d" />
+      <text>加载中...</text>
+    </view>
+  </block>
+  
+  <!-- 用户信息卡片 -->
+  <block wx:else>
+    <!-- 用户信息卡片 -->
+    <view class="user-info-card">
+      <!-- 用户头像 -->
+      <view class="user-avatar">
+        <block wx:if="{{userInfo.avatar}}">
+          <image class="avatar-image" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+        </block>
+        <block wx:else>
+          <text class="avatar-text">{{userInfo.name.charAt(0)}}</text>
+        </block>
+        <view class="avatar-edit" bindtap="handleEdit">✏️</view>
+      </view>
+      
+      <!-- 用户基本信息 -->
+      <view class="user-basic-info">
+        <text class="user-name">{{userInfo.name}}</text>
+        <text class="user-role">{{userInfo.position}}</text>
+        <text class="user-email">{{userInfo.email}}</text>
+      </view>
+      
+      <!-- 统计数据 -->
+      <view class="stats-container">
+        <view class="stat-item">
+          <text class="stat-value">{{userInfo.casesCount}}</text>
+          <text class="stat-label">案件数</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{userInfo.clientsCount}}</text>
+          <text class="stat-label">客户数</text>
+        </view>
+        <view class="stat-item">
+          <text class="stat-value">{{userInfo.rating}}</text>
+          <text class="stat-label">评分</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 个人资料详情 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">个人资料</text>
+        <view class="section-action" bindtap="handleEdit">编辑</view>
+      </view>
+      
+      <view class="profile-details">
+        <view class="detail-item">
+          <text class="detail-label">姓名</text>
+          <text class="detail-value">{{userInfo.name}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">部门</text>
+          <text class="detail-value">{{userInfo.department}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">职位</text>
+          <text class="detail-value">{{userInfo.position}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">邮箱</text>
+          <text class="detail-value">{{userInfo.email}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">手机号</text>
+          <text class="detail-value">{{userInfo.phone}}</text>
+        </view>
+        <view class="detail-item">
+          <text class="detail-label">入职时间</text>
+          <text class="detail-value">{{userInfo.joinDate}}</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 系统功能 -->
+    <view class="section">
+      <view class="section-header">
+        <text class="section-title">系统功能</text>
+      </view>
+      
+      <view class="profile-details">
+        <view class="detail-item" bindtap="handleSettings">
+          <text class="detail-label">设置</text>
+          <text class="detail-value">></text>
+        </view>
+        <view class="detail-item" bindtap="handleAbout">
+          <text class="detail-label">关于我们</text>
+          <text class="detail-value">></text>
+        </view>
+        <view class="detail-item" bindtap="handleHelp">
+          <text class="detail-label">帮助中心</text>
+          <text class="detail-value">></text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 退出登录按钮 -->
+    <view class="action-button" bindtap="handleLogout">退出登录</view>
+  </block>
+</view>

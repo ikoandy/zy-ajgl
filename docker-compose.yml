@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 后端服务
+  backend:
+    build:
+      context: ./backend
+    container_name: law_firm_backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      DB_HOST: 10.6.0.17
+      DB_PORT: 3306
+      DB_NAME: law_firm_management
+      DB_USER: root
+      DB_PASSWORD: ZY520117.
+    ports:
+      - "3000:3000"
+    networks:
+      - law_firm_network
+
+  # 前端服务（使用Nginx部署所有静态文件）
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    container_name: law_firm_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - law_firm_network
+
+volumes:
+  mysql_data:
+
+networks:
+  law_firm_network:
+    driver: bridge

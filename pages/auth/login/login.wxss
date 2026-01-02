@@ -1,0 +1,175 @@
+/* pages/auth/login/login.wxss */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #ffffff;
+  padding: calc(60rpx + env(safe-area-inset-top)) 40rpx calc(60rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.login-content {
+  width: 100%;
+  max-width: 500rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* 系统标题 */
+.system-title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #1a365d;
+  margin-bottom: 16rpx;
+  text-align: center;
+}
+
+/* 系统副标题 */
+.system-subtitle {
+  font-size: 28rpx;
+  color: #718096;
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+/* 登录方式切换 */
+.login-tabs {
+  display: flex;
+  margin-bottom: 40rpx;
+  border-bottom: 1rpx solid #e2e8f0;
+  width: 100%;
+}
+
+.tab-item {
+  flex: 1;
+  padding: 20rpx 0;
+  text-align: center;
+  font-size: 32rpx;
+  color: #718096;
+  position: relative;
+}
+
+.tab-item.active {
+  color: #1a365d;
+  font-weight: 500;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60rpx;
+  height: 4rpx;
+  background-color: #1a365d;
+  border-radius: 2rpx;
+}
+
+/* 登录表单 */
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 40rpx;
+  margin-top: 40rpx;
+}
+
+/* 输入框组 */
+.input-group {
+  width: 100%;
+  margin-bottom: 32rpx;
+}
+
+.input-label {
+  font-size: 28rpx;
+  color: #718096;
+  margin-bottom: 12rpx;
+  display: block;
+  text-align: left;
+}
+
+.input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 20rpx;
+  border: 1rpx solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 32rpx;
+  color: #2d3748;
+  box-sizing: border-box;
+}
+
+.input::placeholder {
+  color: #a0aec0;
+}
+
+/* 忘记密码 */
+.forgot-password {
+  text-align: right;
+  font-size: 28rpx;
+  color: #1a365d;
+  margin-bottom: 40rpx;
+  cursor: pointer;
+  width: 100%;
+}
+
+/* 登录按钮 */
+.login-button {
+  width: 100%;
+  height: 88rpx;
+  font-size: 36rpx;
+  font-weight: 500;
+  background-color: #1a365d;
+  color: white;
+  border-radius: 9999px;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  outline: none;
+}
+
+.login-button::after {
+  border: none;
+  border-radius: 9999px;
+}
+
+/* 注册链接 */
+.register-link {
+  text-align: center;
+  font-size: 28rpx;
+  color: #718096;
+  margin-bottom: 40rpx;
+  width: 100%;
+}
+
+.register-link .link {
+  color: #1a365d;
+  text-decoration: none;
+}
+
+/* 协议提示 */
+.agreement {
+  text-align: center;
+  font-size: 28rpx;
+  color: #a0aec0;
+  line-height: 1.5;
+  width: 100%;
+}
+
+/* 协议链接 */
+.link {
+  color: #1a365d;
+  text-decoration: underline;
+}
+
+/* 加载状态 */
+.login-button[loading] {
+  opacity: 0.8;
+}

@@ -1,0 +1,278 @@
+<!-- pages/cases/detail/detail.wxml -->
+<view class="case-detail-container">
+  <!-- 案件基本信息卡片 -->
+  <view class="case-header-card" wx:if="{{!loading && caseInfo}}">
+    <view class="case-basic-info">
+      <view class="case-title-section">
+        <text class="case-title">{{caseInfo.title}}</text>
+        <view class="priority-badge {{caseInfo.priority}}">
+          {{caseInfo.priority === 'high' ? '高' : caseInfo.priority === 'normal' ? '中' : '低'}}
+        </view>
+      </view>
+      <view class="case-status-section">
+        <text class="case-status-label">状态：</text>
+        <view class="case-status" data-status="{{caseInfo.status}}">
+          {{caseInfo.status === 'pending' ? '待处理' : caseInfo.status === 'processing' ? '处理中' : caseInfo.status === 'completed' ? '已完成' : '已结案'}}
+        </view>
+      </view>
+    </view>
+    
+    <view class="case-meta-info">
+      <view class="meta-item">
+        <text class="meta-label">客户：</text>
+        <text class="meta-value">{{caseInfo.clientName}}</text>
+      </view>
+      <view class="meta-item">
+        <text class="meta-label">创建时间：</text>
+        <text class="meta-value">{{caseInfo.createTime}}</text>
+      </view>
+      <view class="meta-item">
+        <text class="meta-label">更新时间：</text>
+        <text class="meta-value">{{caseInfo.updateTime}}</text>
+      </view>
+    </view>
+    
+    <view class="case-progress-section">
+      <view class="progress-label">案件进度</view>
+      <view class="progress-bar">
+        <view class="progress-fill" style="width: {{caseInfo.progress}}%"></view>
+      </view>
+      <view class="progress-text">{{caseInfo.progress}}%</view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-buttons" wx:if="{{!loading && caseInfo}}">
+    <button class="action-button" bindtap="handleUpdateStatus" data-status="processing">
+      开始处理
+    </button>
+    <button class="action-button" bindtap="handleUpdateStatus" data-status="completed">
+      标记完成
+    </button>
+    <button class="action-button" bindtap="handleUpdateStatus" data-status="closed">
+      结案
+    </button>
+  </view>
+
+  <!-- 标签切换 -->
+  <view class="tab-container" wx:if="{{!loading && caseInfo}}">
+    <view class="tab-bar">
+      <view 
+        wx:for="{{tabs}}" 
+        wx:key="key" 
+        class="tab-item {{activeTab === item.key ? 'active' : ''}}" 
+        bindtap="handleTabChange" 
+        data-tab="{{item.key}}"
+      >
+        {{item.label}}
+      </view>
+    </view>
+    
+    <!-- 案件信息标签内容 -->
+    <view class="tab-content" wx:if="{{activeTab === 'info'}}">
+      <view class="info-section">
+        <view class="section-title">案件描述</view>
+        <view class="section-content">{{caseInfo.description}}</view>
+      </view>
+      
+      <view class="info-section">
+        <view class="section-title">客户信息</view>
+        <view class="section-content">
+          <view class="client-info-item">
+            <text class="info-label">姓名：</text>
+            <text class="info-value">{{caseInfo.clientName}}</text>
+          </view>
+          <view class="client-info-item">
+            <text class="info-label">联系方式：</text>
+            <text class="info-value">{{caseInfo.clientPhone}}</text>
+          </view>
+          <view class="client-info-item">
+            <text class="info-label">邮箱：</text>
+            <text class="info-value">{{caseInfo.clientEmail}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="info-section">
+        <view class="section-title">案件详情</view>
+        <view class="section-content">
+          <view class="detail-item">
+            <text class="detail-label">案件编号：</text>
+            <text class="detail-value">{{caseInfo.caseNumber}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-label">案件类型：</text>
+            <text class="detail-value">{{caseInfo.type}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-label">预计完成时间：</text>
+            <text class="detail-value">{{caseInfo.expectedEndTime}}</text>
+          </view>
+          <view class="detail-item">
+            <text class="detail-label">负责人：</text>
+            <text class="detail-value">{{caseInfo.responsiblePerson}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 相关文档标签内容 -->
+    <view class="tab-content" wx:if="{{activeTab === 'documents'}}">
+      <view class="documents-section">
+        <view class="section-header">
+          <text class="section-title">相关文档</text>
+          <button class="add-button" bindtap="handleAddDocument">添加文档</button>
+        </view>
+        
+        <view class="documents-list">
+          <block wx:if="{{documents.length === 0}}">
+            <view class="empty">
+              <image src="/images/empty-document.png" mode="aspectFit"></image>
+              <text>暂无相关文档</text>
+              <button class="add-button" bindtap="handleAddDocument">添加文档</button>
+            </view>
+          </block>
+          <block wx:else>
+            <view 
+              wx:for="{{documents}}" 
+              wx:key="id" 
+              class="document-item" 
+              bindtap="handleViewDocument" 
+              data-id="{{item.id}}"
+            >
+              <view class="document-info">
+                <text class="document-name">{{item.fileName}}</text>
+                <text class="document-meta">{{item.uploadTime}} · {{item.fileSize}}</text>
+              </view>
+              <view class="document-icon-circle">
+                <text class="document-icon-text">文</text>
+              </view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 文书管理标签内容 -->
+    <view class="tab-content" wx:if="{{activeTab === 'legalDocuments'}}">
+      <view class="documents-section">
+        <view class="section-header">
+          <text class="section-title">文书管理</text>
+          <button class="add-button" bindtap="handleAddLegalDocument">添加文书</button>
+        </view>
+        
+        <view class="documents-list">
+          <block wx:if="{{legalDocuments.length === 0}}">
+            <view class="empty">
+              <image src="/images/empty-document.png" mode="aspectFit"></image>
+              <text>暂无法律文书</text>
+              <button class="add-button" bindtap="handleAddLegalDocument">添加文书</button>
+            </view>
+          </block>
+          <block wx:else>
+            <view 
+              wx:for="{{legalDocuments}}" 
+              wx:key="id" 
+              class="document-item" 
+              bindtap="handleViewDocument" 
+              data-id="{{item.id}}"
+            >
+              <view class="document-info">
+                <view class="document-type-badge">{{item.type}}</view>
+                <text class="document-name">{{item.fileName}}</text>
+                <text class="document-meta">{{item.uploadTime}} · {{item.fileSize}}</text>
+              </view>
+              <view class="document-icon-circle">
+                <text class="document-icon-text">文</text>
+              </view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 沟通记录标签内容 -->
+    <view class="tab-content" wx:if="{{activeTab === 'messages'}}">
+      <view class="messages-section">
+        <view class="section-header">
+          <text class="section-title">沟通记录</text>
+          <button class="contact-button" bindtap="handleContactClient">联系客户</button>
+        </view>
+        
+        <view class="messages-list">
+          <block wx:if="{{messages.length === 0}}">
+            <view class="empty">
+              <image src="/images/empty-message.png" mode="aspectFit"></image>
+              <text>暂无沟通记录</text>
+              <button class="contact-button" bindtap="handleContactClient">开始沟通</button>
+            </view>
+          </block>
+          <block wx:else>
+            <view 
+              wx:for="{{messages}}" 
+              wx:key="id" 
+              class="message-item"
+            >
+              <view class="message-header">
+                <text class="message-sender">{{item.senderName}}</text>
+                <text class="message-time">{{item.createTime}}</text>
+              </view>
+              <view class="message-content">{{item.content}}</view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 进度记录标签内容 -->
+    <view class="tab-content" wx:if="{{activeTab === 'progress'}}">
+      <view class="progress-section">
+        <view class="section-header">
+          <text class="section-title">进度记录</text>
+        </view>
+        
+        <view class="progress-list">
+          <block wx:if="{{progressRecords.length === 0}}">
+            <view class="empty">
+              <image src="/images/empty-progress.png" mode="aspectFit"></image>
+              <text>暂无进度记录</text>
+            </view>
+          </block>
+          <block wx:else>
+            <view 
+              wx:for="{{progressRecords}}" 
+              wx:key="id" 
+              class="progress-item"
+            >
+              <view class="progress-dot"></view>
+              <view class="progress-content">
+                <view class="progress-header">
+                  <text class="progress-title">{{item.title}}</text>
+                  <text class="progress-time">{{item.createTime}}</text>
+                </view>
+                <view class="progress-description">{{item.description}}</view>
+                <view class="progress-changes">
+                  <text class="change-label">进度变化：</text>
+                  <text class="change-value">{{item.progressBefore}}% → {{item.progressAfter}}%</text>
+                </view>
+              </view>
+            </view>
+          </block>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading">
+    <van-loading type="spinner" size="36px" color="var(--primary-color)" />
+    <text>加载中...</text>
+  </view>
+  
+  <!-- 编辑按钮 -->
+  <view class="fixed-button-container" wx:if="{{!loading && caseInfo}}">
+    <button class="edit-button" bindtap="handleEditCase">
+      编辑案件
+    </button>
+  </view>
+</view>

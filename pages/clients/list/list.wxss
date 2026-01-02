@@ -1,0 +1,475 @@
+/* pages/clients/list/list.wxss */
+.clients-container {
+  padding: 20px;
+  background-color: #f7fafc;
+  min-height: 100vh;
+  padding-bottom: 120rpx; /* 为悬浮按钮留出空间 */
+}
+
+/* 搜索栏 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  padding: 0 20px;
+  height: 80rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  margin-right: 20px;
+}
+
+.search-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #718096;
+  background-color: #f7fafc;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+}
+
+.input {
+  flex: 1;
+  font-size: 16px;
+  color: #2d3748;
+  height: 100%;
+}
+
+.input::placeholder {
+  color: #a0aec0;
+}
+
+.clear-icon {
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #a0aec0;
+  background-color: #f7fafc;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-icon:active {
+  background-color: #edf2f7;
+  color: #718096;
+}
+
+.filter-icon, .create-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  margin-left: 20rpx;
+}
+
+.filter-icon:active, .create-icon:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* 状态筛选 */
+.status-filter {
+  display: flex;
+  margin-bottom: 20rpx;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 8rpx 16rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+  border: 1px solid #e2e8f0;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120rpx;
+  padding: 12rpx 24rpx;
+  margin: 0 8rpx;
+  font-size: 14px;
+  color: #718096;
+  background-color: #edf2f7;
+  border-radius: 9999px;
+  transition: all 0.3s;
+  font-weight: 500;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.filter-item:first-child {
+  margin-left: 0;
+}
+
+.filter-item:last-child {
+  margin-right: 0;
+}
+
+.filter-item.active {
+  background-color: #1a365d;
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 客户列表 */
+.client-list {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+  color: #718096;
+}
+
+.loading text {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+/* 空状态 */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 0;
+  color: #a0aec0;
+}
+
+.empty image {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.create-button {
+  margin-top: 40rpx;
+  background-color: #1a365d;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 0 64rpx;
+  height: 80rpx;
+  font-size: 16px;
+}
+
+.create-button::after {
+  border: none;
+  border-radius: 9999px;
+}
+
+/* 客户项 */
+.client-item {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 0.3s;
+}
+
+.client-item:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+/* 客户头像 */
+.client-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: #1a365d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24px;
+  flex-shrink: 0;
+}
+
+.avatar-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* 客户信息 */
+.client-info {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.client-name-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.client-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+/* 状态标签 */
+.status-badge {
+  /* 统一基础样式 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  height: 36rpx;
+  border-radius: 18rpx;
+  border: 1px solid transparent;
+  padding: 0 18rpx;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 60rpx;
+  line-height: 1;
+}
+
+/* 统一状态样式 */
+.status-badge.active {
+  background-color: #f0fff4;
+  color: #38a169;
+  border-color: #48bb78;
+}
+
+.status-badge.inactive {
+  background-color: #edf2f7;
+  color: #718096;
+  border-color: #cbd5e0;
+}
+
+.status-badge.new {
+  background-color: #fffaf0;
+  color: #d69e2e;
+  border-color: #ecc94b;
+}
+
+/* 客户元信息 */
+.client-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  margin-bottom: 12px;
+}
+
+.client-phone, .client-email {
+  font-size: 14px;
+  color: #718096;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 客户统计 */
+.client-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #a0aec0;
+}
+
+.stat-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+/* 箭头图标 */
+.arrow-icon {
+  width: 32rpx;
+  height: 32rpx;
+  opacity: 0.5;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  color: #a0aec0;
+}
+
+/* 筛选面板 */
+.filter-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border-radius: 16px 16px 0 0;
+  padding: 32px 24px;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.filter-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.close-icon {
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  color: #a0aec0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 50%;
+  background-color: #f7fafc;
+}
+
+.close-icon:active {
+  background-color: #edf2f7;
+  color: #718096;
+}
+
+.filter-content {
+  margin-bottom: 32px;
+}
+
+.filter-section {
+  margin-bottom: 32px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #2d3748;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.option-item {
+  padding: 16px 32px;
+  border-radius: 9999px;
+  font-size: 14px;
+  color: #718096;
+  background-color: #edf2f7;
+  transition: all 0.3s;
+}
+
+.option-item.active {
+  background-color: #38a169;
+  color: #ffffff;
+}
+
+.filter-footer {
+  display: flex;
+  gap: 20px;
+  padding-top: 24px;
+  border-top: 1rpx solid #edf2f7;
+}
+
+.reset-button, .confirm-button {
+  flex: 1;
+  height: 88rpx;
+  font-size: 18px;
+  border-radius: 9999px;
+  transition: all 0.3s;
+}
+
+.reset-button {
+  background-color: #edf2f7;
+  color: #718096;
+  border: none;
+}
+
+.confirm-button {
+  background-color: #1a365d;
+  color: #ffffff;
+  border: none;
+}
+
+.reset-button::after, .confirm-button::after {
+  border: none;
+  border-radius: 9999px;
+}
+
+
+
+/* 加载更多 */
+.loading-more, .no-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  color: #718096;
+  font-size: 14px;
+}
+
+.loading-more van-loading {
+  margin-right: 16px;
+}

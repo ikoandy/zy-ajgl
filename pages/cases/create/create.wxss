@@ -1,0 +1,415 @@
+/* pages/cases/create/create.wxss */
+
+/* 页面容器 */
+.case-form-container {
+  background-color: #f7fafc;
+  min-height: 100vh;
+  padding: 20rpx;
+}
+
+/* 表单卡片 */
+.case-form {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+}
+
+/* 表单项 */
+.form-item {
+  margin-bottom: 24px;
+}
+
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+/* 标签样式 */
+.label {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 12rpx;
+  display: block;
+}
+
+/* 输入框样式 */
+.input, .textarea {
+  width: 100%;
+  padding: 20rpx;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 26rpx;
+  color: #2d3748;
+  box-sizing: border-box;
+  background-color: #ffffff;
+  transition: all 0.3s;
+}
+
+.input:focus, .textarea:focus {
+  outline: none;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px #ebf8ff;
+}
+
+.input::placeholder, .textarea::placeholder {
+  color: #a0aec0;
+}
+
+/* 多行文本输入框 */
+.textarea {
+  min-height: 200rpx;
+  line-height: 1.75;
+  resize: vertical;
+}
+
+/* 选择器样式 */
+.picker {
+  width: 100%;
+  height: 80rpx;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+  position: relative;
+  cursor: pointer;
+}
+
+.picker::after {
+  content: "▼";
+  position: absolute;
+  right: 20rpx;
+  color: #a0aec0;
+  font-size: 20rpx;
+  pointer-events: none;
+}
+
+.picker-content {
+  font-size: 26rpx;
+  color: #2d3748;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* 优先级选择器 */
+.priority-selector {
+  display: flex;
+  gap: 16rpx;
+  flex-wrap: wrap;
+}
+
+.priority-option {
+  padding: 16rpx 32rpx;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  font-size: 26rpx;
+  color: #718096;
+  font-weight: 500;
+  transition: all 0.3s;
+  flex-shrink: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+}
+
+.priority-option:active {
+  transform: scale(0.95);
+}
+
+/* 直接按value值匹配，确保选中状态生效 */
+.priority-option.active {
+  font-weight: 600;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.priority-option[data-priority="high"].active {
+  background-color: #feb2b2;
+  color: #e53e3e;
+  border-color: #fc8181;
+}
+
+.priority-option[data-priority="normal"].active {
+  background-color: #faf089;
+  color: #d69e2e;
+  border-color: #f6e05e;
+}
+
+.priority-option[data-priority="low"].active {
+  background-color: #9ae6b4;
+  color: #38a169;
+  border-color: #68d391;
+}
+
+/* 为每个优先级单独设置默认样式，确保active状态能覆盖 */
+.priority-option[data-priority="high"] {
+  background-color: #ffffff;
+  color: #718096;
+}
+
+.priority-option[data-priority="normal"] {
+  background-color: #ffffff;
+  color: #718096;
+}
+
+.priority-option[data-priority="low"] {
+  background-color: #ffffff;
+  color: #718096;
+}
+
+/* 进度输入 */
+.progress-input {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.slider {
+  flex: 1;
+}
+
+.progress-value {
+  min-width: 60rpx;
+  font-size: 24rpx;
+  color: #3182ce;
+  font-weight: 600;
+}
+
+/* 单选框组 */
+.radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24rpx;
+  margin-top: 12rpx;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 28rpx;
+  color: var(--text-primary);
+}
+
+.radio {
+  width: 32rpx;
+  height: 32rpx;
+  border: 2px solid var(--border-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radio.checked {
+  border-color: var(--primary-color);
+  background-color: var(--primary-color);
+}
+
+.radio.checked::after {
+  content: "";
+  width: 16rpx;
+  height: 16rpx;
+  background-color: white;
+  border-radius: 50%;
+}
+
+/* 提交按钮容器 */
+.button-container {
+  margin-top: 32rpx;
+  padding: 0 20rpx;
+  display: flex;
+  justify-content: center;
+}
+
+/* 提交按钮 */
+.submit-button {
+  width: 80%;
+  max-width: 600rpx;
+  height: 88rpx;
+  background-color: #1a365d;
+  color: #ffffff;
+  border-radius: 44rpx;
+  font-size: 32rpx;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  box-shadow: 0 4rpx 16rpx rgba(26, 54, 93, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 88rpx;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  overflow: visible;
+  white-space: nowrap;
+  -webkit-appearance: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.submit-button::after {
+  border: none;
+  border-radius: 44rpx;
+  transform: none;
+  height: 88rpx;
+  width: 100%;
+  line-height: 88rpx;
+  font-size: 32rpx;
+  color: #ffffff;
+  background: none;
+}
+
+.submit-button:active {
+  transform: scale(0.98);
+  box-shadow: 0 2rpx 8rpx rgba(26, 54, 93, 0.4);
+  background-color: #2c5282;
+}
+
+/* 表单分割线 */
+.form-divider {
+  height: 1rpx;
+  background-color: var(--border-light);
+  margin: 32rpx 0;
+}
+
+/* 错误提示 */
+.error-message {
+  font-size: 24rpx;
+  color: var(--error-color);
+  margin-top: 8rpx;
+}
+
+/* 成功提示 */
+.success-message {
+  font-size: 24rpx;
+  color: var(--success-color);
+  margin-top: 8rpx;
+}
+
+/* 快速日期选项 */
+.quick-date-options {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 16rpx;
+  flex-wrap: wrap;
+}
+
+.quick-date-option {
+  padding: 12rpx 24rpx;
+  background-color: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999rpx;
+  font-size: 24rpx;
+  color: #718096;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.quick-date-option:active {
+  background-color: #1a365d !important;
+  color: #ffffff !important;
+  border-color: #1a365d !important;
+  transform: scale(0.95);
+}
+
+.quick-date-option:hover {
+  border-color: #cbd5e0;
+  background-color: #edf2f7;
+}
+
+/* 加载状态 */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40rpx;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  margin-left: 12rpx;
+}
+
+/* 标签组 */
+.tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 12rpx;
+}
+
+/* 标签样式 */
+.tag {
+  padding: 12rpx 20rpx;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-size: 24rpx;
+  color: var(--text-secondary);
+  background-color: var(--background-white);
+}
+
+.tag.selected {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: var(--primary-50);
+}
+
+/* 日期选择器 */
+.date-picker {
+  width: 100%;
+  height: 88rpx;
+  padding: 0 20rpx;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-base);
+  font-size: 28rpx;
+  color: var(--text-primary);
+  background-color: var(--background-white);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-sizing: border-box;
+}
+
+.date-picker::after {
+  content: "";
+  width: 20rpx;
+  height: 20rpx;
+  border-top: 2px solid var(--text-tertiary);
+  border-right: 2px solid var(--text-tertiary);
+  transform: rotate(135deg);
+}
+
+/* 金额输入框 */
+.money-input {
+  position: relative;
+}
+
+.money-input .input {
+  padding-left: 52rpx;
+}
+
+.money-input::before {
+  content: "¥";
+  position: absolute;
+  left: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 28rpx;
+  color: var(--text-secondary);
+}

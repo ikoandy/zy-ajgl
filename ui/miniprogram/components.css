@@ -1,0 +1,387 @@
+.mini-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.mini-tag-primary {
+  background-color: #ebf8ff;
+  color: #3182ce;
+}
+
+.mini-tag-success {
+  background-color: #f0fff4;
+  color: #38a169;
+}
+
+.mini-tag-warning {
+  background-color: #fffaf0;
+  color: #d69e2e;
+}
+
+.mini-tag-error {
+  background-color: #fff5f5;
+  color: #e53e3e;
+}
+
+.mini-tag-info {
+  background-color: #ebf8ff;
+  color: #3182ce;
+}
+
+.mini-tag-default {
+  background-color: #f7fafc;
+  color: #718096;
+}
+
+.mini-tag-sm {
+  padding: 2px 8px;
+  font-size: 11px;
+}
+
+.mini-tag-lg {
+  padding: 6px 16px;
+  font-size: 14px;
+}
+
+.mini-tag-round {
+  border-radius: 9999px;
+}
+
+.mini-tag-bordered {
+  background-color: transparent;
+  border: 1px solid;
+}
+
+.mini-tag-bordered.mini-tag-primary {
+  border-color: #3182ce;
+  color: #3182ce;
+}
+
+.mini-tag-bordered.mini-tag-success {
+  border-color: #38a169;
+  color: #38a169;
+}
+
+.mini-tag-bordered.mini-tag-warning {
+  border-color: #d69e2e;
+  color: #d69e2e;
+}
+
+.mini-tag-bordered.mini-tag-error {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+.mini-tag-bordered.mini-tag-info {
+  border-color: #3182ce;
+  color: #3182ce;
+}
+
+.mini-tag-bordered.mini-tag-default {
+  border-color: #cbd5e0;
+  color: #718096;
+}
+
+.mini-tag-closable {
+  padding-right: 28px;
+  position: relative;
+}
+
+.mini-tag-close {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: inherit;
+  opacity: 0.6;
+  padding: 2px;
+}
+
+.mini-tag-close:active {
+  opacity: 1;
+}
+
+.mini-badge {
+  position: relative;
+  display: inline-block;
+}
+
+.mini-badge-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  background-color: #e53e3e;
+  border-radius: 50%;
+  border: 2px solid #ffffff;
+}
+
+.mini-badge-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  background-color: #e53e3e;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #ffffff;
+  border: 2px solid #ffffff;
+}
+
+.mini-badge-count.mini-badge-count-primary {
+  background-color: #3182ce;
+}
+
+.mini-badge-count.mini-badge-count-success {
+  background-color: #38a169;
+}
+
+.mini-badge-count.mini-badge-count-warning {
+  background-color: #d69e2e;
+}
+
+.mini-badge-count.mini-badge-count-info {
+  background-color: #3182ce;
+}
+
+.mini-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  overflow: hidden;
+  background-color: #e2e8f0;
+  font-size: 14px;
+  color: #718096;
+  font-weight: 500;
+}
+
+.mini-avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 12px;
+}
+
+.mini-avatar-md {
+  width: 40px;
+  height: 40px;
+  font-size: 14px;
+}
+
+.mini-avatar-lg {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+
+.mini-avatar-xl {
+  width: 64px;
+  height: 64px;
+  font-size: 20px;
+}
+
+.mini-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mini-avatar-group {
+  display: flex;
+  align-items: center;
+}
+
+.mini-avatar-group .mini-avatar {
+  margin-left: -12px;
+  border: 2px solid #ffffff;
+}
+
+.mini-avatar-group .mini-avatar:first-child {
+  margin-left: 0;
+}
+
+.mini-avatar-square {
+  border-radius: 8px;
+}
+
+.mini-progress {
+  width: 100%;
+}
+
+.mini-progress-bar {
+  height: 8px;
+  background-color: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mini-progress-fill {
+  height: 100%;
+  background-color: #3182ce;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.mini-progress-fill.mini-progress-fill-success {
+  background-color: #38a169;
+}
+
+.mini-progress-fill.mini-progress-fill-warning {
+  background-color: #d69e2e;
+}
+
+.mini-progress-fill.mini-progress-fill-error {
+  background-color: #e53e3e;
+}
+
+.mini-progress-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #718096;
+}
+
+.mini-progress-sm .mini-progress-bar {
+  height: 4px;
+}
+
+.mini-progress-lg .mini-progress-bar {
+  height: 12px;
+}
+
+.mini-divider {
+  height: 1px;
+  background-color: #e2e8f0;
+  margin: 16px 0;
+}
+
+.mini-divider-dashed {
+  border-top: 1px dashed #e2e8f0;
+  background-color: transparent;
+}
+
+.mini-divider-vertical {
+  width: 1px;
+  height: 1em;
+  background-color: #e2e8f0;
+  margin: 0 12px;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.mini-divider-text {
+  display: flex;
+  align-items: center;
+  color: #718096;
+  font-size: 14px;
+}
+
+.mini-divider-text::before,
+.mini-divider-text::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background-color: #e2e8f0;
+}
+
+.mini-divider-text::before {
+  margin-right: 16px;
+}
+
+.mini-divider-text::after {
+  margin-left: 16px;
+}
+
+.mini-skeleton {
+  background-color: #f7fafc;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.mini-skeleton::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: mini-skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes mini-skeleton-loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.mini-skeleton-text {
+  height: 16px;
+  margin-bottom: 8px;
+}
+
+.mini-skeleton-text-sm {
+  height: 12px;
+}
+
+.mini-skeleton-text-lg {
+  height: 20px;
+}
+
+.mini-skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.mini-skeleton-image {
+  width: 100%;
+  height: 120px;
+  border-radius: 8px;
+}
+
+.mini-skeleton-card {
+  padding: 16px;
+  background-color: #ffffff;
+  border-radius: 8px;
+}
+
+.mini-skeleton-card .mini-skeleton-title {
+  height: 20px;
+  width: 60%;
+  margin-bottom: 12px;
+}
+
+.mini-skeleton-card .mini-skeleton-content {
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.mini-skeleton-card .mini-skeleton-content:last-child {
+  width: 80%;
+}

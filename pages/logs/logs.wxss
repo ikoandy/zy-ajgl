@@ -1,0 +1,30 @@
+/* logs.wxss */
+.log-list {
+  padding: 20rpx;
+  background-color: var(--background-color);
+  min-height: 100vh;
+}
+
+.log-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid var(--border-light);
+  background-color: var(--background-white);
+  padding: 24rpx;
+  margin-bottom: 12rpx;
+  border-radius: var(--radius-base);
+  box-shadow: var(--shadow-xs);
+}
+
+.log-date {
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+}
+
+.log-time {
+  font-size: 28rpx;
+  color: var(--text-tertiary);
+}

@@ -1,0 +1,217 @@
+/* pages/clients/create/create.wxss */
+.create-container {
+  background-color: var(--background-color);
+  min-height: 100vh;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 页面标题 */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--primary-color);
+  color: white;
+  padding: calc(env(safe-area-inset-top) + var(--spacing-5)) var(--spacing-8) var(--spacing-5);
+  min-height: 120rpx;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: var(--shadow-sm);
+}
+
+.back-button {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-icon {
+  font-size: 40rpx;
+  color: white;
+}
+
+.page-title {
+  font-size: 36rpx;
+  font-weight: var(--font-weight-semibold);
+  color: white;
+  flex: 1;
+  text-align: center;
+}
+
+.save-button {
+  width: 120rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  z-index: 1;
+  touch-action: manipulation;
+}
+
+.save-text {
+  font-size: 32rpx;
+  color: white;
+  font-weight: var(--font-weight-medium);
+}
+
+/* 创建表单 */
+.create-form {
+  padding: var(--spacing-8);
+}
+
+.form-section {
+  background-color: var(--background-white);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-6);
+  margin-bottom: var(--spacing-8);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-6);
+  display: block;
+}
+
+/* 表单项 */
+.form-item {
+  margin-bottom: var(--spacing-10);
+}
+
+.form-item:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  font-size: 28rpx;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-3);
+  display: block;
+}
+
+/* 输入框样式 */
+.form-input, .form-textarea {
+  width: 100%;
+  padding: var(--padding-lg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  font-size: 32rpx;
+  color: var(--text-primary);
+  box-sizing: border-box;
+  background-color: var(--background-white);
+  transition: all 0.3s ease;
+  font-family: var(--font-family-base);
+}
+
+.form-input:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+.form-input::placeholder, .form-textarea::placeholder {
+  color: var(--text-tertiary);
+  font-size: 28rpx;
+}
+
+/* 多行文本输入框 */
+.form-textarea {
+  min-height: 160rpx;
+  resize: vertical;
+  line-height: var(--line-height-normal);
+}
+
+/* 选择器样式 */
+.status-selector, .type-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-5);
+}
+
+.status-option, .type-option {
+  padding: var(--padding-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-base);
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  font-weight: var(--font-weight-medium);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background-color: var(--background-white);
+}
+
+.status-option:active, .type-option:active {
+  transform: scale(0.95);
+}
+
+.status-option.active {
+  background-color: var(--success-color);
+  color: var(--background-white);
+  border-color: var(--success-color);
+}
+
+.type-option.active {
+  background-color: var(--primary-color);
+  color: var(--background-white);
+  border-color: var(--primary-color);
+}
+
+/* 加载状态 */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-5);
+  padding: var(--spacing-8);
+  background-color: var(--background-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid var(--border-light);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-text {
+  font-size: 32rpx;
+  color: var(--text-primary);
+  font-weight: var(--font-weight-medium);
+}

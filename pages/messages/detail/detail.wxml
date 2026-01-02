@@ -1,0 +1,112 @@
+<!--pages/messages/detail/detail.wxml-->
+<view class="message-container">
+  <!-- 加载状态 -->
+  <block wx:if="{{loading}}">
+    <view class="loading">
+      <van-loading type="spinner" size="36px" color="#1a365d" />
+      <text>加载中...</text>
+    </view>
+  </block>
+  
+  <!-- 消息详情 -->
+  <block wx:else>
+    <!-- 消息头部 -->
+    <view class="section">
+      <view class="message-header">
+        <view class="sender-avatar">
+          <text class="avatar-text">{{message.clientName.charAt(0)}}</text>
+        </view>
+        <view class="sender-info">
+          <text class="sender-name">{{message.clientName}}</text>
+          <view class="message-meta">
+            <text class="message-time">{{message.createTime}}</text>
+            <view class="status-badge {{message.isRead ? 'read' : 'unread'}}">
+              {{message.isRead ? '已读' : '未读'}}
+            </view>
+          </view>
+        </view>
+      </view>
+      
+      <!-- 消息内容 -->
+      <view class="message-content">
+        {{message.content}}
+      </view>
+      
+      <!-- 消息附件 -->
+      <block wx:if="{{message.attachments && message.attachments.length > 0}}">
+        <view class="message-attachments">
+          <view 
+            wx:for="{{message.attachments}}" 
+            wx:key="id" 
+            class="attachment-item"
+            bindtap="handleDownloadAttachment"
+            data-id="{{item.id}}"
+          >
+            <view class="attachment-icon">📎</view>
+            <view class="attachment-info">
+              <text class="attachment-name">{{item.name}}</text>
+              <text class="attachment-size">{{item.size}}</text>
+            </view>
+          </view>
+        </view>
+      </block>
+      
+      <!-- 操作按钮 -->
+      <view class="action-buttons">
+        <view class="action-btn btn-secondary" bindtap="handleBackToList">
+          返回列表
+        </view>
+        <view class="action-btn btn-primary" bindtap="handleReply">
+          回复消息
+        </view>
+      </view>
+    </view>
+    
+    <!-- 历史消息 -->
+    <block wx:if="{{historyMessages && historyMessages.length > 0}}">
+      <view class="history-messages">
+        <view class="history-header">
+          <text class="history-title">历史消息</text>
+        </view>
+        <view class="history-list">
+          <view 
+            wx:for="{{historyMessages}}" 
+            wx:key="id" 
+            class="history-item {{item.senderType === 'client' ? 'received' : 'sent'}}"
+          >
+            <view class="history-bubble">
+              <text class="history-sender">{{item.sender}}</text>
+              <text class="history-content">{{item.content}}</text>
+              <text class="history-time">{{item.createTime}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+    
+    <!-- 回复区域 -->
+    <view class="reply-section">
+      <view class="reply-header">
+        <text class="reply-title">回复消息</text>
+      </view>
+      <form class="reply-form" bindsubmit="handleSendReply">
+        <textarea 
+          class="reply-textarea" 
+          placeholder="请输入回复内容..." 
+          placeholder-class="placeholder" 
+          value="{{replyContent}}" 
+          bindinput="handleReplyInput"
+          auto-height
+        ></textarea>
+        <view class="reply-actions">
+          <button class="action-btn btn-secondary" type="button" bindtap="handleCancelReply">
+            取消
+          </button>
+          <button class="action-btn btn-primary" type="submit">
+            发送
+          </button>
+        </view>
+      </form>
+    </view>
+  </block>
+</view>

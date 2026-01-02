@@ -1,0 +1,65 @@
+<!-- pages/profile/edit/edit.wxml -->
+<view class="edit-container">
+  <!-- 页面标题 -->
+  <view class="page-header">
+    <view class="back-button" bindtap="handleBack">
+      <text class="back-icon">←</text>
+    </view>
+    <text class="page-title">编辑个人信息</text>
+    <view class="save-button" bindtap="handleSave">
+      <text class="save-text">保存</text>
+    </view>
+  </view>
+
+  <!-- 编辑表单 -->
+  <form class="edit-form" bindsubmit="handleSave">
+    <!-- 头像上传 -->
+    <view class="form-section">
+      <text class="section-title">头像</text>
+      <view class="avatar-upload">
+        <block wx:if="{{userInfo.avatar}}">
+          <image class="avatar-preview" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+        </block>
+        <block wx:else>
+          <view class="avatar-placeholder">
+            <text class="avatar-placeholder-text">{{userInfo.name.charAt(0)}}</text>
+          </view>
+        </block>
+        <button class="upload-button" bindtap="handleAvatarUpload" type="primary" size="mini">更换头像</button>
+      </view>
+    </view>
+
+    <!-- 基本信息 -->
+    <view class="form-section">
+      <text class="section-title">基本信息</text>
+      
+      <view class="form-item">
+        <text class="form-label">姓名</text>
+        <input class="form-input" name="name" type="text" value="{{userInfo.name}}" placeholder="请输入姓名" bindinput="handleInputChange" data-field="name" />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">部门</text>
+        <input class="form-input" name="department" type="text" value="{{userInfo.department}}" placeholder="请输入部门" bindinput="handleInputChange" data-field="department" />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">职位</text>
+        <input class="form-input" name="position" type="text" value="{{userInfo.position}}" placeholder="请输入职位" bindinput="handleInputChange" data-field="position" />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">邮箱</text>
+        <input class="form-input" name="email" type="text" value="{{userInfo.email}}" placeholder="请输入邮箱" bindinput="handleInputChange" data-field="email" />
+      </view>
+
+      <view class="form-item">
+        <text class="form-label">手机号</text>
+        <input class="form-input" name="phone" type="number" value="{{userInfo.phone}}" placeholder="请输入手机号" bindinput="handleInputChange" data-field="phone" />
+      </view>
+    </view>
+
+    <!-- 隐藏的提交按钮 -->
+    <button form-type="submit" style="display: none;"></button>
+  </form>
+</view>

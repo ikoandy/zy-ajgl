@@ -1,0 +1,174 @@
+<!-- pages/cases/list/list.wxml -->
+<view class="cases-container">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input">
+      <view class="search-icon">搜</view>
+      <input 
+        class="input" 
+        placeholder="搜索案件名称、客户姓名..." 
+        placeholder-class="placeholder" 
+        value="{{keyword}}" 
+        bindinput="handleSearch"
+        bindconfirm="handleSearchConfirm"
+      ></input>
+      <view 
+        wx:if="{{keyword}}" 
+        class="clear-icon" 
+        bindtap="handleClearSearch"
+      >×</view>
+    </view>
+    <view 
+      class="create-icon" 
+      bindtap="goToCreate"
+    >+</view>
+    <view 
+      class="filter-icon" 
+      bindtap="toggleFilter"
+    >设</view>
+  </view>
+
+  <!-- 状态筛选 -->
+  <scroll-view scroll-x="true" enable-flex class="status-filter">
+    <view 
+      wx:for="{{statusOptions}}" 
+      wx:key="value" 
+      class="filter-item {{filters.status === item.value ? 'active' : ''}}" 
+      bindtap="handleFilter" 
+      data-status="{{item.value}}"
+    >
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 案件列表 -->
+  <view class="case-list">
+    <block wx:if="{{loading && cases.length === 0}}">
+      <view class="loading">
+        <view class="loading-spinner"></view>
+        <text>加载中...</text>
+      </view>
+    </block>
+    <block wx:elif="{{cases.length === 0}}">
+      <view class="empty">
+        <text>暂无案件</text>
+        <button class="create-button" bindtap="goToCreate">创建案件</button>
+      </view>
+    </block>
+    <block wx:else>
+      <view 
+        wx:for="{{cases}}" 
+        wx:key="id" 
+        class="case-item" 
+        bindtap="goToDetail" 
+        data-id="{{item.id}}"
+      >
+        <view class="case-header">
+            <view class="case-title-container">
+              <text class="case-title">{{item.title}}</text>
+              <view class="priority-badge {{item.priority}}">
+                {{item.priority === 'high' ? '高' : item.priority === 'normal' ? '中' : '低'}}
+              </view>
+            </view>
+            <view class="case-status" data-status="{{item.status}}">
+              {{item.status === 'pending' ? '待处理' : 
+                item.status === 'processing' ? '处理中' : 
+                item.status === 'completed' ? '已完成' : '已结案'}}
+            </view>
+          </view>
+        
+        <view class="case-content">
+          <text class="case-client">客户：{{item.clientName}}</text>
+          <text class="case-date">更新时间：{{item.updateTime}}</text>
+        </view>
+        
+        <view class="case-footer">
+          <view class="case-progress">
+            <text class="progress-label">进度</text>
+            <view class="progress-bar">
+              <view class="progress-fill" style="width: {{item.progress}}%"></view>
+            </view>
+            <text class="progress-text">{{item.progress}}%</text>
+          </view>
+          <view class="arrow-text">></view>
+        </view>
+      </view>
+      
+      <view wx:if="{{loading && cases.length > 0}}" class="loading-more">
+        <view class="loading-spinner"></view>
+        <text>加载更多...</text>
+      </view>
+      <view wx:else-if="{{!hasMore}}" class="no-more">
+        <text>没有更多了</text>
+      </view>
+    </block>
+  </view>
+
+  <!-- 筛选面板 -->
+  <view class="filter-panel" wx:if="{{filterVisible}}">
+    <view class="filter-header">
+      <text class="filter-title">筛选条件</text>
+      <view 
+        class="close-icon" 
+        bindtap="toggleFilter"
+      >×</view>
+    </view>
+    
+    <view class="filter-content">
+      <!-- 优先级筛选 -->
+      <view class="filter-section">
+        <text class="section-title">优先级</text>
+        <view class="filter-options">
+          <view 
+            wx:for="{{priorityOptions}}" 
+            wx:key="value" 
+            class="option-item {{filters.priority === item.value ? 'active' : ''}}" 
+            bindtap="handleFilterChange" 
+            data-field="priority" 
+            data-value="{{item.value}}"
+          >
+            {{item.label}}
+          </view>
+        </view>
+      </view>
+      
+      <!-- 排序方式 -->
+      <view class="filter-section">
+        <text class="section-title">排序方式</text>
+        <view class="filter-options">
+          <view 
+            class="option-item {{filters.sortBy === 'updateTime' ? 'active' : ''}}" 
+            bindtap="handleFilterChange" 
+            data-field="sortBy" 
+            data-value="updateTime"
+          >
+            最近更新
+          </view>
+          <view 
+            class="option-item {{filters.sortBy === 'createTime' ? 'active' : ''}}" 
+            bindtap="handleFilterChange" 
+            data-field="sortBy" 
+            data-value="createTime"
+          >
+            创建时间
+          </view>
+          <view 
+            class="option-item {{filters.sortBy === 'priority' ? 'active' : ''}}" 
+            bindtap="handleFilterChange" 
+            data-field="sortBy" 
+            data-value="priority"
+          >
+            优先级
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <view class="filter-footer">
+      <button class="reset-button" bindtap="handleFilterReset">重置</button>
+      <button class="confirm-button" bindtap="handleFilterConfirm">确认</button>
+    </view>
+  </view>
+
+
+</view>

@@ -1,0 +1,555 @@
+/* pages/cases/list/list.wxss */
+.cases-container {
+  padding: 20rpx;
+  background-color: #f7fafc;
+  min-height: 100vh;
+  padding-bottom: 120rpx; /* 为悬浮按钮留出空间 */
+}
+
+/* 搜索栏 */
+.search-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 0 10rpx;
+}
+
+.search-input {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  padding: 0 20rpx;
+  height: 80rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  margin-right: 20rpx;
+  border: 1px solid #e2e8f0;
+}
+
+.search-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #718096;
+  background-color: #f7fafc;
+  border-radius: 50%;
+  border: 1px solid #e2e8f0;
+}
+
+.input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #2d3748;
+  height: 100%;
+}
+
+.input::placeholder {
+  color: #a0aec0;
+}
+
+.clear-icon {
+  width: 32rpx;
+  height: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  color: #a0aec0;
+  background-color: #f7fafc;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-icon:active {
+  background-color: #edf2f7;
+  color: #718096;
+}
+
+.filter-icon, .create-icon {
+  width: 80rpx;
+  height: 80rpx;
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
+  margin-left: 20rpx;
+}
+
+.filter-icon:active, .create-icon:active {
+  transform: scale(0.95);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+/* 状态筛选 */
+.status-filter {
+  display: flex;
+  margin-bottom: 20rpx;
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 8rpx 16rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  white-space: nowrap;
+  border: 1px solid #e2e8f0;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120rpx;
+  padding: 12rpx 24rpx;
+  margin: 0 8rpx;
+  font-size: 14px;
+  color: #718096;
+  background-color: #edf2f7;
+  border-radius: 9999px;
+  transition: all 0.3s;
+  font-weight: 500;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.filter-item:first-child {
+  margin-left: 0;
+}
+
+.filter-item:last-child {
+  margin-right: 0;
+}
+
+.filter-item.active {
+  background-color: #1a365d;
+  color: #ffffff;
+}
+
+/* 案件列表 */
+.case-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.loading, .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 0;
+  color: #a0aec0;
+}
+
+.loading text, .empty text {
+  margin-top: 20rpx;
+  font-size: 24rpx;
+}
+
+.empty image {
+  width: 160rpx;
+  height: 160rpx;
+  margin-bottom: 20rpx;
+  opacity: 0.5;
+}
+
+.create-button {
+  margin-top: 40rpx;
+  background-color: #38a169 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 40rpx !important;
+  padding: 0 60rpx !important;
+  height: 80rpx !important;
+  font-size: 28rpx !important;
+  line-height: 80rpx !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  min-height: auto !important;
+  max-height: none !important;
+}
+
+.create-button::after {
+  border: none !important;
+  border-radius: 40rpx !important;
+  transform: none !important;
+  height: 80rpx !important;
+  width: 100% !important;
+  line-height: 80rpx !important;
+  font-size: 28rpx !important;
+  color: #ffffff !important;
+  background: none !important;
+}
+
+/* 移除button组件的默认样式 */
+button.create-button {
+  margin: 0 !important;
+  margin-top: 40rpx !important;
+  padding: 0 60rpx !important;
+  font-size: 28rpx !important;
+  font-weight: normal !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  word-spacing: normal !important;
+  text-shadow: none !important;
+  vertical-align: middle !important;
+  cursor: pointer !important;
+  outline: none !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  -webkit-appearance: none !important;
+  user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* 案件项 */
+.case-item {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  transition: all 0.3s;
+}
+
+.case-item:active {
+  transform: scale(0.98);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.case-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20rpx;
+}
+
+.case-title-container {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.case-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2d3748;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  margin-right: 16rpx;
+}
+
+.priority-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 12rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+  margin-left: 12rpx;
+}
+
+.priority-badge.high {
+  background-color: #fed7d7;
+  color: #e53e3e;
+}
+
+.priority-badge.normal {
+  background-color: #fffaf0;
+  color: #d69e2e;
+}
+
+.priority-badge.low {
+  background-color: #c6f6d5;
+  color: #38a169;
+}
+
+.case-status {
+  /* 统一基础样式 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  height: 36rpx;
+  border-radius: 18rpx;
+  border: 1px solid transparent;
+  padding: 0 18rpx;
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 88rpx;
+  line-height: 1;
+}
+
+/* 统一状态样式 */
+.case-status.pending,
+.case-status[data-status="pending"] {
+  background-color: #fffaf0;
+  color: #d69e2e;
+  border-color: #ecc94b;
+}
+
+.case-status.processing,
+.case-status[data-status="processing"] {
+  background-color: #ebf8ff;
+  color: #1a365d;
+  border-color: #bee3f8;
+}
+
+.case-status.completed,
+.case-status[data-status="completed"] {
+  background-color: #f0fff4;
+  color: #38a169;
+  border-color: #48bb78;
+}
+
+.case-status.closed,
+.case-status[data-status="closed"] {
+  background-color: #edf2f7;
+  color: #718096;
+  border-color: #cbd5e0;
+}
+
+.case-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.case-client, .case-date {
+  font-size: 14px;
+  color: #718096;
+}
+
+.case-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.case-progress {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex: 1;
+}
+
+.progress-label {
+  font-size: 22rpx;
+  color: #a0aec0;
+  min-width: 60rpx;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8rpx;
+  background-color: #edf2f7;
+  border-radius: 4rpx;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #1a365d;
+  border-radius: 4rpx;
+  transition: width 0.3s ease;
+  width: 0;
+}
+
+.progress-text {
+  font-size: 22rpx;
+  color: #718096;
+  min-width: 60rpx;
+  text-align: right;
+}
+
+.arrow-icon {
+  width: 32rpx;
+  height: 32rpx;
+  color: #a0aec0;
+}
+
+/* 加载更多 */
+.loading-more, .no-more {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40rpx 0;
+  color: #a0aec0;
+  font-size: 24rpx;
+}
+
+.loading-more van-loading {
+  margin-right: 16rpx;
+}
+
+/* 筛选面板 */
+.filter-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  border-radius: 16px 16px 0 0;
+  padding: 32px 24px;
+  box-shadow: 0 -4rpx 20rpx rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32rpx;
+}
+
+.filter-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.close-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.filter-content {
+  margin-bottom: 32rpx;
+}
+
+.filter-section {
+  margin-bottom: 32rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #2d3748;
+  margin-bottom: 20rpx;
+  display: block;
+}
+
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.option-item {
+  padding: 16rpx 32rpx;
+  border-radius: 24rpx;
+  font-size: 26rpx;
+  color: #718096;
+  background-color: #edf2f7;
+  transition: all 0.3s;
+}
+
+.option-item.active {
+  background-color: #38a169;
+  color: #ffffff;
+}
+
+.filter-footer {
+  display: flex;
+  gap: 20rpx;
+  padding-top: 24rpx;
+  border-top: 1rpx solid #edf2f7;
+}
+
+.reset-button, .confirm-button {
+  flex: 1;
+  height: 88rpx;
+  font-size: 32rpx;
+  border-radius: 44rpx;
+  transition: all 0.3s;
+}
+
+.reset-button {
+  background-color: #edf2f7;
+  color: #718096;
+  border: none;
+}
+
+.confirm-button {
+  background-color: #1a365d;
+  color: #ffffff;
+  border: none;
+}
+
+.reset-button::after, .confirm-button::after {
+  border: none;
+  border-radius: 44rpx;
+}
+
+/* 加载动画 */
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 6rpx solid #e2e8f0;
+  border-top-color: #38a169;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 箭头文字 */
+.arrow-text {
+  font-size: 32rpx;
+  color: #a0aec0;
+  font-weight: bold;
+  margin-left: 20rpx;
+}
+
+/* 关闭按钮样式 */
+.close-icon {
+  font-size: 40rpx;
+  color: #a0aec0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.close-icon:active {
+  transform: scale(0.9);
+  color: #718096;
+}
+

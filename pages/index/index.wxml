@@ -1,0 +1,137 @@
+<!-- pages/index/index.wxml -->
+<scroll-view 
+  class="index-container" 
+  scroll-y 
+  enable-flex
+  bindrefresherrefresh="handleRefresh"
+  refresher-enabled="true"
+  refresher-threshold="45"
+  refresher-background="#f7fafc"
+  refresher-triggered="{{refreshing}}"
+>
+  <!-- 顶部用户信息 -->
+  <view class="user-header">
+    <view class="user-info" bindtap="goToProfile">
+      <block wx:if="{{userInfo.avatar}}">
+        <image class="avatar" src="{{userInfo.avatar}}" mode="aspectFill"></image>
+      </block>
+      <block wx:else>
+        <view class="avatar-text-container">
+          <text class="avatar-text">{{userInfo.name ? userInfo.name.charAt(0) : '用'}}</text>
+        </view>
+      </block>
+      <text class="username">{{userInfo && userInfo.name ? userInfo.name : '用户'}}</text>
+      <text class="user-role">{{userInfo && userInfo.role === 'lawyer' ? '律师' : '管理员'}}</text>
+    </view>
+    <view class="header-actions">
+      <view class="message-badge" bindtap="goToMessageList">
+        <view class="icon">消</view>
+        <view wx:if="{{messageCount > 0}}" class="badge">{{messageCount}}</view>
+      </view>
+      <view class="icon settings-icon" bindtap="goToProfile">设</view>
+    </view>
+  </view>
+
+  <!-- 快捷入口 -->
+  <view class="quick-actions">
+    <!-- 案件相关 -->
+    <view class="action-item" bindtap="goToCaseList">
+      <view class="action-icon">案</view>
+      <text class="action-text">案件管理</text>
+    </view>
+    
+    <!-- 客户管理 -->
+    <view class="action-item" bindtap="goToClientList">
+      <view class="action-icon">客</view>
+      <text class="action-text">客户管理</text>
+    </view>
+    
+    <!-- 消息中心 -->
+    <view class="action-item" bindtap="goToMessageList">
+      <view class="action-icon">消</view>
+      <text class="action-text">消息中心</text>
+    </view>
+    
+    <!-- 日程安排 -->
+    <view class="action-item" bindtap="goToSchedule">
+      <view class="action-icon">日</view>
+      <text class="action-text">日程安排</text>
+    </view>
+  </view>
+
+  <!-- 最近案件 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">最近案件</text>
+      <text class="section-more" bindtap="goToCaseList">查看全部</text>
+    </view>
+    <view class="case-list">
+      <block wx:if="{{loading}}">
+        <view class="loading">
+          <view class="loading-spinner"></view>
+          <text>加载中...</text>
+        </view>
+      </block>
+      <block wx:elif="{{recentCases.length === 0}}">
+        <view class="empty">
+          <text>暂无案件</text>
+          <button class="create-btn" bindtap="goToCaseList" type="default">
+            查看全部案件
+          </button>
+        </view>
+      </block>
+      <block wx:else>
+        <view 
+          wx:for="{{recentCases}}" 
+          wx:key="id" 
+          class="case-item" 
+          bindtap="goToCaseDetail" 
+          data-id="{{item.id}}"
+        >
+          <view class="case-info">
+            <text class="case-title">{{item.title}}</text>
+            <view class="case-status" data-status="{{item.status}}">
+              {{item.status === 'pending' ? '待处理' : item.status === 'processing' ? '处理中' : '已完成'}}
+            </view>
+          </view>
+          <view class="case-meta">
+            <text class="case-client">{{item.clientName}}</text>
+            <text class="case-date">{{item.updateTime}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 待办事项 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">待办事项</text>
+      <text class="section-more" bindtap="goToSchedule">查看全部</text>
+    </view>
+    <view class="task-list">
+      <block wx:if="{{upcomingTasks.length === 0}}">
+        <view class="empty">
+          <text>暂无待办任务</text>
+          <button class="create-btn" bindtap="goToSchedule" type="default">
+            查看全部日程
+          </button>
+        </view>
+      </block>
+      <block wx:else>
+        <view 
+          wx:for="{{upcomingTasks}}" 
+          wx:key="id" 
+          class="task-item" 
+          bindtap="goToSchedule"
+        >
+          <view class="task-dot"></view>
+          <view class="task-content">
+            <text class="task-title">{{item.title}}</text>
+            <text class="task-time">{{item.startTime}}</text>
+          </view>
+        </view>
+      </block>
+    </view>
+  </view>
+</scroll-view>

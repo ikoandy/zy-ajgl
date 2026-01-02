@@ -1,0 +1,209 @@
+/**app.wxss**/
+/* CSS变量定义 - 基于UI设计规范 */
+:root {
+  /* 主色调 */
+  --primary-color: #1a365d;
+  --primary-light: #2c5282;
+  --primary-dark: #1a365d;
+  --primary-50: #ebf8ff;
+  --primary-100: #bee3f8;
+  --primary-200: #90cdf4;
+  --primary-300: #63b3ed;
+  --primary-400: #4299e1;
+  --primary-500: #3182ce;
+  --primary-600: #2b6cb0;
+  --primary-700: #2c5282;
+  --primary-800: #2a4365;
+  --primary-900: #1a365d;
+
+  /* 次要色调 */
+  --secondary-color: #2d3748;
+  --secondary-light: #4a5568;
+  --secondary-dark: #1a202c;
+  --secondary-50: #f7fafc;
+  --secondary-100: #edf2f7;
+  --secondary-200: #e2e8f0;
+  --secondary-300: #cbd5e0;
+  --secondary-400: #a0aec0;
+  --secondary-500: #718096;
+  --secondary-600: #4a5568;
+  --secondary-700: #2d3748;
+  --secondary-800: #1a202c;
+  --secondary-900: #171923;
+
+  /* 强调色 */
+  --accent-color: #3182ce;
+  --accent-hover: #2b6cb0;
+  --accent-active: #2c5282;
+
+  /* 功能色 */
+  /* 成功状态 */
+  --success-color: #38a169;
+  --success-light: #48bb78;
+  --success-dark: #2f855a;
+
+  /* 警告提示 */
+  --warning-color: #d69e2e;
+  --warning-light: #ecc94b;
+  --warning-dark: #b7791f;
+
+  /* 错误状态 */
+  --error-color: #e53e3e;
+  --error-light: #f56565;
+  --error-dark: #c53030;
+
+  /* 信息提示 */
+  --info-color: #3182ce;
+  --info-light: #4299e1;
+  --info-dark: #2b6cb0;
+
+  /* 中性色 */
+  /* 文字颜色 */
+  --text-primary: #2d3748;
+  --text-secondary: #718096;
+  --text-tertiary: #a0aec0;
+  --text-disabled: #cbd5e0;
+
+  /* 边框颜色 */
+  --border-color: #e2e8f0;
+  --border-light: #edf2f7;
+  --border-dark: #cbd5e0;
+
+  /* 背景颜色 */
+  --background-color: #f7fafc;
+  --background-white: #ffffff;
+  --background-light: #f7fafc;
+  --background-dark: #edf2f7;
+
+  /* 阴影 */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* 字体规范 */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-family-mono: 'SF Mono', Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+  --line-height-loose: 2;
+
+  /* 间距规范 */
+  --spacing-0: 0;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --spacing-12: 48px;
+  --spacing-16: 64px;
+  --spacing-20: 80px;
+  --spacing-24: 96px;
+
+  /* 组件内间距 */
+  --padding-xs: 4px 8px;
+  --padding-sm: 8px 12px;
+  --padding-md: 12px 16px;
+  --padding-lg: 16px 24px;
+  --padding-xl: 24px 32px;
+
+  /* 圆角规范 */
+  --radius-none: 0;
+  --radius-sm: 2px;
+  --radius-base: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
+  --radius-full: 9999px;
+}
+
+/* 基础重置 */
+page {
+  font-family: var(--font-family-base);
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  /* 适配刘海屏顶部安全区域 */
+  padding-top: env(safe-area-inset-top);
+  /* 适配底部安全区域 */
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: border-box;
+}
+
+/* 全局容器 */
+.container {
+  width: 100%;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+}
+
+/* 安全区域适配工具类 */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+.safe-area-padding {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* 底部适配容器 */
+.bottom-safe-container {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* 顶部适配容器 */
+.top-safe-container {
+  margin-top: env(safe-area-inset-top);
+}
+
+/* 响应式字体大小 */
+@media (max-width: 375px) {
+  :root {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 376px) and (max-width: 414px) {
+  :root {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 415px) {
+  :root {
+    font-size: 16px;
+  }
+}
+
+/* 适配不同屏幕宽度的容器 */
+.fluid-container {
+  width: 100%;
+  max-width: 750rpx;
+  margin: 0 auto;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+}

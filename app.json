@@ -1,0 +1,69 @@
+{
+  "pages": [
+    "pages/auth/login/login",
+    "pages/index/index",
+    "pages/logs/logs",
+    "pages/auth/register/register",
+    "pages/cases/list/list",
+    "pages/cases/detail/detail",
+    "pages/cases/create/create",
+    "pages/clients/list/list",
+    "pages/clients/create/create",
+    "pages/clients/detail/detail",
+    "pages/clients/follow/follow",
+    "pages/documents/list/list",
+    "pages/documents/upload/upload",
+    "pages/documents/preview/preview",
+    "pages/schedule/calendar/calendar",
+    "pages/schedule/task/task",
+    "pages/messages/list/list",
+    "pages/messages/detail/detail",
+    "pages/profile/info/info",
+    "pages/profile/edit/edit",
+    "pages/profile/settings/settings",
+    "pages/profile/about/about"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#1a365d",
+    "navigationBarTitleText": "中汇法创智能管理系统",
+    "navigationBarTextStyle": "white",
+    "navigationStyle": "default"
+  },
+
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "safeArea": {
+    "enable": true
+  },
+  "usingComponents": {},
+  "compatibilityVersion": "2.16.0",
+  "tabBar": {
+    "color": "#666666",
+    "selectedColor": "#1a365d",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/cases/list/list",
+        "text": "案件"
+      },
+      {
+        "pagePath": "pages/clients/list/list",
+        "text": "客户"
+      },
+      {
+        "pagePath": "pages/messages/list/list",
+        "text": "消息"
+      },
+      {
+        "pagePath": "pages/profile/info/info",
+        "text": "我的"
+      }
+    ]
+  }
+}

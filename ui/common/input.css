@@ -1,0 +1,205 @@
+.input {
+  width: 100%;
+  padding: var(--padding-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  background-color: var(--background-white);
+  transition: all var(--transition-base) var(--transition-timing);
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-100);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.input:disabled {
+  background-color: var(--background-light);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.input-error {
+  border-color: var(--error-color);
+}
+
+.input-error:focus {
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
+}
+
+.input-success {
+  border-color: var(--success-color);
+}
+
+.input-success:focus {
+  box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1);
+}
+
+.input-sm {
+  padding: 4px 10px;
+  font-size: var(--font-size-sm);
+}
+
+.input-lg {
+  padding: var(--padding-md);
+  font-size: var(--font-size-lg);
+}
+
+.input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.input-group .input {
+  flex: 1;
+}
+
+.input-group .input:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.input-group .input:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.input-group .input:not(:first-child):not(:last-child) {
+  border-radius: 0;
+}
+
+.input-group-prepend,
+.input-group-append {
+  display: flex;
+  align-items: center;
+  padding: var(--padding-sm);
+  background-color: var(--background-dark);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.input-group-prepend {
+  border-right: none;
+  border-top-left-radius: var(--radius-base);
+  border-bottom-left-radius: var(--radius-base);
+}
+
+.input-group-append {
+  border-left: none;
+  border-top-right-radius: var(--radius-base);
+  border-bottom-right-radius: var(--radius-base);
+}
+
+.input-group-prepend + .input,
+.input + .input-group-append {
+  border-radius: 0;
+}
+
+textarea.input {
+  min-height: 80px;
+  resize: vertical;
+}
+
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23718096'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.input-wrapper .input-icon {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+.input-wrapper .input {
+  padding-left: 36px;
+}
+
+.input-wrapper .input-icon-right {
+  left: auto;
+  right: 12px;
+}
+
+.input-wrapper .input-with-icon-right {
+  padding-left: var(--padding-sm);
+  padding-right: 36px;
+}
+
+.input-label {
+  display: block;
+  margin-bottom: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-primary);
+}
+
+.input-label.required::after {
+  content: '*';
+  color: var(--error-color);
+  margin-left: 4px;
+}
+
+.input-helper {
+  margin-top: var(--spacing-2);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.input-error-message {
+  margin-top: var(--spacing-2);
+  font-size: var(--font-size-xs);
+  color: var(--error-color);
+}
+
+.form-group {
+  margin-bottom: var(--spacing-6);
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.checkbox-wrapper,
+.radio-wrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  cursor: pointer;
+}
+
+.checkbox-wrapper input[type="checkbox"],
+.radio-wrapper input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+
+.checkbox-label,
+.radio-label {
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+  cursor: pointer;
+}

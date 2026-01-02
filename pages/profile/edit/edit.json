@@ -1,0 +1,8 @@
+{
+  "usingComponents": {},
+  "navigationStyle": "custom",
+  "navigationBarBackgroundColor": "#1a365d",
+  "navigationBarTextStyle": "white",
+  "navigationBarTitleText": "编辑个人信息",
+  "backgroundColor": "#f7fafc"
+}
