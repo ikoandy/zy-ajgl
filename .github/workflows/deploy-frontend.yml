@@ -1,0 +1,54 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'admin-pc/**'
+      - 'lawyer-pc/**'
+      - 'mobile-h5/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+    
+    - name: Install dependencies
+      run: |
+        npm install --prefix admin-pc
+        npm install --prefix lawyer-pc
+        npm install --prefix mobile-h5
+    
+    - name: Build projects
+      run: |
+        npm run build --prefix admin-pc
+        npm run build --prefix lawyer-pc
+        npm run build --prefix mobile-h5
+    
+    - name: Deploy to server
+      uses: easingthemes/ssh-deploy@v2.1.5
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        TARGET: /app/law-firm-management/
+        SOURCE: "admin-pc/dist/,lawyer-pc/dist/,mobile-h5/dist/"
+        EXCLUDE: "**/node_modules/**"
+        ARGS: "-avz --delete"
+    
+    - name: Restart Nginx
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          chmod -R 755 /app/law-firm-management/
+          systemctl restart nginx
