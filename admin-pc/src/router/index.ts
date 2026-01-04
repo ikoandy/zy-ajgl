@@ -4,7 +4,7 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/dashboard'
+    redirect: '/login'
   },
   {
     path: '/login',
@@ -164,6 +164,29 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHistory(),
   routes
+})
+
+// 全局路由守卫
+router.beforeEach((to, _, next) => {
+  // 获取本地存储的token
+  const token = localStorage.getItem('token')
+  
+  // 无需认证的白名单路由
+  const whiteList = ['login', '404']
+  
+  // 如果访问的是白名单中的路由，直接放行
+  if (whiteList.includes(to.name as string)) {
+    next()
+    return
+  }
+  
+  // 如果有token，放行
+  if (token) {
+    next()
+  } else {
+    // 没有token，重定向到登录页面
+    next('/login')
+  }
 })
 
 export default router
