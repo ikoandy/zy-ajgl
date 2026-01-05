@@ -1,0 +1,70 @@
+name: Deploy Full System with Docker Compose
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install frontend dependencies
+      run: |
+        npm install --prefix admin-pc
+        npm install --prefix lawyer-pc
+        npm install --prefix mobile-h5
+    
+    - name: Build frontend projects
+      run: |
+        npm run build --prefix admin-pc
+        npm run build --prefix lawyer-pc
+        npm run build --prefix mobile-h5
+    
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        npm install --production
+    
+    - name: Build backend project
+      run: |
+        cd backend
+        npm run build
+    
+    - name: Deploy to server
+      uses: easingthemes/ssh-deploy@v2.1.5
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        TARGET: /app/law-firm-management/
+        SOURCE: "./"
+        EXCLUDE: "**/node_modules/**,**/.git/**,**/.github/**,**/*.log"
+        ARGS: "-avz --delete"
+    
+    - name: Start Docker Compose services
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.REMOTE_HOST }}
+        username: ${{ secrets.REMOTE_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        script: |
+          cd /app/law-firm-management/
+          docker-compose up -d --build
+          
+          # 等待服务启动
+          sleep 30
+          
+          # 查看服务状态
+          docker-compose ps
+          
+          # 查看日志
+          docker-compose logs -f --tail=50
