@@ -7,6 +7,10 @@ const routes: RouteRecordRaw[] = [
     redirect: '/login'
   },
   {
+    path: '/admin',
+    redirect: '/login'
+  },
+  {
     path: '/login',
     name: 'login',
     component: () => import('../views/login/index.vue')
@@ -175,7 +179,7 @@ router.beforeEach((to, _, next) => {
   const whiteListPaths = ['/login', '/404']
   
   // 如果访问的是白名单中的路由，直接放行
-  if (whiteListPaths.includes(to.path) || to.path === '/') {
+  if (whiteListPaths.includes(to.path) || to.path === '/' || to.path === '/admin') {
     next()
     return
   }
