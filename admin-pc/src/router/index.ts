@@ -171,11 +171,11 @@ router.beforeEach((to, _, next) => {
   // 获取本地存储的token
   const token = localStorage.getItem('token')
   
-  // 无需认证的白名单路由
-  const whiteList = ['login', '404']
+  // 无需认证的白名单路由路径
+  const whiteListPaths = ['/login', '/404']
   
   // 如果访问的是白名单中的路由，直接放行
-  if (whiteList.includes(to.name as string)) {
+  if (whiteListPaths.includes(to.path) || to.path === '/') {
     next()
     return
   }

@@ -383,14 +383,18 @@ const handlePermissionConfirm = () => {
 }
 
 // 删除
-const handleDelete = (_row: any) => {
+const handleDelete = (row: any) => {
   ElMessageBox.confirm('确定要删除该角色吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    // 模拟删除
-    ElMessage.success('删除成功')
+    // 从列表中删除角色
+    const index = roleList.value.findIndex(item => item.id === row.id)
+    if (index !== -1) {
+      roleList.value.splice(index, 1)
+      ElMessage.success('删除成功')
+    }
   }).catch(() => {
     // 取消删除
   })
@@ -410,6 +414,33 @@ const handleDialogConfirm = async () => {
     if (valid) {
       // 模拟提交
       setTimeout(() => {
+        if (!dialogData.id) {
+          // 新增角色
+          const maxId = roleList.value.length > 0 ? Math.max(...roleList.value.map(item => item.id)) : 0
+          const newRole = {
+            id: maxId + 1,
+            roleName: roleForm.roleName,
+            roleCode: roleForm.roleCode,
+            description: roleForm.description,
+            status: roleForm.status,
+            createTime: new Date().toLocaleString('zh-CN')
+          }
+          roleList.value.unshift(newRole)
+        } else {
+          // 编辑角色
+          const index = roleList.value.findIndex(item => item.id === parseInt(dialogData.id))
+          if (index !== -1 && roleList.value[index]) {
+            const originalRole = roleList.value[index]
+            roleList.value[index] = {
+              ...originalRole,
+              roleName: roleForm.roleName,
+              roleCode: roleForm.roleCode,
+              description: roleForm.description,
+              status: roleForm.status
+            }
+          }
+        }
+        
         ElMessage.success(dialogData.id ? '编辑成功' : '新增成功')
         dialogVisible.value = false
       }, 1000)

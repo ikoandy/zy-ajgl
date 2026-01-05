@@ -266,14 +266,18 @@ const handleEdit = (row: any) => {
 }
 
 // 删除
-const handleDelete = (_row: any) => {
+const handleDelete = (row: any) => {
   ElMessageBox.confirm('确定要删除该用户吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    // 模拟删除
-    ElMessage.success('删除成功')
+    // 从列表中删除用户
+    const index = userList.value.findIndex(item => item.id === row.id)
+    if (index !== -1) {
+      userList.value.splice(index, 1)
+      ElMessage.success('删除成功')
+    }
   }).catch(() => {
     // 取消删除
   })
@@ -293,6 +297,35 @@ const handleDialogConfirm = async () => {
     if (valid) {
       // 模拟提交
       setTimeout(() => {
+        if (!dialogData.id) {
+          // 新增用户
+          const maxId = userList.value.length > 0 ? Math.max(...userList.value.map(item => item.id)) : 0
+          const newUser = {
+            id: maxId + 1,
+            username: userForm.username,
+            phone: userForm.phone,
+            email: userForm.email,
+            role: userForm.role,
+            status: userForm.status,
+            createTime: new Date().toLocaleString('zh-CN')
+          }
+          userList.value.unshift(newUser)
+        } else {
+          // 编辑用户
+          const index = userList.value.findIndex(item => item.id === parseInt(dialogData.id))
+          if (index !== -1 && userList.value[index]) {
+            const originalUser = userList.value[index]
+            userList.value[index] = {
+              ...originalUser,
+              username: userForm.username,
+              phone: userForm.phone,
+              email: userForm.email,
+              role: userForm.role,
+              status: userForm.status
+            }
+          }
+        }
+        
         ElMessage.success(dialogData.id ? '编辑成功' : '新增成功')
         dialogVisible.value = false
       }, 1000)

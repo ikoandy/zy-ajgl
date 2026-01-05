@@ -534,28 +534,40 @@ const handleDetail = (row: any) => {
 }
 
 // 删除
-const handleDelete = (_row: any) => {
+const handleDelete = (row: any) => {
   ElMessageBox.confirm('确定要删除该案件吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    // 模拟删除
-    ElMessage.success('删除成功')
+    // 从列表中删除该案件
+    const index = caseList.value.findIndex(item => item.id === row.id)
+    if (index !== -1) {
+      caseList.value.splice(index, 1)
+      ElMessage.success('删除成功')
+    }
   }).catch(() => {
     // 取消删除
   })
 }
 
 // 归档
-const handleArchive = (_row: any) => {
+const handleArchive = (row: any) => {
   ElMessageBox.confirm('确定要归档该案件吗？', '提示', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    // 模拟归档
-    ElMessage.success('归档成功')
+    // 更新案件状态为已归档
+    const index = caseList.value.findIndex(item => item.id === row.id)
+    if (index !== -1 && caseList.value[index]) {
+      caseList.value[index] = {
+        ...caseList.value[index],
+        status: 'archived',
+        updateTime: new Date().toLocaleString('zh-CN')
+      }
+      ElMessage.success('归档成功')
+    }
   }).catch(() => {
     // 取消归档
   })
@@ -568,7 +580,9 @@ const handleBatchDelete = () => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    // 模拟批量删除
+    // 从列表中删除选中的案件
+    const selectedIds = selectedCases.value.map(item => item.id)
+    caseList.value = caseList.value.filter(item => !selectedIds.includes(item.id))
     ElMessage.success(`成功删除 ${selectedCases.value.length} 个案件`)
     selectedCases.value = []
   }).catch(() => {
@@ -583,7 +597,17 @@ const handleBatchArchive = () => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    // 模拟批量归档
+    // 更新选中案件的状态为已归档
+    selectedCases.value.forEach(selectedCase => {
+      const index = caseList.value.findIndex(item => item.id === selectedCase.id)
+      if (index !== -1 && caseList.value[index]) {
+        caseList.value[index] = {
+          ...caseList.value[index],
+          status: 'archived',
+          updateTime: new Date().toLocaleString('zh-CN')
+        }
+      }
+    })
     ElMessage.success(`成功归档 ${selectedCases.value.length} 个案件`)
     selectedCases.value = []
   }).catch(() => {
@@ -605,6 +629,47 @@ const handleDialogConfirm = async () => {
       setTimeout(() => {
         // 模拟API请求成功
         ElMessage.success(dialogData.id ? '编辑成功' : '新增成功')
+        
+        // 新增案件成功后，将新案件添加到列表中
+        if (!dialogData.id) {
+          // 生成新的案件ID（最大ID + 1）
+          const maxId = caseList.value.length > 0 ? Math.max(...caseList.value.map(item => item.id)) : 0
+          const newCase = {
+            id: maxId + 1,
+            caseNo: caseForm.caseNo,
+            caseName: caseForm.caseName,
+            caseType: caseForm.caseType,
+            clientName: caseForm.clientName,
+            lawyerName: caseForm.lawyerName,
+            status: caseForm.status,
+            description: caseForm.description,
+            progress: caseForm.progress,
+            createTime: new Date().toLocaleString('zh-CN'),
+            updateTime: new Date().toLocaleString('zh-CN')
+          }
+          // 添加到案件列表
+          caseList.value.unshift(newCase)
+        } else {
+          // 编辑案件，更新列表中的对应数据
+          const index = caseList.value.findIndex(item => item.id === parseInt(dialogData.id))
+          if (index !== -1 && caseList.value[index]) {
+            const originalCase = caseList.value[index]
+            caseList.value[index] = {
+              id: originalCase.id,
+              caseNo: caseForm.caseNo,
+              caseName: caseForm.caseName,
+              caseType: caseForm.caseType,
+              clientName: caseForm.clientName,
+              lawyerName: caseForm.lawyerName,
+              status: caseForm.status,
+              description: caseForm.description,
+              progress: caseForm.progress,
+              createTime: originalCase.createTime,
+              updateTime: new Date().toLocaleString('zh-CN')
+            }
+          }
+        }
+        
         dialogVisible.value = false
         
         // 重置表单
