@@ -11,6 +11,11 @@ class Request {
     const { url, method = 'GET', data = {}, header = {} } = options;
     const token = wx.getStorageSync('token');
 
+    // 如果apiBaseUrl为空，直接返回错误
+    if (!this.baseURL) {
+      return Promise.reject(new Error('API地址未配置'));
+    }
+
     return new Promise((resolve, reject) => {
       wx.request({
         url: this.baseURL + url,

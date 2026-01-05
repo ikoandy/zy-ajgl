@@ -66,6 +66,7 @@ const router = useRouter();
 
 const loading = ref(false);
 const showPassword = ref(false);
+const loginFormRef = ref<any>(null);
 
 const loginForm = reactive({
   username: '',
@@ -76,10 +77,13 @@ const loginForm = reactive({
 const handleSubmit = async () => {
   loading.value = true;
   try {
-    // 模拟登录
+    // 模拟登录，实际应该调用API
     setTimeout(() => {
       showToast('登录成功');
-      router.push('/dashboard');
+      // 保存token到本地存储
+      localStorage.setItem('token', 'mock-token');
+      // 跳转到移动端dashboard
+      router.push('/mobile/dashboard');
       loading.value = false;
     }, 1000);
   } catch (error: any) {

@@ -1,6 +1,6 @@
 /* pages/index/index.wxss */
 .index-container {
-  padding: 20rpx 20rpx;
+  padding: 0;
   background-color: #f7fafc;
   min-height: 100vh;
   display: flex;
@@ -26,7 +26,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 16rpx;
   padding: 32rpx 40rpx;
-  box-shadow: 0 2rpx 6rpx 0 rgba(0, 0, 0, 0.1), 0 2rpx 4rpx 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   margin-bottom: 40rpx;
   width: 100%;
   box-sizing: border-box;
@@ -52,7 +52,7 @@
   width: 80rpx;
   height: 80rpx;
   border-radius: 50%;
-  background-color: var(--primary-color);
+  background-color: #1a365d;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,14 +62,15 @@
 
 .avatar-text {
   font-size: 32rpx;
-  font-weight: var(--font-weight-bold);
-  color: var(--background-white);
+  font-weight: 700;
+  color: #ffffff;
   line-height: 1;
 }
 
 .user-details {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .username {
@@ -77,6 +78,9 @@
   font-weight: 700;
   color: #2d3748;
   margin-bottom: 4rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-role {
@@ -86,6 +90,9 @@
   padding: 2rpx 24rpx;
   border-radius: 9999rpx;
   display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .header-actions {
@@ -136,7 +143,7 @@
   text-align: center;
   border-radius: 9999rpx;
   padding: 0 16rpx;
-  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
 /* 快捷入口 */
@@ -147,7 +154,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 16rpx;
   padding: 48rpx 20rpx;
-  box-shadow: 0 2rpx 6rpx 0 rgba(0, 0, 0, 0.1), 0 2rpx 4rpx 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   margin-bottom: 40rpx;
   gap: 20rpx;
   width: 100%;
@@ -198,7 +205,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 16rpx;
   padding: 40rpx;
-  box-shadow: 0 2rpx 6rpx 0 rgba(0, 0, 0, 0.1), 0 2rpx 4rpx 0 rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   margin-bottom: 40rpx;
   width: 100%;
   box-sizing: border-box;
@@ -318,8 +325,8 @@
 
 .task-item {
   display: flex;
-  align-items: center;
-  padding: 40rpx 0;
+  align-items: flex-start;
+  padding: 24rpx 0;
   border-bottom: 1px solid #edf2f7;
 }
 
@@ -327,30 +334,95 @@
   border-bottom: none;
 }
 
+/* 任务点 - 色块样式 */
 .task-dot {
-  width: 16rpx;
-  height: 16rpx;
-  border-radius: 50%;
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 8rpx;
   background-color: #1a365d;
-  margin-right: 40rpx;
+  margin-right: 24rpx;
+  margin-top: 8rpx;
   flex-shrink: 0;
 }
 
+/* 任务内容 */
 .task-content {
   flex: 1;
+  margin-right: 24rpx;
 }
 
 .task-title {
-  font-size: 32rpx;
+  font-size: 28rpx;
   color: #2d3748;
-  margin-bottom: 8rpx;
   display: block;
+  margin-bottom: 8rpx;
+  line-height: 1.4;
 }
 
 .task-time {
   font-size: 24rpx;
-  color: #a0aec0;
+  color: #718096;
   display: block;
+  line-height: 1.4;
+}
+
+/* 任务元数据 */
+.task-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+/* 任务优先级 - 色块加文字样式 */
+.task-priority {
+  font-size: 20rpx;
+  color: white;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 4rpx 12rpx;
+  border-radius: 9999rpx;
+  background-color: #1a365d;
+  display: inline-block;
+}
+
+/* 任务优先级颜色 */
+.task-priority[data-priority="high"] {
+  background-color: #e53e3e;
+}
+
+.task-priority[data-priority="medium"] {
+  background-color: #d69e2e;
+}
+
+.task-priority[data-priority="low"] {
+  background-color: #38a169;
+}
+
+/* 任务状态 - 色块加文字样式 */
+.task-status {
+  font-size: 20rpx;
+  color: white;
+  font-weight: 500;
+  line-height: 1.4;
+  padding: 4rpx 12rpx;
+  border-radius: 9999rpx;
+  background-color: #718096;
+  display: inline-block;
+}
+
+/* 任务状态颜色 */
+.task-status[data-status="pending"] {
+  background-color: #d69e2e;
+}
+
+.task-status[data-status="processing"] {
+  background-color: #1a365d;
+}
+
+.task-status[data-status="completed"] {
+  background-color: #38a169;
 }
 
 /* 加载和空状态 */
@@ -396,4 +468,123 @@
   margin-top: 20rpx;
   background-color: #1a365d !important;
   color: white !important;
+}
+
+/* 骨架屏样式 */
+.skeleton-container {
+  width: 100%;
+}
+
+.skeleton-case-item {
+  padding: 40rpx 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.skeleton-case-item:last-child {
+  border-bottom: none;
+}
+
+.skeleton-case-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.skeleton-title {
+  width: 60%;
+  height: 32rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-status {
+  width: 120rpx;
+  height: 36rpx;
+  background-color: #f0f0f0;
+  border-radius: 18rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-case-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skeleton-client {
+  width: 30%;
+  height: 24rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.skeleton-date {
+  width: 25%;
+  height: 24rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+/* 待办事项骨架屏样式 */
+.skeleton-task-item {
+  display: flex;
+  align-items: center;
+  padding: 40rpx 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.skeleton-task-item:last-child {
+  border-bottom: none;
+}
+
+.skeleton-task-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-right: 40rpx;
+  flex-shrink: 0;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-task-content {
+  flex: 1;
+}
+
+.skeleton-task-title {
+  width: 70%;
+  height: 32rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  margin-bottom: 12rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.skeleton-task-time {
+  width: 40%;
+  height: 24rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.4s;
+}
+
+/* 骨架屏动画 */
+@keyframes skeleton-loading {
+  0% {
+    background-color: #f0f0f0;
+  }
+  50% {
+    background-color: #e0e0e0;
+  }
+  100% {
+    background-color: #f0f0f0;
+  }
 }

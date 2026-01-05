@@ -70,39 +70,11 @@ Page({
         url: '/pages/index/index'
       });
     } catch (err) {
-      // 真实API调用失败时，使用模拟数据作为备选方案
-      const mockRes = {
-        data: {
-          token: 'mock_token_' + Date.now(),
-          userInfo: {
-            id: '1',
-            username: 'wechat_user',
-            role: 'lawyer',
-            name: '微信用户',
-            avatar: ''
-          }
-        }
-      };
-      
-      wx.setStorageSync('token', mockRes.data.token);
-      wx.setStorageSync('userInfo', mockRes.data.userInfo);
-      
-      // 更新App实例的globalData.userInfo
-      const app = getApp();
-      app.globalData.userInfo = mockRes.data.userInfo;
-      app.store.setUser(mockRes.data.userInfo);
-      
-      // 重置loading状态
+      console.error('登录失败', err);
       this.setData({ loading: false });
-
       wx.showToast({
-        title: '登录成功',
-        icon: 'success'
-      });
-
-      // 立即跳转，不延迟，使用reLaunch确保能跳转到首页
-      wx.reLaunch({
-        url: '/pages/index/index'
+        title: '登录失败，请重试',
+        icon: 'none'
       });
     }
   },
@@ -139,94 +111,6 @@ Page({
 
   async loginWithAccount(account, password) {
     try {
-      console.log('进入loginWithAccount方法，账号：', account, '密码：', password);
-      // 模拟登录 - 用于演示环境
-      let mockRes = null;
-      
-      // 管理员账号
-      if (account === 'admin' && password === '123456') {
-        console.log('匹配管理员账号');
-        mockRes = {
-          data: {
-            token: 'mock_token_' + Date.now(),
-            userInfo: {
-              id: '1',
-              username: 'admin',
-              role: 'admin',
-              name: '管理员',
-              avatar: ''
-            }
-          }
-        };
-      }
-      // 律师账号
-      else if (account === 'lawyer' && password === '123456') {
-        console.log('匹配律师账号');
-        mockRes = {
-          data: {
-            token: 'mock_token_' + Date.now(),
-            userInfo: {
-              id: '2',
-              username: 'lawyer',
-              role: 'lawyer',
-              name: '张律师',
-              avatar: ''
-            }
-          }
-        };
-      }
-      // 客户账号
-      else if (account === 'client' && password === '123456') {
-        console.log('匹配客户账号');
-        mockRes = {
-          data: {
-            token: 'mock_token_' + Date.now(),
-            userInfo: {
-              id: '3',
-              username: 'client',
-              role: 'client',
-              name: '张三',
-              avatar: ''
-            }
-          }
-        };
-      }
-      
-      if (mockRes) {
-        console.log('mockRes存在，开始处理登录成功逻辑');
-        wx.setStorageSync('token', mockRes.data.token);
-        wx.setStorageSync('userInfo', mockRes.data.userInfo);
-        
-        // 更新App实例的globalData.userInfo
-        const app = getApp();
-        app.globalData.userInfo = mockRes.data.userInfo;
-        app.store.setUser(mockRes.data.userInfo);
-        
-        // 重置loading状态
-        this.setData({ loading: false });
-
-        wx.showToast({
-          title: '登录成功',
-          icon: 'success'
-        });
-        console.log('显示登录成功提示');
-        console.log('重置loading状态');
-
-        // 立即跳转，不延迟
-        console.log('开始跳转首页');
-        wx.reLaunch({
-          url: '/pages/index/index',
-          success: () => {
-            console.log('跳转成功');
-          },
-          fail: (err) => {
-            console.error('跳转失败：', err);
-          }
-        });
-        return;
-      }
-      
-      console.log('没有匹配的账号，尝试真实API调用');
       // 真实API调用
       const res = await api.user.loginWithAccount({ account, password });
       
@@ -248,13 +132,7 @@ Page({
 
       // 立即跳转，不延迟
       wx.reLaunch({
-        url: '/pages/index/index',
-        success: () => {
-          console.log('真实API调用跳转成功');
-        },
-        fail: (err) => {
-          console.error('真实API调用跳转失败：', err);
-        }
+        url: '/pages/index/index'
       });
     } catch (err) {
       console.error('登录失败：', err);

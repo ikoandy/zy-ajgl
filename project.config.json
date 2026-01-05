@@ -1,7 +1,44 @@
 {
   "description": "微信小程序项目配置文件",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      {
+        "type": "folder",
+        "value": "admin-pc"
+      },
+      {
+        "type": "folder",
+        "value": "lawyer-pc"
+      },
+      {
+        "type": "folder",
+        "value": "mobile-h5"
+      },
+      {
+        "type": "folder",
+        "value": "backend"
+      },
+      {
+        "type": "folder",
+        "value": "docker"
+      },
+      {
+        "type": "folder",
+        "value": ".github"
+      },
+      {
+        "type": "folder",
+        "value": "node_modules"
+      },
+      {
+        "type": "folder",
+        "value": "deploy"
+      },
+      {
+        "type": "folder",
+        "value": "docs"
+      }
+    ],
     "include": []
   },
   "setting": {
@@ -44,8 +81,8 @@
     "disableSWC": true
   },
   "compileType": "miniprogram",
-  "libVersion": "2.19.4",
-  "appid": "wxcb7bf8421eaeb4d9",
+  "libVersion": "3.13.0",
+  "appid": "wxf468d17f120a65f2",
   "projectname": "HBuilderXWechatDemo",
   "isGameTourist": false,
   "gameType": "",

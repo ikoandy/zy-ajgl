@@ -186,5 +186,12 @@ Page({
   // 返回上一页
   handleBack() {
     wx.navigateBack();
+  },
+
+  // 返回客户列表
+  goToClientList() {
+    wx.redirectTo({
+      url: '/pages/clients/list/list'
+    });
   }
 });

@@ -1,2 +1,128 @@
 <!--pages/schedule/task/task.wxml-->
-<text>pages/schedule/task/task.wxml</text>
+<!--pages/schedule/task/task.wxml-->
+<view class="task-container">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="back-button" bindtap="navigateBack">返回</view>
+    <text class="nav-title">{{isEditing ? '编辑任务' : '新建任务'}}</text>
+    <view class="nav-right">{{isEditing ? '删除' : ''}}</view>
+  </view>
+
+  <!-- 任务表单 -->
+  <form class="task-form" bindsubmit="handleSubmit">
+    <!-- 任务标题 -->
+    <view class="form-item">
+      <text class="form-label">任务标题</text>
+      <input 
+        class="form-input" 
+        type="text" 
+        placeholder="请输入任务标题" 
+        data-field="title" 
+        bindinput="handleInputChange"
+        value="{{formData.title}}"
+      />
+    </view>
+
+    <!-- 任务描述 -->
+    <view class="form-item">
+      <text class="form-label">任务描述</text>
+      <textarea 
+        class="form-textarea" 
+        placeholder="请输入任务描述" 
+        data-field="description" 
+        bindinput="handleInputChange"
+        value="{{formData.description}}"
+        rows="4"
+      />
+    </view>
+
+    <!-- 任务日期 -->
+    <view class="form-item">
+      <text class="form-label">任务日期</text>
+      <input 
+        class="form-input" 
+        type="date" 
+        data-field="date" 
+        bindchange="handleDateChange"
+        value="{{formData.date}}"
+      />
+    </view>
+
+    <!-- 任务时间 -->
+    <view class="form-item">
+      <text class="form-label">任务时间</text>
+      <input 
+        class="form-input" 
+        type="time" 
+        data-field="time" 
+        bindchange="handleTimeChange"
+        value="{{formData.time}}"
+      />
+    </view>
+
+    <!-- 任务状态 -->
+    <view class="form-item">
+      <text class="form-label">任务状态</text>
+      <radio-group class="radio-group" data-field="status" bindchange="handleInputChange">
+        <label class="radio-label" wx:for="{{statusOptions}}" wx:key="value">
+          <radio value="{{item.value}}" checked="{{formData.status === item.value}}" />
+          <text>{{item.label}}</text>
+        </label>
+      </radio-group>
+    </view>
+
+    <!-- 任务优先级 -->
+    <view class="form-item">
+      <text class="form-label">任务优先级</text>
+      <radio-group class="radio-group" data-field="priority" bindchange="handleInputChange">
+        <label class="radio-label" wx:for="{{priorityOptions}}" wx:key="value">
+          <radio value="{{item.value}}" checked="{{formData.priority === item.value}}" />
+          <text>{{item.label}}</text>
+        </label>
+      </radio-group>
+    </view>
+
+    <!-- 关联案件 -->
+    <view class="form-item">
+      <text class="form-label">关联案件</text>
+      <picker 
+        class="form-picker" 
+        mode="selector" 
+        range="{{cases}}" 
+        range-key="title" 
+        data-field="caseId" 
+        bindchange="handleCaseChange"
+        value="{{caseIndex}}"
+      >
+        <view class="picker-text">{{selectedCase || '请选择关联案件'}}</view>
+      </picker>
+    </view>
+
+    <!-- 表单操作按钮 -->
+    <view class="form-actions">
+      <button 
+        class="cancel-button" 
+        form-type="reset" 
+        bindtap="navigateBack"
+      >
+        取消
+      </button>
+      <button 
+        class="submit-button" 
+        form-type="submit" 
+        loading="{{loading}}"
+      >
+        {{isEditing ? '保存' : '创建'}}
+      </button>
+    </view>
+
+    <!-- 标记完成按钮 -->
+    <button 
+      wx:if="{{isEditing && formData.status !== 'completed'}}" 
+      class="complete-button" 
+      bindtap="handleComplete"
+    >
+      标记为已完成
+    </button>
+  </form>
+</view>

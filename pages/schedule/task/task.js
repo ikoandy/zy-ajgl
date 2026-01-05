@@ -10,12 +10,24 @@ Page({
       date: '',
       time: '',
       status: 'pending',
-      priority: 'normal',
+      priority: 'medium',
       caseId: ''
     },
     cases: [],
     loading: false,
-    isEditing: false
+    isEditing: false,
+    statusOptions: [
+      { value: 'pending', label: '待处理' },
+      { value: 'processing', label: '处理中' },
+      { value: 'completed', label: '已完成' }
+    ],
+    priorityOptions: [
+      { value: 'low', label: '低' },
+      { value: 'medium', label: '中' },
+      { value: 'high', label: '高' }
+    ],
+    selectedCase: '',
+    caseIndex: 0
   },
 
   onLoad(options) {
@@ -29,12 +41,35 @@ Page({
     this.loadCases();
   },
 
+  // 返回上一页
+  navigateBack() {
+    wx.navigateBack();
+  },
+
   async loadCases() {
     try {
       const res = await api.case.list({ pageSize: 50 });
-      this.setData({ cases: res.data.list });
+      const cases = res.data.list || [];
+      this.setData({ cases });
+      
+      // 如果已有caseId，设置selectedCase
+      if (this.data.formData.caseId) {
+        const selectedCase = cases.find(c => c.id === this.data.formData.caseId);
+        if (selectedCase) {
+          this.setData({ 
+            selectedCase: selectedCase.title,
+            caseIndex: cases.findIndex(c => c.id === this.data.formData.caseId)
+          });
+        }
+      }
     } catch (err) {
       console.error('加载案件列表失败', err);
+      // 模拟案件数据
+      const mockCases = [
+        { id: '1', title: '合同纠纷案' },
+        { id: '2', title: '劳动争议案' }
+      ];
+      this.setData({ cases: mockCases });
     }
   },
 
@@ -42,6 +77,17 @@ Page({
     try {
       const res = await api.schedule.detail(taskId);
       this.setData({ formData: res.data });
+      
+      // 设置选中的案件
+      if (res.data.caseId && this.data.cases.length > 0) {
+        const selectedCase = this.data.cases.find(c => c.id === res.data.caseId);
+        if (selectedCase) {
+          this.setData({ 
+            selectedCase: selectedCase.title,
+            caseIndex: this.data.cases.findIndex(c => c.id === res.data.caseId)
+          });
+        }
+      }
     } catch (err) {
       wx.showToast({
         title: '加载失败',
@@ -53,9 +99,26 @@ Page({
 
   handleInputChange(e) {
     const { field } = e.currentTarget.dataset;
-    const value = e.detail.value;
+    let value = e.detail.value;
+    
+    // 处理radio-group的value
+    if (e.detail.value && typeof e.detail.value === 'string') {
+      value = e.detail.value;
+    }
+    
     this.setData({
       [`formData.${field}`]: value
+    });
+  },
+
+  // 处理案件选择
+  handleCaseChange(e) {
+    const index = e.detail.value;
+    const selected = this.data.cases[index];
+    this.setData({
+      caseIndex: index,
+      selectedCase: selected.title,
+      'formData.caseId': selected.id
     });
   },
 

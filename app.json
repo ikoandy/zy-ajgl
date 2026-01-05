@@ -33,11 +33,8 @@
 
   "style": "v2",
   "sitemapLocation": "sitemap.json",
-  "safeArea": {
-    "enable": true
-  },
-  "usingComponents": {},
-  "compatibilityVersion": "2.16.0",
+  "componentFramework": "glass-easel",
+  "lazyCodeLoading": "requiredComponents",
   "tabBar": {
     "color": "#666666",
     "selectedColor": "#1a365d",

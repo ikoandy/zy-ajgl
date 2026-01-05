@@ -53,7 +53,10 @@ Log "连接服务器并准备部署环境..."
 
 $commands = @"
 # 创建部署目录
-mkdir -p /opt/law-firm-management/{backend,admin,lawyer,mobile}
+mkdir -p /opt/law-firm-management/backend
+mkdir -p /opt/law-firm-management/admin
+mkdir -p /opt/law-firm-management/lawyer
+mkdir -p /opt/law-firm-management/mobile
 
 # 安装必要依赖
 echo "安装Node.js..."

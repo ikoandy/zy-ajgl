@@ -202,7 +202,7 @@
         <view class="messages-list">
           <block wx:if="{{messages.length === 0}}">
             <view class="empty">
-              <image src="/images/empty-message.png" mode="aspectFit"></image>
+              <text>暂无数据</text>
               <text>暂无沟通记录</text>
               <button class="contact-button" bindtap="handleContactClient">开始沟通</button>
             </view>

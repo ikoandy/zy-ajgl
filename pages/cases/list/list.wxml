@@ -1,52 +1,75 @@
 <!-- pages/cases/list/list.wxml -->
 <view class="cases-container">
-  <!-- 搜索栏 -->
-  <view class="search-bar">
-    <view class="search-input">
-      <view class="search-icon">搜</view>
-      <input 
-        class="input" 
-        placeholder="搜索案件名称、客户姓名..." 
-        placeholder-class="placeholder" 
-        value="{{keyword}}" 
-        bindinput="handleSearch"
-        bindconfirm="handleSearchConfirm"
-      ></input>
+  <!-- 搜索和筛选卡片 -->
+  <view class="search-filter-card">
+    <!-- 搜索栏 -->
+    <view class="search-bar">
+      <view class="search-input">
+        <view class="search-icon">搜</view>
+        <input 
+          class="input" 
+          placeholder="搜索案件名称、客户姓名..." 
+          placeholder-class="placeholder" 
+          value="{{keyword}}" 
+          bindinput="handleSearch"
+          bindconfirm="handleSearchConfirm"
+        ></input>
+        <view 
+          wx:if="{{keyword}}" 
+          class="clear-icon" 
+          bindtap="handleClearSearch"
+        >×</view>
+      </view>
       <view 
-        wx:if="{{keyword}}" 
-        class="clear-icon" 
-        bindtap="handleClearSearch"
-      >×</view>
+        class="create-icon" 
+        bindtap="goToCreate"
+      >+</view>
+      <view 
+        class="filter-icon" 
+        bindtap="toggleFilter"
+      >设</view>
     </view>
-    <view 
-      class="create-icon" 
-      bindtap="goToCreate"
-    >+</view>
-    <view 
-      class="filter-icon" 
-      bindtap="toggleFilter"
-    >设</view>
-  </view>
 
-  <!-- 状态筛选 -->
-  <scroll-view scroll-x="true" enable-flex class="status-filter">
-    <view 
-      wx:for="{{statusOptions}}" 
-      wx:key="value" 
-      class="filter-item {{filters.status === item.value ? 'active' : ''}}" 
-      bindtap="handleFilter" 
-      data-status="{{item.value}}"
-    >
-      {{item.label}}
-    </view>
-  </scroll-view>
+    <!-- 状态筛选 -->
+    <scroll-view scroll-x="true" enable-flex class="status-filter">
+      <view 
+        wx:for="{{statusOptions}}" 
+        wx:key="value" 
+        class="filter-item {{filters.status === item.value ? 'active' : ''}}" 
+        bindtap="handleFilter" 
+        data-status="{{item.value}}"
+      >
+        {{item.label}}
+      </view>
+    </scroll-view>
+  </view>
 
   <!-- 案件列表 -->
   <view class="case-list">
     <block wx:if="{{loading && cases.length === 0}}">
-      <view class="loading">
-        <view class="loading-spinner"></view>
-        <text>加载中...</text>
+      <!-- 骨架屏 -->
+      <view class="skeleton-container">
+        <view class="skeleton-case-item" wx:for="[1,2,3,4,5]" wx:key="index">
+          <view class="skeleton-case-header">
+            <view class="skeleton-case-title-container">
+              <view class="skeleton-case-title"></view>
+              <view class="skeleton-priority-badge"></view>
+            </view>
+            <view class="skeleton-case-status"></view>
+          </view>
+          <view class="skeleton-case-content">
+            <view class="skeleton-case-client"></view>
+            <view class="skeleton-case-date"></view>
+          </view>
+          <view class="skeleton-case-footer">
+            <view class="skeleton-progress-label"></view>
+            <view class="skeleton-progress-bar">
+              <view class="skeleton-progress-fill"></view>
+            </view>
+            <view class="skeleton-progress-text"></view>
+            <view class="skeleton-arrow"></view>
+          </view>
+        </view>
       </view>
     </block>
     <block wx:elif="{{cases.length === 0}}">

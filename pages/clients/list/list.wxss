@@ -1,34 +1,60 @@
 /* pages/clients/list/list.wxss */
 .clients-container {
-  padding: 20px;
+  padding: 20rpx;
   background-color: #f7fafc;
   min-height: 100vh;
   padding-bottom: 120rpx; /* 为悬浮按钮留出空间 */
 }
 
 /* 搜索栏 */
+/* 搜索和筛选卡片 */
+.search-filter-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24rpx;
+  margin-bottom: 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.search-filter-card:active {
+  transform: translateY(1rpx);
+  box-shadow: 0 1rpx 6rpx rgba(0, 0, 0, 0.06);
+}
+
+/* 搜索栏 */
 .search-bar {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 24rpx;
+  padding: 0;
 }
 
 .search-input {
   flex: 1;
   display: flex;
   align-items: center;
+  background-color: #f7fafc;
+  border-radius: 100rpx;
+  padding: 0 24rpx;
+  height: 88rpx;
+  margin-right: 16rpx;
+  border: 1px solid #e2e8f0;
+  box-shadow: none;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus-within {
   background-color: #ffffff;
-  border-radius: 9999px;
-  padding: 0 20px;
-  height: 80rpx;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-  margin-right: 20px;
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3rpx rgba(49, 130, 206, 0.1);
 }
 
 .search-icon {
   width: 40rpx;
   height: 40rpx;
-  margin-right: 16px;
+  margin-right: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -41,7 +67,7 @@
 
 .input {
   flex: 1;
-  font-size: 16px;
+  font-size: 28rpx;
   color: #2d3748;
   height: 100%;
 }
@@ -69,20 +95,35 @@
   color: #718096;
 }
 
-.filter-icon, .create-icon {
-  width: 80rpx;
-  height: 80rpx;
+.create-icon {
+  width: 88rpx;
+  height: 88rpx;
   background-color: #ffffff;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32rpx;
+  font-size: 36rpx;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   cursor: pointer;
   transition: all 0.3s ease;
   border: 1px solid #e2e8f0;
-  margin-left: 20rpx;
+  margin-right: 12rpx;
+}
+
+.filter-icon {
+  width: 88rpx;
+  height: 88rpx;
+  background-color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 1px solid #e2e8f0;
 }
 
 .filter-icon:active, .create-icon:active {
@@ -93,13 +134,13 @@
 /* 状态筛选 */
 .status-filter {
   display: flex;
-  margin-bottom: 20rpx;
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 8rpx 16rpx;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  margin-bottom: 0;
+  background-color: transparent;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
   white-space: nowrap;
-  border: 1px solid #e2e8f0;
+  border: none;
   align-items: center;
   justify-content: flex-start;
 }
@@ -194,8 +235,8 @@
   align-items: center;
   background-color: #ffffff;
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 20px;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
   transition: all 0.3s;
 }
@@ -465,11 +506,149 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 40px 0;
+  padding: 40rpx 0;
   color: #718096;
-  font-size: 14px;
+  font-size: 24rpx;
 }
 
 .loading-more van-loading {
-  margin-right: 16px;
+  margin-right: 16rpx;
+}
+
+/* 骨架屏样式 */
+.skeleton-container {
+  width: 100%;
+}
+
+.skeleton-client-item {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-client-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-client-info {
+  flex: 1;
+  margin-right: 20rpx;
+}
+
+.skeleton-client-name-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-client-name {
+  width: 40%;
+  height: 32rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.2s;
+}
+
+.skeleton-status-badge {
+  width: 100rpx;
+  height: 36rpx;
+  background-color: #f0f0f0;
+  border-radius: 18rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+.skeleton-client-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  margin-bottom: 12rpx;
+}
+
+.skeleton-client-phone, .skeleton-client-email {
+  width: 70%;
+  height: 24rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+}
+
+.skeleton-client-phone {
+  animation-delay: 0.4s;
+}
+
+.skeleton-client-email {
+  animation-delay: 0.5s;
+  width: 60%;
+}
+
+.skeleton-client-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skeleton-stat-label {
+  width: 80rpx;
+  height: 22rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.6s;
+}
+
+.skeleton-stat-value {
+  width: 40rpx;
+  height: 22rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  margin-right: 40rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.7s;
+}
+
+.skeleton-last-contact {
+  width: 120rpx;
+  height: 22rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+.skeleton-arrow {
+  width: 32rpx;
+  height: 32rpx;
+  background-color: #f0f0f0;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: skeleton-loading 1.5s ease-in-out infinite;
+  animation-delay: 0.9s;
+}
+
+/* 骨架屏动画 */
+@keyframes skeleton-loading {
+  0% {
+    background-color: #f0f0f0;
+  }
+  50% {
+    background-color: #e0e0e0;
+  }
+  100% {
+    background-color: #f0f0f0;
+  }
 }

@@ -1,142 +1,259 @@
 @echo off
-setlocal
+chcp 65001 >nul
 
-echo 部署律师事务所管理系统...
-echo =======================================
+setlocal enabledelayedexpansion
 
-REM 配置信息
+rem 配置信息
 set "SERVER_HOST=139.155.42.254"
 set "SERVER_USER=root"
 set "SERVER_PASSWORD=Zy520117."
 set "SERVER_PORT=22"
 
-REM 本地路径
-set "LOCAL_BACKEND=..\backend"
-set "LOCAL_ADMIN=..\admin-pc\dist"
-set "LOCAL_LAWYER=..\lawyer-pc\dist"
-set "LOCAL_MOBILE=..\mobile-h5\dist"
+rem 本地路径
+set "LOCAL_BACKEND_PATH=..\backend"
+set "LOCAL_ADMIN_PATH=..\admin-pc\dist"
+set "LOCAL_LAWYER_PATH=..\lawyer-pc\dist"
+set "LOCAL_MOBILE_PATH=..\mobile-h5\dist"
 
-REM 服务器路径
-set "SERVER_PATH=/opt/law-firm-management"
+rem 服务器路径
+set "SERVER_DEPLOY_PATH=/opt/law-firm-management"
 
-echo 检查本地目录...
-if not exist "%LOCAL_BACKEND%" (echo 错误: 后端目录不存在 && exit /b 1)
-if not exist "%LOCAL_ADMIN%" (echo 错误: 管理后台目录不存在 && exit /b 1)
-if not exist "%LOCAL_LAWYER%" (echo 错误: 律师端目录不存在 && exit /b 1)
-if not exist "%LOCAL_MOBILE%" (echo 错误: 移动端目录不存在 && exit /b 1)
+rem 打印信息
+:log
+    echo [%date% %time%] %1
+    goto :eof
 
-echo 下载WinSCP...
-if not exist "winscp.exe" (echo 正在下载WinSCP... && powershell -Command "Invoke-WebRequest -Uri 'https://winscp.net/download/WinSCP-5.21.8.zip' -OutFile 'WinSCP.zip'" && powershell -Command "Expand-Archive -Path 'WinSCP.zip' -DestinationPath '.'" && move "WinSCP-5.21.8\winscp.exe" . && del WinSCP.zip && rmdir /s /q "WinSCP-5.21.8")
+rem 开始部署
+call :log "开始部署律师事务所管理系统..."
 
-echo 创建WinSCP脚本...
-echo option batch abort > deploy_winscp.txt
-echo option confirm off >> deploy_winscp.txt
-echo open sftp://%SERVER_USER%:%SERVER_PASSWORD%@%SERVER_HOST%:%SERVER_PORT% -hostkey="*" >> deploy_winscp.txt
-echo mkdir -p %SERVER_PATH%/backend >> deploy_winscp.txt
-echo mkdir -p %SERVER_PATH%/admin >> deploy_winscp.txt
-echo mkdir -p %SERVER_PATH%/lawyer >> deploy_winscp.txt
-echo mkdir -p %SERVER_PATH%/mobile >> deploy_winscp.txt
-echo put "%LOCAL_BACKEND%\*" %SERVER_PATH%/backend/ -rawtransfersettings PreserveTimeDirs=1 >> deploy_winscp.txt
-echo put "%LOCAL_ADMIN%\*" %SERVER_PATH%/admin/ -rawtransfersettings PreserveTimeDirs=1 >> deploy_winscp.txt
-echo put "%LOCAL_LAWYER%\*" %SERVER_PATH%/lawyer/ -rawtransfersettings PreserveTimeDirs=1 >> deploy_winscp.txt
-echo put "%LOCAL_MOBILE%\*" %SERVER_PATH%/mobile/ -rawtransfersettings PreserveTimeDirs=1 >> deploy_winscp.txt
-echo exit >> deploy_winscp.txt
+rem 检查前端项目是否已构建
+call :log "检查前端项目构建情况..."
 
-echo 上传文件到服务器...
-winscp.exe /script=deploy_winscp.txt /log=deploy_winscp.log
-if errorlevel 1 (echo 上传失败，请检查日志文件 && exit /b 1)
+if not exist "%LOCAL_ADMIN_PATH%" (
+    call :log "构建admin-pc项目..."
+    cd /d "..\admin-pc"
+    npm run build
+    cd /d "%~dp0"
+)
 
-echo 创建服务器部署脚本...
-echo #!/bin/bash > server_deploy.sh
-echo # 创建目录 >> server_deploy.sh
-echo mkdir -p /opt/law-firm-management/{backend,admin,lawyer,mobile} >> server_deploy.sh
-echo # 安装依赖 >> server_deploy.sh
-echo yum update -y >> server_deploy.sh
-echo yum install -y curl >> server_deploy.sh
-echo # 安装Node.js >> server_deploy.sh
-echo curl -fsSL https://rpm.nodesource.com/setup_18.x | bash - >> server_deploy.sh
-echo yum install -y nodejs >> server_deploy.sh
-echo # 安装PM2 >> server_deploy.sh
-echo npm install -g pm2 >> server_deploy.sh
-echo # 安装Nginx >> server_deploy.sh
-echo yum install -y nginx >> server_deploy.sh
-echo # 配置后端 >> server_deploy.sh
-echo cd /opt/law-firm-management/backend >> server_deploy.sh
-echo npm install --production >> server_deploy.sh
-echo # 启动后端服务 >> server_deploy.sh
-echo pm2 start dist/app.js --name law-firm-backend >> server_deploy.sh
-echo pm2 save >> server_deploy.sh
-echo # 配置Nginx >> server_deploy.sh
-echo cat > /etc/nginx/conf.d/law-firm.conf << 'NGINX_EOF' >> server_deploy.sh
-echo server { >> server_deploy.sh
-echo     listen 80; >> server_deploy.sh
-echo     server_name 139.155.42.254; >> server_deploy.sh
-echo     # 管理后台 >> server_deploy.sh
-echo     location /admin { >> server_deploy.sh
-echo         root /opt/law-firm-management; >> server_deploy.sh
-echo         index index.html; >> server_deploy.sh
-echo         try_files $uri $uri/ /admin/index.html; >> server_deploy.sh
-echo     } >> server_deploy.sh
-echo     # 律师端 >> server_deploy.sh
-echo     location /lawyer { >> server_deploy.sh
-echo         root /opt/law-firm-management; >> server_deploy.sh
-echo         index index.html; >> server_deploy.sh
-echo         try_files $uri $uri/ /lawyer/index.html; >> server_deploy.sh
-echo     } >> server_deploy.sh
-echo     # 移动端 >> server_deploy.sh
-echo     location /mobile { >> server_deploy.sh
-echo         root /opt/law-firm-management; >> server_deploy.sh
-echo         index index.html; >> server_deploy.sh
-echo         try_files $uri $uri/ /mobile/index.html; >> server_deploy.sh
-echo     } >> server_deploy.sh
-echo     # API接口 >> server_deploy.sh
-echo     location /api { >> server_deploy.sh
-echo         proxy_pass http://localhost:3000; >> server_deploy.sh
-echo         proxy_set_header Host $host; >> server_deploy.sh
-echo         proxy_set_header X-Real-IP $remote_addr; >> server_deploy.sh
-echo         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; >> server_deploy.sh
-echo         proxy_set_header X-Forwarded-Proto $scheme; >> server_deploy.sh
-echo     } >> server_deploy.sh
-echo     # 健康检查 >> server_deploy.sh
-echo     location /health { >> server_deploy.sh
-echo         proxy_pass http://localhost:3000/health; >> server_deploy.sh
-echo         proxy_set_header Host $host; >> server_deploy.sh
-echo         proxy_set_header X-Real-IP $remote_addr; >> server_deploy.sh
-echo     } >> server_deploy.sh
-echo } >> server_deploy.sh
-echo NGINX_EOF >> server_deploy.sh
-echo # 重启Nginx >> server_deploy.sh
-echo systemctl restart nginx >> server_deploy.sh
-echo systemctl enable nginx >> server_deploy.sh
-echo echo "部署完成！" >> server_deploy.sh
+if not exist "%LOCAL_LAWYER_PATH%" (
+    call :log "构建lawyer-pc项目..."
+    cd /d "..\lawyer-pc"
+    npm run build
+    cd /d "%~dp0"
+)
 
-echo 上传服务器部署脚本...
-echo open sftp://%SERVER_USER%:%SERVER_PASSWORD%@%SERVER_HOST%:%SERVER_PORT% -hostkey="*" > upload_server_script.txt
-echo put server_deploy.sh /root/ >> upload_server_script.txt
-echo exit >> upload_server_script.txt
-winscp.exe /script=upload_server_script.txt /log=upload_server_script.log
+if not exist "%LOCAL_MOBILE_PATH%" (
+    call :log "构建mobile-h5项目..."
+    cd /d "..\mobile-h5"
+    npm run build
+    cd /d "%~dp0"
+)
 
-echo 连接服务器执行部署...
-echo 请手动连接服务器执行以下命令：
-echo ssh %SERVER_USER%@%SERVER_HOST% -p %SERVER_PORT%
-echo 输入密码：%SERVER_PASSWORD%
-echo chmod +x /root/server_deploy.sh
-echo sh /root/server_deploy.sh
+rem 验证构建
+call :log "验证前端项目构建..."
 
-echo 清理临时文件...
-del deploy_winscp.txt
-del upload_server_script.txt
-del server_deploy.sh
+if not exist "%LOCAL_ADMIN_PATH%" (
+    call :log "错误: admin-pc构建失败"
+    exit /b 1
+)
 
-echo 部署完成！
-echo 请手动连接服务器执行部署脚本。
-echo 访问地址：
-echo - 管理后台: http://139.155.42.254/admin
-echo - 律师端: http://139.155.42.254/lawyer
-echo - 移动端: http://139.155.42.254/mobile
-echo - API: http://139.155.42.254/api
-echo - 健康检查: http://139.155.42.254/health
+if not exist "%LOCAL_LAWYER_PATH%" (
+    call :log "错误: lawyer-pc构建失败"
+    exit /b 1
+)
 
-echo =======================================
-echo 部署脚本结束.
-pause
+if not exist "%LOCAL_MOBILE_PATH%" (
+    call :log "错误: mobile-h5构建失败"
+    exit /b 1
+)
+
+call :log "前端项目构建成功！"
+
+rem 安装Node.js模块用于SSH连接
+call :log "安装Node.js SSH模块..."
+npm install ssh2 scp2
+
+rem 创建Node.js部署脚本
+call :log "创建Node.js部署脚本..."
+
+> deploy-script.js echo const Client = require('ssh2').Client;
+>> deploy-script.js echo const scpClient = require('scp2');
+>> deploy-script.js echo 
+>> deploy-script.js echo const config = {
+>> deploy-script.js echo   host: '%SERVER_HOST%',
+>> deploy-script.js echo   port: %SERVER_PORT%,
+>> deploy-script.js echo   username: '%SERVER_USER%',
+>> deploy-script.js echo   password: '%SERVER_PASSWORD%'
+>> deploy-script.js echo };
+>> deploy-script.js echo 
+>> deploy-script.js echo const serverPath = '%SERVER_DEPLOY_PATH%';
+>> deploy-script.js echo 
+>> deploy-script.js echo function log(message) {
+>> deploy-script.js echo   console.log(`[${new Date().toLocaleString()}] ${message}`);
+>> deploy-script.js echo }
+>> deploy-script.js echo 
+>> deploy-script.js echo // 执行SSH命令
+>> deploy-script.js echo function execCommand(conn, command) {
+>> deploy-script.js echo   return new Promise((resolve, reject) => {
+>> deploy-script.js echo     conn.exec(command, (err, stream) => {
+>> deploy-script.js echo       if (err) return reject(err);
+>> deploy-script.js echo       
+>> deploy-script.js echo       let output = '';
+>> deploy-script.js echo       stream.on('close', (code, signal) => {
+>> deploy-script.js echo         if (code !== 0) {
+>> deploy-script.js echo           reject(new Error(`Command failed with code ${code}: ${output}`));
+>> deploy-script.js echo         } else {
+>> deploy-script.js echo           resolve(output);
+>> deploy-script.js echo         }
+>> deploy-script.js echo       });
+>> deploy-script.js echo       
+>> deploy-script.js echo       stream.on('data', (data) => {
+>> deploy-script.js echo         output += data.toString();
+>> deploy-script.js echo         process.stdout.write(data);
+>> deploy-script.js echo       });
+>> deploy-script.js echo       
+>> deploy-script.js echo       stream.stderr.on('data', (data) => {
+>> deploy-script.js echo         output += data.toString();
+>> deploy-script.js echo         process.stderr.write(data);
+>> deploy-script.js echo       });
+>> deploy-script.js echo     });
+>> deploy-script.js echo   });
+>> deploy-script.js echo }
+>> deploy-script.js echo 
+>> deploy-script.js echo // 上传文件
+>> deploy-script.js echo function uploadFiles(localPath, remotePath) {
+>> deploy-script.js echo   return new Promise((resolve, reject) => {
+>> deploy-script.js echo     scpClient.scp(localPath, {
+>> deploy-script.js echo       ...config,
+>> deploy-script.js echo       path: remotePath
+>> deploy-script.js echo     }, (err) => {
+>> deploy-script.js echo       if (err) {
+>> deploy-script.js echo         reject(err);
+>> deploy-script.js echo       } else {
+>> deploy-script.js echo         resolve();
+>> deploy-script.js echo       }
+>> deploy-script.js echo     });
+>> deploy-script.js echo   });
+>> deploy-script.js echo }
+>> deploy-script.js echo 
+>> deploy-script.js echo // 主部署函数
+>> deploy-script.js echo async function deploy() {
+>> deploy-script.js echo   log('开始部署...');
+>> deploy-script.js echo   
+>> deploy-script.js echo   const conn = new Client();
+>> deploy-script.js echo   
+>> deploy-script.js echo   return new Promise((resolve, reject) => {
+>> deploy-script.js echo     conn.on('ready', async () => {
+>> deploy-script.js echo       try {
+>> deploy-script.js echo         // 创建部署目录
+>> deploy-script.js echo         log('创建部署目录...');
+>> deploy-script.js echo         await execCommand(conn, `mkdir -p ${serverPath}/backend ${serverPath}/admin ${serverPath}/lawyer ${serverPath}/mobile`);
+>> deploy-script.js echo         
+>> deploy-script.js echo         // 上传后端文件
+>> deploy-script.js echo         log('上传后端文件...');
+>> deploy-script.js echo         await uploadFiles('../backend/*', `${serverPath}/backend/`);
+>> deploy-script.js echo         
+>> deploy-script.js echo         // 上传前端文件
+>> deploy-script.js echo         log('上传admin-pc文件...');
+>> deploy-script.js echo         await uploadFiles('../admin-pc/dist/*', `${serverPath}/admin/`);
+>> deploy-script.js echo         
+>> deploy-script.js echo         log('上传lawyer-pc文件...');
+>> deploy-script.js echo         await uploadFiles('../lawyer-pc/dist/*', `${serverPath}/lawyer/`);
+>> deploy-script.js echo         
+>> deploy-script.js echo         log('上传mobile-h5文件...');
+>> deploy-script.js echo         await uploadFiles('../mobile-h5/dist/*', `${serverPath}/mobile/`);
+>> deploy-script.js echo         
+>> deploy-script.js echo         // 配置后端
+>> deploy-script.js echo         log('配置后端服务...');
+>> deploy-script.js echo         await execCommand(conn, `cd ${serverPath}/backend && npm install --production`);
+>> deploy-script.js echo         await execCommand(conn, `pm2 start ${serverPath}/backend/dist/app.js --name law-firm-backend || pm2 restart law-firm-backend`);
+>> deploy-script.js echo         await execCommand(conn, `pm2 save`);
+>> deploy-script.js echo         
+>> deploy-script.js echo         // 配置Nginx
+>> deploy-script.js echo         log('配置Nginx...');
+>> deploy-script.js echo         await execCommand(conn, `cat > /etc/nginx/conf.d/law-firm.conf << 'EOF'`);
+>> deploy-script.js echo         await execCommand(conn, `server {`);
+>> deploy-script.js echo         await execCommand(conn, `    listen 80;`);
+>> deploy-script.js echo         await execCommand(conn, `    server_name 139.155.42.254;`);
+>> deploy-script.js echo         await execCommand(conn, `    `);
+>> deploy-script.js echo         await execCommand(conn, `    # 管理后台`);
+>> deploy-script.js echo         await execCommand(conn, `    location /admin {`);
+>> deploy-script.js echo         await execCommand(conn, `        root /opt/law-firm-management;`);
+>> deploy-script.js echo         await execCommand(conn, `        index index.html;`);
+>> deploy-script.js echo         await execCommand(conn, `        try_files $uri $uri/ /admin/index.html;`);
+>> deploy-script.js echo         await execCommand(conn, `    }`);
+>> deploy-script.js echo         await execCommand(conn, `    `);
+>> deploy-script.js echo         await execCommand(conn, `    # 律师端`);
+>> deploy-script.js echo         await execCommand(conn, `    location /lawyer {`);
+>> deploy-script.js echo         await execCommand(conn, `        root /opt/law-firm-management;`);
+>> deploy-script.js echo         await execCommand(conn, `        index index.html;`);
+>> deploy-script.js echo         await execCommand(conn, `        try_files $uri $uri/ /lawyer/index.html;`);
+>> deploy-script.js echo         await execCommand(conn, `    }`);
+>> deploy-script.js echo         await execCommand(conn, `    `);
+>> deploy-script.js echo         await execCommand(conn, `    # 移动端`);
+>> deploy-script.js echo         await execCommand(conn, `    location /mobile {`);
+>> deploy-script.js echo         await execCommand(conn, `        root /opt/law-firm-management;`);
+>> deploy-script.js echo         await execCommand(conn, `        index index.html;`);
+>> deploy-script.js echo         await execCommand(conn, `        try_files $uri $uri/ /mobile/index.html;`);
+>> deploy-script.js echo         await execCommand(conn, `    }`);
+>> deploy-script.js echo         await execCommand(conn, `    `);
+>> deploy-script.js echo         await execCommand(conn, `    # API接口`);
+>> deploy-script.js echo         await execCommand(conn, `    location /api {`);
+>> deploy-script.js echo         await execCommand(conn, `        proxy_pass http://localhost:3000;`);
+>> deploy-script.js echo         await execCommand(conn, `        proxy_set_header Host $host;`);
+>> deploy-script.js echo         await execCommand(conn, `        proxy_set_header X-Real-IP $remote_addr;`);
+>> deploy-script.js echo         await execCommand(conn, `        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`);
+>> deploy-script.js echo         await execCommand(conn, `        proxy_set_header X-Forwarded-Proto $scheme;`);
+>> deploy-script.js echo         await execCommand(conn, `    }`);
+>> deploy-script.js echo         await execCommand(conn, `    `);
+>> deploy-script.js echo         await execCommand(conn, `    # 健康检查`);
+>> deploy-script.js echo         await execCommand(conn, `    location /health {`);
+>> deploy-script.js echo         await execCommand(conn, `        proxy_pass http://localhost:3000/health;`);
+>> deploy-script.js echo         await execCommand(conn, `        proxy_set_header Host $host;`);
+>> deploy-script.js echo         await execCommand(conn, `        proxy_set_header X-Real-IP $remote_addr;`);
+>> deploy-script.js echo         await execCommand(conn, `    }`);
+>> deploy-script.js echo         await execCommand(conn, `}`);
+>> deploy-script.js echo         await execCommand(conn, `EOF`);
+>> deploy-script.js echo         
+>> deploy-script.js echo         // 重启Nginx
+>> deploy-script.js echo         log('重启Nginx服务...');
+>> deploy-script.js echo         await execCommand(conn, `systemctl restart nginx || service nginx restart`);
+>> deploy-script.js echo         await execCommand(conn, `systemctl enable nginx || chkconfig nginx on`);
+>> deploy-script.js echo         
+>> deploy-script.js echo         log('部署完成！');
+>> deploy-script.js echo         log('访问地址：');
+>> deploy-script.js echo         log('- 管理后台: http://139.155.42.254/admin');
+>> deploy-script.js echo         log('- 律师端: http://139.155.42.254/lawyer');
+>> deploy-script.js echo         log('- 移动端: http://139.155.42.254/mobile');
+>> deploy-script.js echo         log('- API: http://139.155.42.254/api');
+>> deploy-script.js echo         log('- 健康检查: http://139.155.42.254/health');
+>> deploy-script.js echo         
+>> deploy-script.js echo         conn.end();
+>> deploy-script.js echo         resolve();
+>> deploy-script.js echo       } catch (err) {
+>> deploy-script.js echo         log(`部署失败: ${err.message}`);
+>> deploy-script.js echo         conn.end();
+>> deploy-script.js echo         reject(err);
+>> deploy-script.js echo       }
+>> deploy-script.js echo     });
+>> deploy-script.js echo     
+>> deploy-script.js echo     conn.connect(config);
+>> deploy-script.js echo   });
+>> deploy-script.js echo }
+>> deploy-script.js echo 
+>> deploy-script.js echo // 执行部署
+>> deploy-script.js echo deploy().catch(err => {
+>> deploy-script.js echo   console.error(err);
+>> deploy-script.js echo   process.exit(1);
+>> deploy-script.js echo });
+
+rem 执行Node.js部署脚本
+call :log "执行Node.js部署脚本..."
+node deploy-script.js
+
+rem 清理临时文件
+del deploy-script.js
+
+call :log "部署脚本执行完毕！"
+endlocal

@@ -42,9 +42,13 @@ module.exports = {
   // 日程相关
   schedule: {
     list: '/schedule',
+    detail: '/schedule/detail',
     create: '/schedule/create',
     update: '/schedule/update',
-    delete: '/schedule/delete'
+    delete: '/schedule/delete',
+    updateStatus: '/schedule/status',
+    byCase: '/schedule/by-case',
+    byClient: '/schedule/by-client'
   },
   // 费用相关
   fee: {

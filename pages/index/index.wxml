@@ -20,8 +20,10 @@
           <text class="avatar-text">{{userInfo.name ? userInfo.name.charAt(0) : '用'}}</text>
         </view>
       </block>
-      <text class="username">{{userInfo && userInfo.name ? userInfo.name : '用户'}}</text>
-      <text class="user-role">{{userInfo && userInfo.role === 'lawyer' ? '律师' : '管理员'}}</text>
+      <view class="user-details">
+        <text class="username">{{userInfo && userInfo.name ? userInfo.name : '用户'}}</text>
+        <text class="user-role">{{userInfo && userInfo.role === 'lawyer' ? '律师' : '管理员'}}</text>
+      </view>
     </view>
     <view class="header-actions">
       <view class="message-badge" bindtap="goToMessageList">
@@ -67,9 +69,18 @@
     </view>
     <view class="case-list">
       <block wx:if="{{loading}}">
-        <view class="loading">
-          <view class="loading-spinner"></view>
-          <text>加载中...</text>
+        <!-- 骨架屏 -->
+        <view class="skeleton-container">
+          <view class="skeleton-case-item" wx:for="[1,2,3]" wx:key="index">
+            <view class="skeleton-case-info">
+              <view class="skeleton-title"></view>
+              <view class="skeleton-status"></view>
+            </view>
+            <view class="skeleton-case-meta">
+              <view class="skeleton-client"></view>
+              <view class="skeleton-date"></view>
+            </view>
+          </view>
         </view>
       </block>
       <block wx:elif="{{recentCases.length === 0}}">
@@ -110,7 +121,19 @@
       <text class="section-more" bindtap="goToSchedule">查看全部</text>
     </view>
     <view class="task-list">
-      <block wx:if="{{upcomingTasks.length === 0}}">
+      <block wx:if="{{loading}}">
+        <!-- 骨架屏 -->
+        <view class="skeleton-container">
+          <view class="skeleton-task-item" wx:for="[1,2,3]" wx:key="index">
+            <view class="skeleton-task-dot"></view>
+            <view class="skeleton-task-content">
+              <view class="skeleton-task-title"></view>
+              <view class="skeleton-task-time"></view>
+            </view>
+          </view>
+        </view>
+      </block>
+      <block wx:elif="{{upcomingTasks.length === 0}}">
         <view class="empty">
           <text>暂无待办任务</text>
           <button class="create-btn" bindtap="goToSchedule" type="default">
@@ -123,12 +146,17 @@
           wx:for="{{upcomingTasks}}" 
           wx:key="id" 
           class="task-item" 
-          bindtap="goToSchedule"
+          bindtap="goToTaskDetail" 
+          data-id="{{item.id}}"
         >
           <view class="task-dot"></view>
           <view class="task-content">
             <text class="task-title">{{item.title}}</text>
             <text class="task-time">{{item.startTime}}</text>
+          </view>
+          <view class="task-meta">
+            <text class="task-priority" data-priority="{{item.priority}}">{{item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}}</text>
+            <text class="task-status" data-status="{{item.status}}">{{item.status === 'pending' ? '待处理' : item.status === 'processing' ? '处理中' : '已完成'}}</text>
           </view>
         </view>
       </block>

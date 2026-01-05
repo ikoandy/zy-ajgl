@@ -51,13 +51,14 @@ App({
   setupMessagePush() {
     // 微信小程序中没有wx.onMessage API，使用WebSocket或订阅消息
     // 这里实现订阅消息设置
-    this.setupSubscribeMessage();
+    // 暂时注释，避免启动时自动调用订阅消息API
+    // this.setupSubscribeMessage();
   },
   
   setupSubscribeMessage() {
     // 设置订阅消息，用于接收系统通知
     // 实际使用时替换为真实的模板ID
-    wx.requestSubscribeMessage({
+    /*wx.requestSubscribeMessage({
       tmplIds: ['template-id-1', 'template-id-2'],
       success: (res) => {
         console.log('订阅成功', res);
@@ -65,7 +66,7 @@ App({
       fail: (err) => {
         console.error('订阅失败', err);
       }
-    });
+    });*/
   },
   
   handleCaseStatusChange(data) {

@@ -1,14 +1,17 @@
 <!-- pages/clients/create/create.wxml -->
 <view class="create-container">
-  <!-- 页面标题 -->
-  <view class="page-header">
-    <view class="back-button" bindtap="handleBack">
-      <text class="back-icon">←</text>
+  <!-- 自定义标题栏 -->
+  <view class="custom-header">
+    <view class="custom-right"></view>
+  </view>
+
+  <!-- 固定标题色块 -->
+  <view class="fixed-title-section">
+    <view class="custom-back-button" bindtap="goToClientList">
+      <text class="custom-back-icon">←</text>
+      <text class="back-text">返回</text>
     </view>
-    <text class="page-title">{{clientId ? '编辑客户' : '添加客户'}}</text>
-    <view class="save-button" bindtap="handleSubmit">
-      <text class="save-text">保存</text>
-    </view>
+    <text class="fixed-title">{{clientId ? '编辑客户' : '新建客户'}}</text>
   </view>
 
   <!-- 创建表单 -->
@@ -114,6 +117,11 @@
     <!-- 隐藏的提交按钮 -->
     <button form-type="submit" style="display: none;"></button>
   </form>
+
+  <!-- 底部保存按钮 -->
+  <view class="bottom-save-button" bindtap="handleSubmit">
+    <text class="save-text">保存</text>
+  </view>
 
   <!-- 加载状态 -->
   <view class="loading-overlay" wx:if="{{loading}}">

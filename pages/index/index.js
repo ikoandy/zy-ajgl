@@ -59,45 +59,15 @@ Page({
       });
     } catch (err) {
       console.error('加载数据失败', err);
-      // API调用失败时，使用模拟数据作为备选方案
-      const mockCases = [
-        {
-          id: '1',
-          title: '合同纠纷案',
-          clientName: '张三',
-          status: 'processing',
-          updateTime: '2025-12-30'
-        },
-        {
-          id: '2',
-          title: '劳动争议案',
-          clientName: '李四',
-          status: 'pending',
-          updateTime: '2025-12-29'
-        }
-      ];
-      
-      const mockTasks = [
-        {
-          id: '1',
-          title: '准备庭审材料',
-          startTime: '2025-12-31 09:00'
-        },
-        {
-          id: '2',
-          title: '会见客户',
-          startTime: '2025-12-31 14:00'
-        }
-      ];
-      
+      // 初始化空数据
       this.setData({
-        recentCases: mockCases,
-        upcomingTasks: mockTasks,
-        messageCount: 2
+        recentCases: [],
+        upcomingTasks: [],
+        messageCount: 0
       });
       
       wx.showToast({
-        title: '加载失败，使用模拟数据',
+        title: '加载失败',
         icon: 'none'
       });
     } finally {
@@ -140,6 +110,13 @@ Page({
     const caseId = e.currentTarget.dataset.id;
     wx.navigateTo({
       url: `/pages/cases/detail/detail?id=${caseId}`
+    });
+  },
+
+  goToTaskDetail(e) {
+    const taskId = e.currentTarget.dataset.id;
+    wx.navigateTo({
+      url: `/pages/schedule/task/task?id=${taskId}`
     });
   },
 

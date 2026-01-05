@@ -8,7 +8,8 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/admin',
-    redirect: '/login'
+    name: 'admin',
+    redirect: '/dashboard'
   },
   {
     path: '/login',
@@ -179,8 +180,20 @@ router.beforeEach((to, _, next) => {
   const whiteListPaths = ['/login', '/404']
   
   // 如果访问的是白名单中的路由，直接放行
-  if (whiteListPaths.includes(to.path) || to.path === '/' || to.path === '/admin') {
+  if (whiteListPaths.includes(to.path)) {
     next()
+    return
+  }
+  
+  // 如果访问的是根路径，重定向到登录
+  if (to.path === '/') {
+    next('/login')
+    return
+  }
+  
+  // 如果访问的是admin路径，重定向到dashboard
+  if (to.path === '/admin') {
+    next('/dashboard')
     return
   }
   

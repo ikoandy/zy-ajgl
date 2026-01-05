@@ -1,4 +1,5 @@
 /* styles/variables.wxss */
+:root {
 /* 主色调 - 深蓝色 - 专业权威 */
 /* 主色调 */
 --primary-color: #1a365d;
@@ -139,3 +140,4 @@
 --icon-md: 20px;
 --icon-lg: 24px;
 --icon-xl: 32px;
+}

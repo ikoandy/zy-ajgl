@@ -50,7 +50,7 @@ const active = computed(() => {
 
 // 处理标签切换
 const handleTabChange = (name: string) => {
-  router.push(`/${name}`);
+  router.push(`/mobile/${name}`);
 };
 
 // 处理搜索

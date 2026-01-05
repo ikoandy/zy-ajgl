@@ -118,6 +118,11 @@ Page({
   },
 
   setupRealtimeMessage() {
+    // 只有当wsBaseUrl配置不为空时，才建立WebSocket连接
+    if (!config.wsBaseUrl || config.wsBaseUrl === '') {
+      return;
+    }
+    
     // 建立WebSocket连接
     this.connectWebSocket();
     
@@ -148,7 +153,10 @@ Page({
   
   connectWebSocket() {
     const token = wx.getStorageSync('token');
-    if (!token) return;
+    // 只有当token和wsBaseUrl都存在时，才尝试建立WebSocket连接
+    if (!token || !config.wsBaseUrl || config.wsBaseUrl === '') {
+      return;
+    }
     
     wx.connectSocket({
       url: `${config.wsBaseUrl}/ws?token=${token}`,

@@ -5,7 +5,7 @@ import type { RouteRecordRaw } from 'vue-router';
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    redirect: '/dashboard'
+    redirect: '/auth/login'
   },
   {
     path: '/auth',
@@ -99,7 +99,7 @@ const routes: RouteRecordRaw[] = [
 ];
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/mobile/'),
   routes
 });
 
@@ -107,7 +107,26 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   // 设置页面标题
   document.title = to.meta.title as string || '律师事务所管理系统';
-  next();
+  
+  // 获取本地存储的token
+  const token = localStorage.getItem('token');
+  
+  // 无需认证的白名单路由
+  const whiteList = ['/auth/login'];
+  
+  // 如果访问的是白名单中的路由，直接放行
+  if (whiteList.includes(to.path)) {
+    next();
+    return;
+  }
+  
+  // 如果有token，放行
+  if (token) {
+    next();
+  } else {
+    // 没有token，重定向到登录页面
+    next('/auth/login');
+  }
 });
 
 export default router;

@@ -18,7 +18,7 @@ import { useRouter } from 'vue-router';
 const router = useRouter();
 
 const handleBackHome = () => {
-  router.push('/dashboard');
+  router.push('/mobile/dashboard');
 };
 </script>
 

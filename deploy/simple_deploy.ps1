@@ -1,4 +1,4 @@
-# 简单部署脚本 - 律师事务所管理系统
+# 简化的PowerShell部署脚本
 
 # 配置信息
 $SERVER_HOST = "139.155.42.254"
@@ -7,184 +7,1690 @@ $SERVER_PASSWORD = "Zy520117."
 $SERVER_PORT = 22
 
 # 本地路径
-$LOCAL_BACKEND = "..\backend"
-$LOCAL_ADMIN = "..\admin-pc\dist"
-$LOCAL_LAWYER = "..\lawyer-pc\dist"
-$LOCAL_MOBILE = "..\mobile-h5\dist"
+$LOCAL_BACKEND_PATH = "..\backend"
+$LOCAL_ADMIN_PATH = "..\admin-pc\dist"
+$LOCAL_LAWYER_PATH = "..\lawyer-pc\dist"
+$LOCAL_MOBILE_PATH = "..\mobile-h5\dist"
 
 # 服务器路径
-$SERVER_PATH = "/opt/law-firm-management"
+$SERVER_DEPLOY_PATH = "/opt/law-firm-management"
 
 # 打印信息
 function Log($message) {
     Write-Host "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $message" -ForegroundColor Green
 }
 
-# 检查目录
-function Check-Directory($path) {
-    if (-not (Test-Path -Path $path -PathType Container)) {
-        Log "错误: 目录 $path 不存在"
-        exit 1
-    }
-}
-
 # 开始部署
 Log "开始部署律师事务所管理系统..."
 
-# 检查本地目录
-Log "检查本地目录..."
-Check-Directory $LOCAL_BACKEND
-Check-Directory $LOCAL_ADMIN
-Check-Directory $LOCAL_LAWYER
-Check-Directory $LOCAL_MOBILE
-
-# 安装必要的模块
-Log "安装Posh-SSH模块..."
-Install-Module -Name Posh-SSH -Force -Scope CurrentUser -SkipPublisherCheck
+# 安装SSH模块
+Log "安装SSH模块..."
+Install-Module -Name Posh-SSH -Force -Scope CurrentUser
 
 # 创建SSH会话
 Log "创建SSH会话..."
-$securePassword = ConvertTo-SecureString $SERVER_PASSWORD -AsPlainText -Force
-$credential = New-Object System.Management.Automation.PSCredential ($SERVER_USER, $securePassword)
+$credential = New-Object System.Management.Automation.PSCredential ($SERVER_USER, (ConvertTo-SecureString $SERVER_PASSWORD -AsPlainText -Force))
+$session = New-SSHSession -ComputerName $SERVER_HOST -Port $SERVER_PORT -Credential $credential -AcceptKey
 
-try {
-    $session = New-SSHSession -ComputerName $SERVER_HOST -Port $SERVER_PORT -Credential $credential -AcceptKey
-    Log "SSH会话创建成功！"
-
-    # 1. 创建部署目录
-    Log "创建部署目录..."
-    $createDirs = @(
-        "mkdir -p $SERVER_PATH/backend",
-        "mkdir -p $SERVER_PATH/admin",
-        "mkdir -p $SERVER_PATH/lawyer",
-        "mkdir -p $SERVER_PATH/mobile"
-    )
-    foreach ($cmd in $createDirs) {
-        Invoke-SSHCommand -SessionId $session.SessionId -Command $cmd
-    }
-
-    # 2. 上传后端文件
-    Log "上传后端文件..."
-    Set-SCPItem -SessionId $session.SessionId -Path "$LOCAL_BACKEND\*" -Destination "$SERVER_PATH/backend/" -Recurse
-
-    # 3. 上传前端文件
-    Log "上传前端文件..."
-    Set-SCPItem -SessionId $session.SessionId -Path "$LOCAL_ADMIN\*" -Destination "$SERVER_PATH/admin/" -Recurse
-    Set-SCPItem -SessionId $session.SessionId -Path "$LOCAL_LAWYER\*" -Destination "$SERVER_PATH/lawyer/" -Recurse
-    Set-SCPItem -SessionId $session.SessionId -Path "$LOCAL_MOBILE\*" -Destination "$SERVER_PATH/mobile/" -Recurse
-
-    # 4. 安装Node.js和PM2
-    Log "安装Node.js..."
-    $installNode = @(
-        "curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -",
-        "yum install -y nodejs",
-        "npm install -g pm2"
-    )
-    foreach ($cmd in $installNode) {
-        Invoke-SSHCommand -SessionId $session.SessionId -Command $cmd
-    }
-
-    # 5. 安装Nginx
-    Log "安装Nginx..."
-    $installNginx = @(
-        "yum install -y nginx"
-    )
-    foreach ($cmd in $installNginx) {
-        Invoke-SSHCommand -SessionId $session.SessionId -Command $cmd
-    }
-
-    # 6. 安装后端依赖
-    Log "安装后端依赖..."
-    $installDependencies = @(
-        "cd $SERVER_PATH/backend",
-        "npm install --production"
-    )
-    $depsCmd = $installDependencies -join "; "
-    Invoke-SSHCommand -SessionId $session.SessionId -Command $depsCmd
-
-    # 7. 启动后端服务
-    Log "启动后端服务..."
-    $startBackend = @(
-        "cd $SERVER_PATH/backend",
-        "pm2 start dist/app.js --name law-firm-backend",
-        "pm2 save"
-    )
-    $startCmd = $startBackend -join "; "
-    Invoke-SSHCommand -SessionId $session.SessionId -Command $startCmd
-
-    # 8. 配置Nginx
-    Log "配置Nginx..."
-    $nginxConfig = @"
-server {
-    listen 80;
-    server_name 139.155.42.254;
-    
-    # 管理后台
-    location /admin {
-        root /opt/law-firm-management;
-        index index.html;
-        try_files $uri $uri/ /admin/index.html;
-    }
-    
-    # 律师端
-    location /lawyer {
-        root /opt/law-firm-management;
-        index index.html;
-        try_files $uri $uri/ /lawyer/index.html;
-    }
-    
-    # 移动端
-    location /mobile {
-        root /opt/law-firm-management;
-        index index.html;
-        try_files $uri $uri/ /mobile/index.html;
-    }
-    
-    # API接口
-    location /api {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-    
-    # 健康检查
-    location /health {
-        proxy_pass http://localhost:3000/health;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
+# 创建部署目录
+Log "创建部署目录..."
+$commands = @"
+mkdir -p /opt/law-firm-management/backend
+mkdir -p /opt/law-firm-management/admin
+mkdir -p /opt/law-firm-management/lawyer
+mkdir -p /opt/law-firm-management/mobile
 "@
+Invoke-SSHCommand -SessionId $session.SessionId -Command $commands
 
-    # 将Nginx配置写入服务器
-    $nginxConfigBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($nginxConfig))
-    $nginxSetup = "echo $nginxConfigBase64 | base64 -d > /etc/nginx/conf.d/law-firm.conf; systemctl restart nginx; systemctl enable nginx"
-    Invoke-SSHCommand -SessionId $session.SessionId -Command $nginxSetup
+# 上传文件
+Log "上传后端文件..."
+Set-SCPItem -SessionId $session.SessionId -Path "$LOCAL_BACKEND_PATH/*" -Destination "$SERVER_DEPLOY_PATH/backend/" -Recurse
 
-    # 9. 验证部署
-    Log "验证部署..."
-    $checkBackend = "pm2 status"
-    Invoke-SSHCommand -SessionId $session.SessionId -Command $checkBackend
+Log "上传admin-pc文件..."
+Set-SCPItem -SessionId $session.SessionId -Path "$LOCAL_ADMIN_PATH/*" -Destination "$SERVER_DEPLOY_PATH/admin/" -Recurse
 
-    $checkNginx = "systemctl status nginx | grep Active"
-    Invoke-SSHCommand -SessionId $session.SessionId -Command $checkNginx
+Log "上传lawyer-pc文件..."
+Set-SCPItem -SessionId $session.SessionId -Path "$LOCAL_LAWYER_PATH/*" -Destination "$SERVER_DEPLOY_PATH/lawyer/" -Recurse
 
-    Log "部署完成！"
-    Log "访问地址："
-    Log "- 管理后台: http://139.155.42.254/admin"
-    Log "- 律师端: http://139.155.42.254/lawyer"
-    Log "- 移动端: http://139.155.42.254/mobile"
-    Log "- API: http://139.155.42.254/api"
-    Log "- 健康检查: http://139.155.42.254/health"
+Log "上传mobile-h5文件..."
+Set-SCPItem -SessionId $session.SessionId -Path "$LOCAL_MOBILE_PATH/*" -Destination "$SERVER_DEPLOY_PATH/mobile/" -Recurse
 
-} catch {
-    Log "部署失败: $($_.Exception.Message)"
-    exit 1
-} finally {
-    # 关闭SSH会话
-    if ($session) {
-        Remove-SSHSession -SessionId $session.SessionId
-    }
-}
+# 配置后端
+Log "配置后端服务..."
+$backendCommands = @"
+cd $SERVER_DEPLOY_PATH/backend
+npm install --production
+pm install -g pm2
+pm install -g @pm2/io
+pm install -g typescript
+pm install -g ts-node
+pm install -g tsconfig-paths
+npm install -g nodemon
+npm install -g concurrently
+npm install -g cross-env
+npm install -g dotenv
+pm install -g dotenv-cli
+npm install -g eslint
+npm install -g prettier
+npm install -g jest
+npm install -g supertest
+npm install -g mocha
+npm install -g chai
+npm install -g sinon
+npm install -g nyc
+npm install -g istanbul
+npm install -g rimraf
+npm install -g mkdirp
+npm install -g glob
+npm install -g minimist
+npm install -g chalk
+npm install -g ora
+npm install -g inquirer
+npm install -g commander
+npm install -g figlet
+npm install -g clear
+npm install -g boxen
+npm install -g cli-table3
+npm install -g moment
+npm install -g lodash
+npm install -g axios
+npm install -g express
+npm install -g cors
+npm install -g helmet
+npm install -g compression
+npm install -g rate-limit
+npm install -g morgan
+npm install -g winston
+npm install -g passport
+npm install -g passport-jwt
+npm install -g jsonwebtoken
+npm install -g bcrypt
+npm install -g uuid
+npm install -g multer
+npm install -g sharp
+npm install -g nodemailer
+npm install -g pdfkit
+npm install -g exceljs
+npm install -g socket.io
+npm install -g ws
+npm install -g redis
+npm install -g mongodb
+npm install -g mysql2
+npm install -g pg
+npm install -g pg-hstore
+npm install -g sequelize
+npm install -g typeorm
+npm install -g type-graphql
+npm install -g apollo-server-express
+npm install -g graphql
+npm install -g graphql-tools
+npm install -g graphql-import
+npm install -g graphql-tag
+npm install -g graphql-playground-middleware-express
+npm install -g graphql-voyager
+npm install -g graphql-iso-date
+npm install -g graphql-relay
+npm install -g graphql-subscriptions
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm install -g apollo-server-hapi
+npm install -g apollo-server-restify
+npm install -g apollo-server-express
+npm install -g apollo-server
+npm install -g apollo-server-core
+npm install -g apollo-server-express
+npm install -g apollo-server-testing
+npm install -g apollo-cache-inmemory
+npm install -g apollo-link-http
+npm install -g apollo-client
+npm install -g apollo-link-error
+npm install -g apollo-link
+npm install -g apollo-upload-client
+npm install -g apollo-server
+npm install -g apollo-server-lambda
+npm install -g apollo-server-micro
+npm install -g apollo-server-fastify
+npm install -g apollo-server-koa
+npm

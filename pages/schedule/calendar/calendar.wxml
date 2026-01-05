@@ -1,2 +1,78 @@
 <!--pages/schedule/calendar/calendar.wxml-->
-<text>pages/schedule/calendar/calendar.wxml</text>
+<!--pages/schedule/calendar/calendar.wxml-->
+<view class="calendar-container">
+  <!-- 顶部导航栏 -->
+  <view class="nav-bar">
+    <view class="back-button" bindtap="navigateBack">返回</view>
+    <text class="nav-title">待办事项</text>
+    <view class="nav-right" bindtap="handleAddEvent">新建</view>
+  </view>
+
+  <!-- 日期选择器 -->
+  <view class="date-picker">
+    <picker-view 
+      indicator-style="height: 88rpx;" 
+      style="width: 100%; height: 240rpx;"
+      value="{{datePickerValue}}" 
+      bindchange="handleDateChange"
+    >
+      <picker-view-column>
+        <view wx:for="{{years}}" wx:key="item" style="line-height: 88rpx; text-align: center;">{{item}}年</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{months}}" wx:key="item" style="line-height: 88rpx; text-align: center;">{{item}}月</view>
+      </picker-view-column>
+      <picker-view-column>
+        <view wx:for="{{days}}" wx:key="item" style="line-height: 88rpx; text-align: center;">{{item}}日</view>
+      </picker-view-column>
+    </picker-view>
+  </view>
+
+  <!-- 待办事项列表 -->
+  <view class="events-list">
+    <text class="section-title">{{selectedDate}} 待办事项</text>
+    
+    <!-- 加载状态 -->
+    <view wx:if="{{loading}}" class="loading">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">加载中...</text>
+    </view>
+    
+    <!-- 空状态 -->
+    <view wx:elif="{{events.length === 0}}" class="empty">
+      <text class="empty-text">暂无待办事项</text>
+      <button class="create-btn" bindtap="handleAddEvent">新建待办</button>
+    </view>
+    
+    <!-- 待办事项列表 -->
+    <view wx:else class="event-items">
+      <view 
+        wx:for="{{events}}" 
+        wx:key="id" 
+        class="event-item" 
+        bindtap="handleEventDetail" 
+        data-id="{{item.id}}"
+      >
+        <!-- 事件类型 -->
+        <view class="event-type" data-type="{{item.type}}">
+          {{item.type === 'work' ? '工作' : '会议'}}
+        </view>
+        
+        <!-- 事件内容 -->
+        <view class="event-content">
+          <view class="event-header">
+            <text class="event-title">{{item.title}}</text>
+            <view class="event-status" data-status="{{item.status}}">
+              {{item.status === 'pending' ? '待处理' : item.status === 'processing' ? '处理中' : '已完成'}}
+            </view>
+          </view>
+          <view class="event-meta">
+            <text class="event-time">{{item.startTime}} - {{item.endTime}}</text>
+            <text class="event-location">{{item.location}}</text>
+          </view>
+          <text class="event-description">{{item.description}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
