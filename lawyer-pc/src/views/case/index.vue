@@ -125,9 +125,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import request from '@/utils/request'
 
 const router = useRouter()
 
@@ -161,47 +162,34 @@ interface CaseItem {
 const selectedCases = ref<CaseItem[]>([])
 
 // 案件列表数据
-const casesList = ref<CaseItem[]>([
-  {
-    id: 1,
-    caseNumber: 'LAW-2025-001',
-    title: 'XX合同纠纷案件',
-    client: '张先生',
-    status: '进行中',
-    createTime: '2025-12-01 10:00:00',
-    updateTime: '2025-12-30 14:30:00'
-  },
-  {
-    id: 2,
-    caseNumber: 'LAW-2025-002',
-    title: 'XX侵权赔偿案件',
-    client: '李女士',
-    status: '已立案',
-    createTime: '2025-12-05 14:30:00',
-    updateTime: '2025-12-28 09:15:00'
-  },
-  {
-    id: 3,
-    caseNumber: 'LAW-2025-003',
-    title: 'XX劳动仲裁案件',
-    client: '王先生',
-    status: '已结案',
-    createTime: '2025-11-20 09:00:00',
-    updateTime: '2025-12-25 16:45:00'
-  },
-  {
-    id: 4,
-    caseNumber: 'LAW-2025-004',
-    title: 'XX离婚纠纷案件',
-    client: '赵女士',
-    status: '进行中',
-    createTime: '2025-12-10 11:20:00',
-    updateTime: '2025-12-30 10:00:00'
-  }
-])
+const casesList = ref<CaseItem[]>([])
 
-// 设置总条数
-pagination.total = casesList.value.length
+// 生命周期钩子，用于获取案件列表数据
+onMounted(() => {
+  getCasesList()
+})
+
+// 获取案件列表
+const getCasesList = async () => {
+  try {
+    const params: Record<string, any> = {
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize
+    }
+    if (searchForm.caseNumber) params.caseNumber = searchForm.caseNumber
+    if (searchForm.title) params.title = searchForm.title
+    if (searchForm.client) params.client = searchForm.client
+    if (searchForm.status) params.status = searchForm.status
+    
+    const res = await request.get('/cases', params)
+    if (res.code === 200 && res.data) {
+      casesList.value = res.data.list || []
+      pagination.total = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取案件列表失败:', error)
+  }
+}
 
 // 获取状态类型
 const getStatusType = (status: string) => {
@@ -224,8 +212,8 @@ const handleSelectionChange = (selection: any[]) => {
 
 // 搜索案件
 const handleSearch = () => {
-  // 这里应该调用API进行搜索
-  ElMessage.success('搜索功能已触发')
+  pagination.currentPage = 1
+  getCasesList()
 }
 
 // 重置搜索
@@ -236,24 +224,26 @@ const resetSearch = () => {
     client: '',
     status: ''
   })
+  pagination.currentPage = 1
+  getCasesList()
 }
 
 // 分页大小变化
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size
-  // 这里应该调用API获取数据
+  getCasesList()
 }
 
 // 当前页码变化
 const handleCurrentChange = (current: number) => {
   pagination.currentPage = current
-  // 这里应该调用API获取数据
+  getCasesList()
 }
 
 // 新建案件
 const createCase = () => {
-  // 这里应该跳转到新建案件页面
-  ElMessage.success('新建案件功能已触发')
+  // 跳转到新建案件页面
+  router.push('/case/create')
 }
 
 // 查看案件详情
@@ -262,15 +252,30 @@ const viewCase = (id: number) => {
 }
 
 // 编辑案件
-const editCase = (_id: number) => {
-  // 这里应该跳转到编辑案件页面
-  ElMessage.success('编辑案件功能已触发')
+const editCase = (id: number) => {
+  // 跳转到编辑案件页面
+  router.push(`/case/${id}/edit`)
 }
 
 // 删除案件
-const deleteCase = (_id: number) => {
-  // 这里应该调用API删除案件
-  ElMessage.success('删除案件功能已触发')
+const deleteCase = async (id: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除该案件吗？此操作不可恢复！', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'error'
+    })
+    
+    await request.delete(`/cases/${id}`)
+    ElMessage.success('删除成功')
+    
+    // 重新获取案件列表
+    getCasesList()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.response?.data?.message || '删除失败')
+    }
+  }
 }
 </script>
 

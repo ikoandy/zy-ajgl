@@ -96,7 +96,7 @@
               <el-button
                 type="warning"
                 size="small"
-                @click="editFinance(scope.row.id)"
+                @click="editFinance()"
                 plain
               >
                 <i class="el-icon-edit"></i>
@@ -133,8 +133,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 
 // 搜索表单
 const searchForm = reactive({
@@ -167,51 +168,33 @@ interface FinanceItem {
 const selectedFinances = ref<FinanceItem[]>([])
 
 // 财务记录列表数据
-const financeList = ref<FinanceItem[]>([
-  {
-    id: 1,
-    type: 'income',
-    amount: 15000.00,
-    description: '案件LAW-2025-001律师费',
-    category: '律师费收入',
-    createTime: '2025-12-31 14:30:00'
-  },
-  {
-    id: 2,
-    type: 'expense',
-    amount: 2000.00,
-    description: '办公用品采购',
-    category: '办公支出',
-    createTime: '2025-12-30 10:00:00'
-  },
-  {
-    id: 3,
-    type: 'income',
-    amount: 8000.00,
-    description: '案件LAW-2025-002咨询费',
-    category: '咨询费收入',
-    createTime: '2025-12-29 16:00:00'
-  },
-  {
-    id: 4,
-    type: 'expense',
-    amount: 500.00,
-    description: '差旅费报销',
-    category: '差旅支出',
-    createTime: '2025-12-28 09:30:00'
-  },
-  {
-    id: 5,
-    type: 'income',
-    amount: 20000.00,
-    description: '案件LAW-2025-003律师费',
-    category: '律师费收入',
-    createTime: '2025-12-27 15:00:00'
-  }
-])
+const financeList = ref<FinanceItem[]>([])
 
-// 设置总条数
-pagination.total = financeList.value.length
+// 生命周期钩子，用于获取财务记录列表数据
+onMounted(() => {
+  getFinanceList()
+})
+
+// 获取财务记录列表
+const getFinanceList = async () => {
+  try {
+    const params: Record<string, any> = {
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize
+    }
+    if (searchForm.type) params.type = searchForm.type
+    if (searchForm.minAmount) params.minAmount = searchForm.minAmount
+    if (searchForm.maxAmount) params.maxAmount = searchForm.maxAmount
+    
+    const res = await request.get('/finance', params)
+    if (res.code === 200 && res.data) {
+      financeList.value = res.data.list || []
+      pagination.total = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取财务记录列表失败:', error)
+  }
+}
 
 // 处理选择变化
 const handleSelectionChange = (selection: any[]) => {
@@ -220,8 +203,8 @@ const handleSelectionChange = (selection: any[]) => {
 
 // 搜索财务记录
 const handleSearch = () => {
-  // 这里应该调用API进行搜索
-  ElMessage.success('搜索功能已触发')
+  pagination.currentPage = 1
+  getFinanceList()
 }
 
 // 重置搜索
@@ -237,37 +220,50 @@ const resetSearch = () => {
 // 分页大小变化
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size
-  // 这里应该调用API获取数据
+  getFinanceList()
 }
 
 // 当前页码变化
 const handleCurrentChange = (current: number) => {
   pagination.currentPage = current
-  // 这里应该调用API获取数据
+  getFinanceList()
 }
 
 // 新建财务记录
-const createFinance = () => {
-  // 这里应该跳转到新建记录页面
+const createFinance = async () => {
   ElMessage.success('新建记录功能已触发')
 }
 
 // 查看财务记录详情
-const viewFinance = (_id: number) => {
-  // 这里应该跳转到详情页面
-  ElMessage.success('查看详情功能已触发')
+const viewFinance = async (id: number) => {
+  try {
+    const res = await request.get(`/finance/${id}`)
+    if (res.code === 200 && res.data) {
+      ElMessage.success('获取详情成功')
+    }
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '获取详情失败')
+  }
 }
 
 // 编辑财务记录
-const editFinance = (_id: number) => {
-  // 这里应该跳转到编辑页面
-  ElMessage.success('编辑记录功能已触发')
+const editFinance = async () => {
+  try {
+    ElMessage.success('编辑记录功能已触发')
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '编辑记录失败')
+  }
 }
 
 // 删除财务记录
-const deleteFinance = (_id: number) => {
-  // 这里应该调用API删除记录
-  ElMessage.success('删除记录功能已触发')
+const deleteFinance = async (id: number) => {
+  try {
+    await request.delete(`/finance/${id}`)
+    ElMessage.success('删除记录成功')
+    getFinanceList()
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '删除记录失败')
+  }
 }
 </script>
 

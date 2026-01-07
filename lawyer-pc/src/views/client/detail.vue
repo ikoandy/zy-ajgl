@@ -117,53 +117,28 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import request from '@/utils/request'
 
 const router = useRouter()
 const route = useRoute()
 
 // 客户详情数据
 const clientDetail = ref({
-  id: 1,
-  name: '张先生',
-  type: '个人',
-  phone: '13800138000',
-  email: 'zhang@example.com',
-  address: '北京市朝阳区',
-  createTime: '2025-12-01 10:00:00',
-  updateTime: '2025-12-30 14:30:00'
+  id: 0,
+  name: '',
+  type: '',
+  phone: '',
+  email: '',
+  address: '',
+  createTime: '',
+  updateTime: ''
 })
 
 // 关联案件
-const relatedCases = ref([
-  {
-    id: 1,
-    caseNumber: 'LAW-2025-001',
-    title: 'XX合同纠纷案件',
-    status: '进行中'
-  },
-  {
-    id: 2,
-    caseNumber: 'LAW-2025-002',
-    title: 'XX侵权赔偿案件',
-    status: '已立案'
-  }
-])
+const relatedCases = ref([])
 
 // 客户备注
-const clientRemarks = ref([
-  {
-    id: 1,
-    content: '客户是VIP客户，需要重点关注',
-    time: '2025-12-01 10:30:00',
-    author: '王律师'
-  },
-  {
-    id: 2,
-    content: '客户最近有新的案件需求',
-    time: '2025-12-15 14:30:00',
-    author: '王律师'
-  }
-])
+const clientRemarks = ref([])
 
 // 获取状态类型
 const getStatusType = (status: string) => {
@@ -179,11 +154,52 @@ const getStatusType = (status: string) => {
   }
 }
 
+// 获取客户详情
+const getClientDetail = async (id: number) => {
+  try {
+    const res = await request.get(`/clients/${id}`)
+    if (res.code === 200 && res.data) {
+      clientDetail.value = res.data
+    }
+  } catch (error) {
+    console.error('获取客户详情失败:', error)
+    ElMessage.error('获取客户详情失败')
+  }
+}
+
+// 获取关联案件
+const getRelatedCases = async (clientId: number) => {
+  try {
+    const res = await request.get(`/clients/${clientId}/cases`)
+    if (res.code === 200 && res.data) {
+      relatedCases.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取关联案件失败:', error)
+  }
+}
+
+// 获取客户备注
+const getClientRemarks = async (clientId: number) => {
+  try {
+    const res = await request.get(`/clients/${clientId}/remarks`)
+    if (res.code === 200 && res.data) {
+      clientRemarks.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取客户备注失败:', error)
+  }
+}
+
 // 生命周期钩子，用于获取客户详情数据
 onMounted(() => {
-  const id = route.params.id
-  // 这里应该根据id调用API获取客户详情
-  console.log('获取客户详情，ID：', id)
+  const id = route.params.id as string
+  if (id) {
+    const clientId = parseInt(id)
+    getClientDetail(clientId)
+    getRelatedCases(clientId)
+    getClientRemarks(clientId)
+  }
 })
 
 // 返回上一页

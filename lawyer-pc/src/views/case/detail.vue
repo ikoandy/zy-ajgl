@@ -119,70 +119,149 @@
         </el-table>
       </div>
     </el-card>
+    
+    <!-- 添加进度对话框 -->
+    <el-dialog
+      v-model="progressDialogVisible"
+      title="添加进度"
+      width="500px"
+      @close="resetProgressForm"
+    >
+      <el-form
+        ref="progressFormRef"
+        :model="progressForm"
+        :rules="progressRules"
+        label-position="top"
+      >
+        <el-form-item label="进度标题" prop="title">
+          <el-input v-model="progressForm.title" placeholder="请输入进度标题" />
+        </el-form-item>
+        <el-form-item label="进度内容" prop="content">
+          <el-input
+            v-model="progressForm.content"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入进度内容"
+          />
+        </el-form-item>
+        <el-form-item label="进度时间" prop="time">
+          <el-date-picker
+            v-model="progressForm.time"
+            type="datetime"
+            placeholder="选择日期时间"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="progressDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitProgress">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
+    
+    <!-- 上传文档对话框 -->
+    <el-dialog
+      v-model="documentDialogVisible"
+      title="上传文档"
+      width="500px"
+      @close="resetDocumentForm"
+    >
+      <el-form
+        ref="documentFormRef"
+        :model="documentForm"
+        :rules="documentRules"
+        label-position="top"
+      >
+        <el-form-item label="文档名称" prop="name">
+          <el-input v-model="documentForm.name" placeholder="请输入文档名称" />
+        </el-form-item>
+        <el-form-item label="选择文件" prop="file">
+          <el-upload
+            v-model:file-list="fileList"
+            :auto-upload="false"
+            :on-change="handleFileChange"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+          >
+            <el-button type="primary">选择文件</el-button>
+            <template #tip>
+              <div class="el-upload__tip">
+                请上传 PDF、Word、Excel 或 TXT 文件
+              </div>
+            </template>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="documentDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitDocument">上传</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
+import request from '@/utils/request'
 
 const route = useRoute()
 const router = useRouter()
 
 // 案件详情数据
 const caseDetail = ref({
-  id: 1,
-  caseNumber: 'LAW-2025-001',
-  title: 'XX合同纠纷案件',
-  client: '张先生',
-  status: '进行中',
-  type: '合同纠纷',
-  lawyer: '王律师',
-  description: '这是一起关于XX公司与YY公司之间的合同纠纷案件，涉及金额较大，需要仔细处理。',
-  timeline: [
-    {
-      id: 1,
-      title: '案件立案',
-      content: '案件已在法院立案，案号为（2025）XX民初字第001号',
-      time: '2025-12-01 10:00:00'
-    },
-    {
-      id: 2,
-      title: '第一次开庭',
-      content: '案件第一次开庭审理，双方进行了举证质证',
-      time: '2025-12-15 14:30:00'
-    },
-    {
-      id: 3,
-      title: '提交补充证据',
-      content: '向法院提交了补充证据材料',
-      time: '2025-12-30 10:00:00'
-    }
-  ],
-  documents: [
-    {
-      id: 1,
-      name: '起诉状.pdf',
-      type: 'PDF',
-      size: '1.2MB',
-      uploadTime: '2025-12-01 10:30:00'
-    },
-    {
-      id: 2,
-      name: '证据清单.xlsx',
-      type: 'Excel',
-      size: '500KB',
-      uploadTime: '2025-12-01 11:00:00'
-    },
-    {
-      id: 3,
-      name: '答辩状.pdf',
-      type: 'PDF',
-      size: '800KB',
-      uploadTime: '2025-12-10 15:00:00'
-    }
-  ]
+  id: 0,
+  caseNumber: '',
+  title: '',
+  client: '',
+  status: '',
+  type: '',
+  lawyer: '',
+  description: '',
+  timeline: [],
+  documents: []
+})
+
+// 进度对话框
+const progressDialogVisible = ref(false)
+const progressFormRef = ref<FormInstance>()
+
+// 进度表单数据
+const progressForm = reactive({
+  title: '',
+  content: '',
+  time: new Date()
+})
+
+// 进度表单验证规则
+const progressRules = reactive<FormRules>({
+  title: [{ required: true, message: '请输入进度标题', trigger: 'blur' }],
+  content: [{ required: true, message: '请输入进度内容', trigger: 'blur' }],
+  time: [{ required: true, message: '请选择进度时间', trigger: 'change' }]
+})
+
+// 文档对话框
+const documentDialogVisible = ref(false)
+const documentFormRef = ref<FormInstance>()
+
+// 文档表单数据
+const documentForm = reactive({
+  name: '',
+  file: null as File | null
+})
+
+// 文件列表
+const fileList = ref<Array<any>>([])
+
+// 文档表单验证规则
+const documentRules = reactive<FormRules>({
+  name: [{ required: true, message: '请输入文档名称', trigger: 'blur' }],
+  file: [{ required: true, message: '请选择文件', trigger: 'change' }]
 })
 
 // 获取状态类型
@@ -199,11 +278,25 @@ const getStatusType = (status: string) => {
   }
 }
 
+// 获取案件详情
+const getCaseDetail = async (id: number) => {
+  try {
+    const res = await request.get(`/cases/${id}`)
+    if (res.code === 200 && res.data) {
+      caseDetail.value = res.data
+    }
+  } catch (error) {
+    console.error('获取案件详情失败:', error)
+    ElMessage.error('获取案件详情失败')
+  }
+}
+
 // 生命周期钩子，用于获取案件详情数据
 onMounted(() => {
-  const id = route.params.id
-  // 这里应该根据id调用API获取案件详情
-  console.log('获取案件详情，ID：', id)
+  const id = route.params.id as string
+  if (id) {
+    getCaseDetail(parseInt(id))
+  }
 })
 
 // 返回上一页
@@ -213,14 +306,45 @@ const goBack = () => {
 
 // 编辑案件
 const editCase = () => {
-  // 这里应该跳转到编辑案件页面
-  ElMessage.success('编辑案件功能已触发')
+  // 跳转到编辑案件页面
+  router.push(`/case/${caseDetail.value.id}/edit`)
 }
 
 // 添加进度
 const addProgress = () => {
-  // 这里应该弹出添加进度的对话框
-  ElMessage.success('添加进度功能已触发')
+  // 打开添加进度对话框
+  progressDialogVisible.value = true
+}
+
+// 重置进度表单
+const resetProgressForm = () => {
+  if (progressFormRef.value) {
+    progressFormRef.value.resetFields()
+  }
+  progressForm.title = ''
+  progressForm.content = ''
+  progressForm.time = new Date()
+}
+
+// 提交进度
+const submitProgress = async () => {
+  if (!progressFormRef.value) return
+  try {
+    await progressFormRef.value.validate()
+    // 调用API添加进度
+    await request.post(`/cases/${caseDetail.value.id}/timeline`, {
+      title: progressForm.title,
+      content: progressForm.content,
+      time: progressForm.time
+    })
+    ElMessage.success('进度添加成功')
+    progressDialogVisible.value = false
+    // 重新获取案件详情，更新进度列表
+    getCaseDetail(caseDetail.value.id)
+  } catch (error) {
+    console.error('进度添加失败:', error)
+    ElMessage.error('进度添加失败')
+  }
 }
 
 // 下载文档
@@ -231,8 +355,53 @@ const downloadDocument = (_id: number) => {
 
 // 上传文档
 const uploadDocument = () => {
-  // 这里应该调用API上传文档
-  ElMessage.success('上传文档功能已触发')
+  // 打开上传文档对话框
+  documentDialogVisible.value = true
+}
+
+// 处理文件变化
+const handleFileChange = (file: any) => {
+  documentForm.file = file.raw
+}
+
+// 重置文档表单
+const resetDocumentForm = () => {
+  if (documentFormRef.value) {
+    documentFormRef.value.resetFields()
+  }
+  documentForm.name = ''
+  documentForm.file = null
+  fileList.value = []
+}
+
+// 提交文档
+const submitDocument = async () => {
+  if (!documentFormRef.value) return
+  try {
+    await documentFormRef.value.validate()
+    
+    // 创建FormData对象
+    const formData = new FormData()
+    formData.append('name', documentForm.name)
+    if (documentForm.file) {
+      formData.append('file', documentForm.file)
+    }
+    
+    // 调用API上传文档
+    await request.post(`/cases/${caseDetail.value.id}/documents`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    
+    ElMessage.success('文档上传成功')
+    documentDialogVisible.value = false
+    // 重新获取案件详情，更新文档列表
+    getCaseDetail(caseDetail.value.id)
+  } catch (error) {
+    console.error('文档上传失败:', error)
+    ElMessage.error('文档上传失败')
+  }
 }
 
 // 删除文档

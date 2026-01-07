@@ -220,10 +220,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-// import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
-// const router = useRouter()
+import request from '@/utils/request'
 
 // 搜索表单
 const searchForm = reactive({
@@ -256,55 +254,7 @@ interface TodoItem {
 const selectedTodos = ref<TodoItem[]>([])
 
 // 待办列表数据
-const todoList = ref<TodoItem[]>([
-  {
-    id: 1,
-    title: '整理案件材料',
-    description: '整理XX合同纠纷案件的证据材料',
-    priority: '高',
-    dueDate: '2025-12-31 18:00:00',
-    status: '未完成',
-    assignee: '王律师',
-    createTime: '2025-12-30 09:00:00',
-    updateTime: '2025-12-30 09:00:00'
-  },
-  {
-    id: 2,
-    title: '起草法律文书',
-    description: '起草XX侵权赔偿案件的起诉状',
-    priority: '中',
-    dueDate: '2025-12-31 12:00:00',
-    status: '已完成',
-    assignee: '王律师',
-    createTime: '2025-12-29 14:30:00',
-    updateTime: '2025-12-30 11:00:00'
-  },
-  {
-    id: 3,
-    title: '客户回访',
-    description: '回访客户李女士，了解服务满意度',
-    priority: '低',
-    dueDate: '2025-12-31 17:00:00',
-    status: '未完成',
-    assignee: '王律师',
-    createTime: '2025-12-30 10:00:00',
-    updateTime: '2025-12-30 10:00:00'
-  },
-  {
-    id: 4,
-    title: '准备案件讨论会',
-    description: '准备明天案件讨论会的材料',
-    priority: '中',
-    dueDate: '2025-12-31 16:00:00',
-    status: '已完成',
-    assignee: '王律师',
-    createTime: '2025-12-30 14:00:00',
-    updateTime: '2025-12-30 15:30:00'
-  }
-])
-
-// 设置总条数
-pagination.total = todoList.value.length
+const todoList = ref<TodoItem[]>([])
 
 // 待办表单
 const todoForm = reactive({
@@ -343,9 +293,29 @@ const todoRules = {
 
 // 生命周期钩子，用于获取待办列表数据
 onMounted(() => {
-  // 这里应该调用API获取待办列表
-  console.log('获取待办列表')
+  getTodoList()
 })
+
+// 获取待办列表
+const getTodoList = async () => {
+  try {
+    const params: Record<string, any> = {
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize
+    }
+    if (searchForm.title) params.title = searchForm.title
+    if (searchForm.status) params.status = searchForm.status
+    if (searchForm.priority) params.priority = searchForm.priority
+    
+    const res = await request.get('/todos', params)
+    if (res.code === 200 && res.data) {
+      todoList.value = res.data.list || []
+      pagination.total = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取待办列表失败:', error)
+  }
+}
 
 // 处理选择变化
 const handleSelectionChange = (selection: TodoItem[]) => {
@@ -354,8 +324,8 @@ const handleSelectionChange = (selection: TodoItem[]) => {
 
 // 搜索待办
 const handleSearch = () => {
-  // 这里应该调用API进行搜索
-  ElMessage.success('搜索功能已触发')
+  pagination.currentPage = 1
+  getTodoList()
 }
 
 // 重置搜索
@@ -370,31 +340,35 @@ const resetSearch = () => {
 // 分页大小变化
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size
-  // 这里应该调用API获取数据
+  getTodoList()
 }
 
 // 当前页码变化
 const handleCurrentChange = (current: number) => {
   pagination.currentPage = current
-  // 这里应该调用API获取数据
+  getTodoList()
 }
 
 // 查看待办详情
-const viewTodoDetail = (_id: number) => {
-  // 这里应该跳转到待办详情页面
-  ElMessage.success('查看待办详情功能已触发')
+const viewTodoDetail = async (id: number) => {
+  try {
+    const res = await request.get(`/todos/${id}`)
+    if (res.code === 200 && res.data) {
+      ElMessage.success('获取详情成功')
+    }
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '获取详情失败')
+  }
 }
 
 // 更新待办状态
-const updateTodoStatus = (id: number, status: string) => {
-  // 这里应该调用API更新待办状态
-  ElMessage.success('更新待办状态成功')
-  
-  // 模拟更新数据
-  const index = todoList.value.findIndex(item => item.id === id)
-  if (index !== -1 && todoList.value[index]) {
-    todoList.value[index].status = status
-    todoList.value[index].updateTime = new Date().toISOString().slice(0, 19).replace('T', ' ')
+const updateTodoStatus = async (id: number, status: string) => {
+  try {
+    await request.put(`/todos/${id}/status`, { status })
+    ElMessage.success('更新待办状态成功')
+    getTodoList()
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '更新状态失败')
   }
 }
 
@@ -421,44 +395,49 @@ const openEditTodoDialog = (todo: TodoItem) => {
 }
 
 // 新增待办
-const addTodo = () => {
+const addTodo = async () => {
   if (todoFormRef.value) {
-    todoFormRef.value.validate((valid: boolean) => {
+    todoFormRef.value.validate(async (valid: boolean) => {
       if (valid) {
-        // 这里应该调用API新增待办
-        ElMessage.success('新增待办成功')
-        addTodoDialogVisible.value = false
-        
-        // 模拟添加数据
-        const newTodo = {
-          ...todoForm,
-          id: todoList.value.length + 1,
-          createTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-          updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
-        } as TodoItem
-        todoList.value.unshift(newTodo)
-        pagination.total = todoList.value.length
+        try {
+          await request.post('/todos', {
+            title: todoForm.title,
+            description: todoForm.description,
+            priority: todoForm.priority,
+            dueDate: todoForm.dueDate,
+            status: todoForm.status,
+            assignee: todoForm.assignee
+          })
+          ElMessage.success('新增待办成功')
+          addTodoDialogVisible.value = false
+          getTodoList()
+        } catch (error: any) {
+          ElMessage.error(error.response?.data?.message || '新增待办失败')
+        }
       }
     })
   }
 }
 
 // 编辑待办
-const editTodo = () => {
+const editTodo = async () => {
   if (todoFormRef.value) {
-    todoFormRef.value.validate((valid: boolean) => {
+    todoFormRef.value.validate(async (valid: boolean) => {
       if (valid) {
-        // 这里应该调用API编辑待办
-        ElMessage.success('编辑待办成功')
-        editTodoDialogVisible.value = false
-        
-        // 模拟更新数据
-        const index = todoList.value.findIndex(item => item.id === todoForm.id)
-        if (index !== -1) {
-          todoList.value[index] = {
-            ...todoForm,
-            updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
-          } as TodoItem
+        try {
+          await request.put(`/todos/${todoForm.id}`, {
+            title: todoForm.title,
+            description: todoForm.description,
+            priority: todoForm.priority,
+            dueDate: todoForm.dueDate,
+            status: todoForm.status,
+            assignee: todoForm.assignee
+          })
+          ElMessage.success('编辑待办成功')
+          editTodoDialogVisible.value = false
+          getTodoList()
+        } catch (error: any) {
+          ElMessage.error(error.response?.data?.message || '编辑待办失败')
         }
       }
     })
@@ -466,24 +445,22 @@ const editTodo = () => {
 }
 
 // 删除待办
-const deleteTodo = (id: number) => {
-  ElMessageBox.confirm('确定要删除这个待办吗？', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    // 这里应该调用API删除待办
-    ElMessage.success('删除待办成功')
+const deleteTodo = async (id: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个待办吗？此操作不可恢复！', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'error'
+    })
     
-    // 模拟删除数据
-    const index = todoList.value.findIndex(item => item.id === id)
-    if (index !== -1) {
-      todoList.value.splice(index, 1)
-      pagination.total = todoList.value.length
+    await request.delete(`/todos/${id}`)
+    ElMessage.success('删除待办成功')
+    getTodoList()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.response?.data?.message || '删除待办失败')
     }
-  }).catch(() => {
-    // 取消删除
-  })
+  }
 }
 </script>
 

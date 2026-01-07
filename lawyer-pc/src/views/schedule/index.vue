@@ -235,10 +235,8 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-// import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-
-// const router = useRouter()
+import request from '@/utils/request'
 
 // 搜索表单
 const searchForm = reactive({
@@ -270,51 +268,7 @@ interface ScheduleItem {
 const selectedSchedules = ref<ScheduleItem[]>([])
 
 // 日程列表数据
-const scheduleList = ref<ScheduleItem[]>([
-  {
-    id: 1,
-    title: '案件讨论会',
-    type: '案件相关',
-    startTime: '2025-12-31 14:30:00',
-    endTime: '2025-12-31 16:00:00',
-    location: '会议室A',
-    description: '讨论XX合同纠纷案件的诉讼策略',
-    status: '未开始'
-  },
-  {
-    id: 2,
-    title: '客户会见',
-    type: '客户会见',
-    startTime: '2025-12-31 10:00:00',
-    endTime: '2025-12-31 11:00:00',
-    location: '接待室',
-    description: '会见客户张先生，讨论案件进展',
-    status: '已完成'
-  },
-  {
-    id: 3,
-    title: '内部会议',
-    type: '内部会议',
-    startTime: '2025-12-30 09:30:00',
-    endTime: '2025-12-30 11:00:00',
-    location: '会议室B',
-    description: '每周团队例会',
-    status: '已完成'
-  },
-  {
-    id: 4,
-    title: '提交法律文书',
-    type: '案件相关',
-    startTime: '2025-12-30 15:00:00',
-    endTime: '2025-12-30 16:00:00',
-    location: '办公室',
-    description: '向法院提交XX案件的答辩状',
-    status: '已完成'
-  }
-])
-
-// 设置总条数
-pagination.total = scheduleList.value.length
+const scheduleList = ref<ScheduleItem[]>([])
 
 // 日程表单
 const scheduleForm = reactive({
@@ -354,9 +308,28 @@ const scheduleRules = {
 
 // 生命周期钩子，用于获取日程列表数据
 onMounted(() => {
-  // 这里应该调用API获取日程列表
-  console.log('获取日程列表')
+  getScheduleList()
 })
+
+// 获取日程列表
+const getScheduleList = async () => {
+  try {
+    const params: Record<string, any> = {
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize
+    }
+    if (searchForm.title) params.title = searchForm.title
+    if (searchForm.type) params.type = searchForm.type
+    
+    const res = await request.get('/schedules', params)
+    if (res.code === 200 && res.data) {
+      scheduleList.value = res.data.list || []
+      pagination.total = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取日程列表失败:', error)
+  }
+}
 
 // 处理选择变化
 const handleSelectionChange = (selection: ScheduleItem[]) => {
@@ -365,8 +338,8 @@ const handleSelectionChange = (selection: ScheduleItem[]) => {
 
 // 搜索日程
 const handleSearch = () => {
-  // 这里应该调用API进行搜索
-  ElMessage.success('搜索功能已触发')
+  pagination.currentPage = 1
+  getScheduleList()
 }
 
 // 重置搜索
@@ -381,19 +354,25 @@ const resetSearch = () => {
 // 分页大小变化
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size
-  // 这里应该调用API获取数据
+  getScheduleList()
 }
 
 // 当前页码变化
 const handleCurrentChange = (current: number) => {
   pagination.currentPage = current
-  // 这里应该调用API获取数据
+  getScheduleList()
 }
 
 // 查看日程详情
-const viewScheduleDetail = (_id: number) => {
-  // 这里应该跳转到日程详情页面
-  ElMessage.success('查看日程详情功能已触发')
+const viewScheduleDetail = async (id: number) => {
+  try {
+    const res = await request.get(`/schedules/${id}`)
+    if (res.code === 200 && res.data) {
+      ElMessage.success('获取详情成功')
+    }
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '获取详情失败')
+  }
 }
 
 // 打开新增日程对话框
@@ -420,39 +399,50 @@ const openEditScheduleDialog = (schedule: ScheduleItem) => {
 }
 
 // 新增日程
-const addSchedule = () => {
+const addSchedule = async () => {
   if (scheduleFormRef.value) {
-    scheduleFormRef.value.validate((valid: boolean) => {
+    scheduleFormRef.value.validate(async (valid: boolean) => {
       if (valid) {
-        // 这里应该调用API新增日程
-        ElMessage.success('新增日程成功')
-        addScheduleDialogVisible.value = false
-        
-        // 模拟添加数据
-        const newSchedule = {
-          ...scheduleForm,
-          id: scheduleList.value.length + 1
-        } as ScheduleItem
-        scheduleList.value.unshift(newSchedule)
-        pagination.total = scheduleList.value.length
+        try {
+          await request.post('/schedules', {
+            title: scheduleForm.title,
+            type: scheduleForm.type,
+            startTime: scheduleForm.startTime,
+            endTime: scheduleForm.endTime,
+            location: scheduleForm.location,
+            description: scheduleForm.description
+          })
+          ElMessage.success('新增日程成功')
+          addScheduleDialogVisible.value = false
+          getScheduleList()
+        } catch (error: any) {
+          ElMessage.error(error.response?.data?.message || '新增日程失败')
+        }
       }
     })
   }
 }
 
 // 编辑日程
-const editSchedule = () => {
+const editSchedule = async () => {
   if (scheduleFormRef.value) {
-    scheduleFormRef.value.validate((valid: boolean) => {
+    scheduleFormRef.value.validate(async (valid: boolean) => {
       if (valid) {
-        // 这里应该调用API编辑日程
-        ElMessage.success('编辑日程成功')
-        editScheduleDialogVisible.value = false
-        
-        // 模拟更新数据
-        const index = scheduleList.value.findIndex(item => item.id === scheduleForm.id)
-        if (index !== -1) {
-          scheduleList.value[index] = { ...scheduleForm } as ScheduleItem
+        try {
+          await request.put(`/schedules/${scheduleForm.id}`, {
+            title: scheduleForm.title,
+            type: scheduleForm.type,
+            startTime: scheduleForm.startTime,
+            endTime: scheduleForm.endTime,
+            location: scheduleForm.location,
+            description: scheduleForm.description,
+            status: scheduleForm.status
+          })
+          ElMessage.success('编辑日程成功')
+          editScheduleDialogVisible.value = false
+          getScheduleList()
+        } catch (error: any) {
+          ElMessage.error(error.response?.data?.message || '编辑日程失败')
         }
       }
     })
@@ -460,24 +450,22 @@ const editSchedule = () => {
 }
 
 // 删除日程
-const deleteSchedule = (id: number) => {
-  ElMessageBox.confirm('确定要删除这个日程吗？', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    // 这里应该调用API删除日程
-    ElMessage.success('删除日程成功')
+const deleteSchedule = async (id: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个日程吗？此操作不可恢复！', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'error'
+    })
     
-    // 模拟删除数据
-    const index = scheduleList.value.findIndex(item => item.id === id)
-    if (index !== -1) {
-      scheduleList.value.splice(index, 1)
-      pagination.total = scheduleList.value.length
+    await request.delete(`/schedules/${id}`)
+    ElMessage.success('删除日程成功')
+    getScheduleList()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.response?.data?.message || '删除日程失败')
     }
-  }).catch(() => {
-    // 取消删除
-  })
+  }
 }
 </script>
 

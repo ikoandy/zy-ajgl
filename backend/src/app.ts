@@ -15,11 +15,18 @@ import clientRoutes from './routes/clients';
 import caseRoutes from './routes/cases';
 import financialRoutes from './routes/financial';
 import documentRoutes from './routes/documents';
+import scheduleRoutes from './routes/schedules';
+import todoRoutes from './routes/todos';
+import messageRoutes from './routes/messages';
+import dashboardRoutes from './routes/dashboard';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// 添加trust proxy设置，解决express-rate-limit的X-Forwarded-For错误
+app.set('trust proxy', true);
 
 // 安全中间件
 app.use(helmet());
@@ -65,6 +72,10 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/cases', caseRoutes);
 app.use('/api/financial', financialRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/todos', todoRoutes);
+app.use('/api/messages', messageRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // 404处理
 app.use('*', (req, res) => {
@@ -81,11 +92,10 @@ app.use(errorHandler);
 // 启动服务器
 const startServer = async () => {
   try {
-    // 测试数据库连接
-    const dbConnected = await testConnection();
-    if (!dbConnected) {
-      throw new Error('数据库连接失败');
-    }
+    // 尝试测试数据库连接，但连接失败时不影响服务器启动
+    await testConnection().catch(error => {
+      console.warn('⚠️  数据库连接失败，但服务器将继续启动:', error.message);
+    });
 
     app.listen(PORT, () => {
       console.log(`🚀 服务器启动成功`);

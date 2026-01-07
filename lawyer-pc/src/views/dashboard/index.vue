@@ -278,114 +278,37 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
+import request from '@/utils/request'
 
 const router = useRouter()
 
 // 统计数据
-const caseCount = ref(24)
-const todoCount = ref(12)
-const clientCount = ref(86)
-const messageCount = ref(5)
+const caseCount = ref(0)
+const todoCount = ref(0)
+const clientCount = ref(0)
+const messageCount = ref(0)
 
 // 选中的待办事项
 const checkedTodos = ref<number[]>([])
 
 // 最近日程
-const recentSchedules = ref([
-  {
-    id: 1,
-    title: '案件讨论会',
-    content: '与团队讨论XX案件的诉讼策略',
-    time: '今天 14:30'
-  },
-  {
-    id: 2,
-    title: '客户会见',
-    content: '会见客户张先生，讨论案件进展',
-    time: '明天 10:00'
-  },
-  {
-    id: 3,
-    title: '提交法律文书',
-    content: '向法院提交XX案件的答辩状',
-    time: '明天 15:00'
-  }
-])
+const recentSchedules = ref([])
 
 // 最近待办
-const recentTodos = ref([
-  {
-    id: 1,
-    title: '整理案件材料',
-    description: '整理XX案件的证据材料',
-    time: '2025-12-31'
-  },
-  {
-    id: 2,
-    title: '起草法律文书',
-    description: '起草XX合同纠纷的起诉状',
-    time: '2025-12-31'
-  },
-  {
-    id: 3,
-    title: '客户回访',
-    description: '回访客户李女士，了解服务满意度',
-    time: '2025-12-31'
-  }
-])
+const recentTodos = ref([])
 
 // 最近案件
-const recentCases = ref([
-  {
-    id: 1,
-    caseNumber: 'LAW-2025-001',
-    title: 'XX合同纠纷',
-    status: '进行中',
-    client: '张先生'
-  },
-  {
-    id: 2,
-    caseNumber: 'LAW-2025-002',
-    title: 'XX侵权赔偿',
-    status: '已立案',
-    client: '李女士'
-  },
-  {
-    id: 3,
-    caseNumber: 'LAW-2025-003',
-    title: 'XX劳动仲裁',
-    status: '已结案',
-    client: '王先生'
-  }
-])
+const recentCases = ref([])
 
 // 最近消息
-const recentMessages = ref([
-  {
-    id: 1,
-    sender: '系统通知',
-    content: '您有一个新的案件分配',
-    time: '今天 14:30'
-  },
-  {
-    id: 2,
-    sender: '张先生',
-    content: '关于案件的最新进展，我想了解一下',
-    time: '今天 13:15'
-  },
-  {
-    id: 3,
-    sender: '王律师',
-    content: '明天的案件讨论会需要准备一下材料',
-    time: '昨天 16:45'
-  }
-])
+const recentMessages = ref([])
 
 // 系统监控数据
-const onlineUsers = ref(24)
-const serverLoad = ref(45)
-const dbConnections = ref(86)
+const onlineUsers = ref(0)
+const serverLoad = ref(0)
+const dbConnections = ref(0)
 
 // 图表ref
 const caseTrendChartRef = ref<HTMLElement | null>(null)
@@ -400,25 +323,163 @@ let caseTypeChart: echarts.ECharts | null = null
 let clientRegionChart: echarts.ECharts | null = null
 
 // 图表数据
-const caseTrendData = {
-  xAxis: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-  yAxis: [12, 19, 15, 22, 18, 25, 21, 28, 23, 30, 26, 32]
+const caseTrendData = ref({
+  xAxis: [],
+  yAxis: []
+})
+
+const incomeTrendData = ref({
+  xAxis: [],
+  yAxis: []
+})
+
+const caseTypeData = ref({
+  categories: [],
+  values: []
+})
+
+const clientRegionData = ref({
+  categories: [],
+  values: []
+})
+
+// 获取统计数据
+const getStatsData = async () => {
+  try {
+    const res = await request.get('/dashboard/stats')
+    if (res.code === 200 && res.data) {
+      caseCount.value = res.data.caseCount || 0
+      todoCount.value = res.data.todoCount || 0
+      clientCount.value = res.data.clientCount || 0
+      messageCount.value = res.data.messageCount || 0
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+  }
 }
 
-const incomeTrendData = {
-  xAxis: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
-  yAxis: [12000, 19000, 15000, 22000, 18000, 25000, 21000, 28000, 23000, 30000, 26000, 32000]
+// 获取最近日程
+const getRecentSchedules = async () => {
+  try {
+    const res = await request.get('/dashboard/schedules')
+    if (res.code === 200 && res.data) {
+      recentSchedules.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取最近日程失败:', error)
+  }
 }
 
-const caseTypeData = {
-  categories: ['合同纠纷', '知识产权', '婚姻家庭', '劳动仲裁', '房产纠纷', '刑事辩护'],
-  values: [35, 18, 22, 15, 28, 20]
+// 获取最近待办
+const getRecentTodos = async () => {
+  try {
+    const res = await request.get('/dashboard/todos')
+    if (res.code === 200 && res.data) {
+      recentTodos.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取最近待办失败:', error)
+  }
 }
 
-const clientRegionData = {
-  categories: ['北京', '上海', '广州', '深圳', '杭州', '其他'],
-  values: [30, 25, 18, 15, 12, 20]
+// 获取最近案件
+const getRecentCases = async () => {
+  try {
+    const res = await request.get('/dashboard/recent-cases')
+    if (res.code === 200 && res.data) {
+      recentCases.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取最近案件失败:', error)
+  }
 }
+
+// 获取最近消息
+const getRecentMessages = async () => {
+  try {
+    const res = await request.get('/dashboard/messages')
+    if (res.code === 200 && res.data) {
+      recentMessages.value = res.data || []
+    }
+  } catch (error) {
+    console.error('获取最近消息失败:', error)
+  }
+}
+
+// 获取系统监控数据
+const getMonitorData = async () => {
+  try {
+    const res = await request.get('/dashboard/monitor')
+    if (res.code === 200 && res.data) {
+      onlineUsers.value = res.data.onlineUsers || 0
+      serverLoad.value = res.data.serverLoad || 0
+      dbConnections.value = res.data.dbConnections || 0
+    }
+  } catch (error) {
+    console.error('获取系统监控数据失败:', error)
+  }
+}
+
+// 获取图表数据
+const getChartData = async () => {
+  try {
+    const res = await request.get('/dashboard/charts')
+    if (res.code === 200 && res.data) {
+      // 案件增长趋势数据
+      caseTrendData.value = res.data.caseTrend || {
+        xAxis: [],
+        yAxis: []
+      }
+      
+      // 收入趋势数据
+      incomeTrendData.value = res.data.incomeTrend || {
+        xAxis: [],
+        yAxis: []
+      }
+      
+      // 案件类型分布数据
+      caseTypeData.value = res.data.caseType || {
+        categories: [],
+        values: []
+      }
+      
+      // 客户地域分布数据
+      clientRegionData.value = res.data.clientRegion || {
+        categories: [],
+        values: []
+      }
+      
+      // 重新渲染图表
+      initCharts()
+    }
+  } catch (error) {
+    console.error('获取图表数据失败:', error)
+  }
+}
+
+// 初始化获取所有数据
+const initData = async () => {
+  try {
+    await Promise.all([
+      getStatsData(),
+      getRecentSchedules(),
+      getRecentTodos(),
+      getRecentCases(),
+      getRecentMessages(),
+      getMonitorData(),
+      getChartData()
+    ])
+  } catch (error) {
+    console.error('初始化数据失败:', error)
+  }
+}
+
+// 生命周期钩子
+onMounted(() => {
+  initData()
+  initCharts()
+  window.addEventListener('resize', handleResize)
+})
 
 // 初始化图表
 const initCharts = () => {
@@ -443,7 +504,7 @@ const initCharts = () => {
       },
       xAxis: {
         type: 'category',
-        data: caseTrendData.xAxis,
+        data: caseTrendData.value.xAxis,
         axisLabel: {
           fontSize: 12
         }
@@ -456,7 +517,7 @@ const initCharts = () => {
       },
       series: [
         {
-          data: caseTrendData.yAxis,
+          data: caseTrendData.value.yAxis,
           type: 'line',
           smooth: true,
           itemStyle: {
@@ -500,7 +561,7 @@ const initCharts = () => {
       },
       xAxis: {
         type: 'category',
-        data: incomeTrendData.xAxis,
+        data: incomeTrendData.value.xAxis,
         axisLabel: {
           fontSize: 12
         }
@@ -514,7 +575,7 @@ const initCharts = () => {
       },
       series: [
         {
-          data: incomeTrendData.yAxis,
+          data: incomeTrendData.value.yAxis,
           type: 'bar',
           itemStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
@@ -580,9 +641,9 @@ const initCharts = () => {
           labelLine: {
             show: false
           },
-          data: caseTypeData.categories.map((category, index) => ({
+          data: caseTypeData.value.categories.map((category, index) => ({
             name: category,
-            value: caseTypeData.values[index]
+            value: caseTypeData.value.values[index]
           })),
           color: [
             '#3182ce',
@@ -624,14 +685,14 @@ const initCharts = () => {
       },
       yAxis: {
         type: 'category',
-        data: clientRegionData.categories,
+        data: clientRegionData.value.categories,
         axisLabel: {
           fontSize: 12
         }
       },
       series: [
         {
-          data: clientRegionData.values,
+          data: clientRegionData.value.values,
           type: 'bar',
           itemStyle: {
             color: new echarts.graphic.LinearGradient(1, 0, 0, 0, [

@@ -190,6 +190,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import request from '@/utils/request'
 
 const router = useRouter()
 
@@ -223,51 +224,7 @@ interface ClientItem {
 const selectedClients = ref<ClientItem[]>([])
 
 // 客户列表数据
-const clientList = ref<ClientItem[]>([
-  {
-    id: 1,
-    name: '张先生',
-    type: '个人',
-    phone: '13800138000',
-    email: 'zhang@example.com',
-    address: '北京市朝阳区',
-    createTime: '2025-12-01 10:00:00',
-    updateTime: '2025-12-30 14:30:00'
-  },
-  {
-    id: 2,
-    name: '李女士',
-    type: '个人',
-    phone: '13900139000',
-    email: 'li@example.com',
-    address: '上海市浦东新区',
-    createTime: '2025-12-05 14:30:00',
-    updateTime: '2025-12-28 09:15:00'
-  },
-  {
-    id: 3,
-    name: '王先生',
-    type: '个人',
-    phone: '13700137000',
-    email: 'wang@example.com',
-    address: '广州市天河区',
-    createTime: '2025-11-20 09:00:00',
-    updateTime: '2025-12-25 16:45:00'
-  },
-  {
-    id: 4,
-    name: 'XX科技有限公司',
-    type: '企业',
-    phone: '010-88888888',
-    email: 'company@example.com',
-    address: '深圳市南山区',
-    createTime: '2025-12-10 11:20:00',
-    updateTime: '2025-12-30 10:00:00'
-  }
-])
-
-// 设置总条数
-pagination.total = clientList.value.length
+const clientList = ref<ClientItem[]>([])
 
 // 客户表单
 const clientForm = reactive({
@@ -304,9 +261,29 @@ const clientRules = {
 
 // 生命周期钩子，用于获取客户列表数据
 onMounted(() => {
-  // 这里应该调用API获取客户列表
-  console.log('获取客户列表')
+  getClientList()
 })
+
+// 获取客户列表
+const getClientList = async () => {
+  try {
+    const params: Record<string, any> = {
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize
+    }
+    if (searchForm.name) params.name = searchForm.name
+    if (searchForm.type) params.type = searchForm.type
+    if (searchForm.phone) params.phone = searchForm.phone
+    
+    const res = await request.get('/clients', params)
+    if (res.code === 200 && res.data) {
+      clientList.value = res.data.list || []
+      pagination.total = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取客户列表失败:', error)
+  }
+}
 
 // 处理选择变化
 const handleSelectionChange = (selection: any[]) => {
@@ -315,8 +292,8 @@ const handleSelectionChange = (selection: any[]) => {
 
 // 搜索客户
 const handleSearch = () => {
-  // 这里应该调用API进行搜索
-  ElMessage.success('搜索功能已触发')
+  pagination.currentPage = 1
+  getClientList()
 }
 
 // 重置搜索
@@ -331,13 +308,13 @@ const resetSearch = () => {
 // 分页大小变化
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size
-  // 这里应该调用API获取数据
+  getClientList()
 }
 
 // 当前页码变化
 const handleCurrentChange = (current: number) => {
   pagination.currentPage = current
-  // 这里应该调用API获取数据
+  getClientList()
 }
 
 // 查看客户详情
@@ -367,45 +344,47 @@ const openEditClientDialog = (client: any) => {
 }
 
 // 新增客户
-const addClient = () => {
+const addClient = async () => {
   if (clientFormRef.value) {
-    clientFormRef.value.validate((valid: boolean) => {
+    clientFormRef.value.validate(async (valid: boolean) => {
       if (valid) {
-        // 这里应该调用API新增客户
-        ElMessage.success('新增客户成功')
-        addClientDialogVisible.value = false
-        
-        // 模拟添加数据
-        const newClient = {
-          ...clientForm,
-          id: clientList.value.length + 1,
-          createTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-          updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
+        try {
+          await request.post('/clients', {
+            name: clientForm.name,
+            type: clientForm.type,
+            phone: clientForm.phone,
+            email: clientForm.email,
+            address: clientForm.address
+          })
+          ElMessage.success('新增客户成功')
+          addClientDialogVisible.value = false
+          getClientList()
+        } catch (error: any) {
+          ElMessage.error(error.response?.data?.message || '新增客户失败')
         }
-        clientList.value.unshift(newClient)
-        pagination.total = clientList.value.length
       }
     })
   }
 }
 
 // 编辑客户
-const editClient = () => {
+const editClient = async () => {
   if (clientFormRef.value) {
-    clientFormRef.value.validate((valid: boolean) => {
+    clientFormRef.value.validate(async (valid: boolean) => {
       if (valid) {
-        // 这里应该调用API编辑客户
-        ElMessage.success('编辑客户成功')
-        editClientDialogVisible.value = false
-        
-        // 模拟更新数据
-        const index = clientList.value.findIndex(item => item.id === clientForm.id)
-        if (index !== -1) {
-          clientList.value[index] = {
-            ...clientList.value[index],
-            ...clientForm,
-            updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
-          }
+        try {
+          await request.put(`/clients/${clientForm.id}`, {
+            name: clientForm.name,
+            type: clientForm.type,
+            phone: clientForm.phone,
+            email: clientForm.email,
+            address: clientForm.address
+          })
+          ElMessage.success('编辑客户成功')
+          editClientDialogVisible.value = false
+          getClientList()
+        } catch (error: any) {
+          ElMessage.error(error.response?.data?.message || '编辑客户失败')
         }
       }
     })
@@ -413,24 +392,22 @@ const editClient = () => {
 }
 
 // 删除客户
-const deleteClient = (id: number) => {
-  ElMessageBox.confirm('确定要删除这个客户吗？', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    // 这里应该调用API删除客户
-    ElMessage.success('删除客户成功')
+const deleteClient = async (id: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个客户吗？此操作不可恢复！', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'error'
+    })
     
-    // 模拟删除数据
-    const index = clientList.value.findIndex(item => item.id === id)
-    if (index !== -1) {
-      clientList.value.splice(index, 1)
-      pagination.total = clientList.value.length
+    await request.delete(`/clients/${id}`)
+    ElMessage.success('删除客户成功')
+    getClientList()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.response?.data?.message || '删除客户失败')
     }
-  }).catch(() => {
-    // 取消删除
-  })
+  }
 }
 </script>
 

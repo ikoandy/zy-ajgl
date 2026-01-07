@@ -101,7 +101,7 @@
               <el-button
                 type="warning"
                 size="small"
-                @click="editDocument(scope.row.id)"
+                @click="editDocument()"
                 plain
               >
                 <i class="el-icon-edit"></i>
@@ -189,6 +189,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import request from '@/utils/request'
 
 // 定义文档类型
 interface DocItem {
@@ -235,51 +236,7 @@ const pagination = reactive({
 const selectedDocs = ref<DocItem[]>([])
 
 // 文档列表数据
-const docsList = ref<DocItem[]>([
-  {
-    id: 1,
-    name: '起诉状.pdf',
-    type: 'PDF',
-    caseName: 'XX合同纠纷案件',
-    size: '1.2MB',
-    uploadUser: '王律师',
-    uploadTime: '2025-12-01 10:30:00',
-    downloadCount: 15
-  },
-  {
-    id: 2,
-    name: '证据清单.xlsx',
-    type: 'Excel',
-    caseName: 'XX合同纠纷案件',
-    size: '500KB',
-    uploadUser: '王律师',
-    uploadTime: '2025-12-01 11:00:00',
-    downloadCount: 8
-  },
-  {
-    id: 3,
-    name: '答辩状.pdf',
-    type: 'PDF',
-    caseName: 'XX侵权赔偿案件',
-    size: '800KB',
-    uploadUser: '王律师',
-    uploadTime: '2025-12-10 15:00:00',
-    downloadCount: 12
-  },
-  {
-    id: 4,
-    name: '庭审记录.docx',
-    type: 'Word',
-    caseName: 'XX劳动仲裁案件',
-    size: '300KB',
-    uploadUser: '王律师',
-    uploadTime: '2025-12-20 09:30:00',
-    downloadCount: 5
-  }
-])
-
-// 设置总条数
-pagination.total = docsList.value.length
+const docsList = ref<DocItem[]>([])
 
 // 文档表单
 const docForm = reactive({
@@ -291,11 +248,27 @@ const docForm = reactive({
 })
 
 // 案件列表
-const caseList = ref<CaseItem[]>([
-  { id: 1, name: 'XX合同纠纷案件' },
-  { id: 2, name: 'XX侵权赔偿案件' },
-  { id: 3, name: 'XX劳动仲裁案件' }
-])
+const caseList = ref<CaseItem[]>([])
+
+// 获取案件列表用于文档上传
+const getCaseList = async () => {
+  try {
+    const res = await request.get('/cases', { pageSize: 100 })
+    if (res.code === 200 && res.data) {
+      caseList.value = res.data.list.map((item: any) => ({
+        id: item.id,
+        name: item.title
+      }))
+    }
+  } catch (error) {
+    console.error('获取案件列表失败:', error)
+  }
+}
+
+// 初始化获取案件列表
+onMounted(() => {
+  getCaseList()
+})
 
 // 文件列表
 const fileList = ref<FileItem[]>([])
@@ -322,9 +295,29 @@ const docRules = {
 
 // 生命周期钩子，用于获取文档列表数据
 onMounted(() => {
-  // 这里应该调用API获取文档列表
-  console.log('获取文档列表')
+  getDocList()
 })
+
+// 获取文档列表
+const getDocList = async () => {
+  try {
+    const params: Record<string, any> = {
+      page: pagination.currentPage,
+      pageSize: pagination.pageSize
+    }
+    if (searchForm.name) params.name = searchForm.name
+    if (searchForm.type) params.type = searchForm.type
+    if (searchForm.caseName) params.caseName = searchForm.caseName
+    
+    const res = await request.get('/documents', params)
+    if (res.code === 200 && res.data) {
+      docsList.value = res.data.list || []
+      pagination.total = res.data.total || 0
+    }
+  } catch (error) {
+    console.error('获取文档列表失败:', error)
+  }
+}
 
 // 处理选择变化
 const handleSelectionChange = (selection: any[]) => {
@@ -333,8 +326,8 @@ const handleSelectionChange = (selection: any[]) => {
 
 // 搜索文档
 const handleSearch = () => {
-  // 这里应该调用API进行搜索
-  ElMessage.success('搜索功能已触发')
+  pagination.currentPage = 1
+  getDocList()
 }
 
 // 重置搜索
@@ -349,13 +342,13 @@ const resetSearch = () => {
 // 分页大小变化
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size
-  // 这里应该调用API获取数据
+  getDocList()
 }
 
 // 当前页码变化
 const handleCurrentChange = (current: number) => {
   pagination.currentPage = current
-  // 这里应该调用API获取数据
+  getDocList()
 }
 
 // 打开上传文档对话框
@@ -379,88 +372,83 @@ const handleFileChange = (file: FileItem) => {
 }
 
 // 上传文档
-const uploadDocument = () => {
+const uploadDocument = async () => {
   if (docFormRef.value) {
-    docFormRef.value.validate((valid: boolean) => {
+    docFormRef.value.validate(async (valid: boolean) => {
       if (valid) {
-        // 这里应该调用API上传文档
-        ElMessage.success('上传文档成功')
-        uploadDialogVisible.value = false
-        
-        // 模拟添加数据
-        const fileType = docForm.file ? docForm.file.name.split('.').pop() || '其他' : '其他';
-        const fileSize = docForm.file ? docForm.file.size : 0;
-        const newDoc = {
-          id: docsList.value.length + 1,
-          name: docForm.name,
-          type: fileType,
-          caseName: caseList.value.find(item => item.id === docForm.caseId)?.name || '',
-          size: formatFileSize(fileSize),
-          uploadUser: '王律师',
-          uploadTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-          downloadCount: 0
+        try {
+          const formData = new FormData()
+          formData.append('name', docForm.name)
+          formData.append('caseId', String(docForm.caseId))
+          formData.append('description', docForm.description)
+          if (docForm.file) {
+            formData.append('file', docForm.file)
+          }
+          
+          await request.post('/documents/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
+          ElMessage.success('上传文档成功')
+          uploadDialogVisible.value = false
+          getDocList()
+        } catch (error: any) {
+          ElMessage.error(error.response?.data?.message || '上传文档失败')
         }
-        docsList.value.unshift(newDoc)
-        pagination.total = docsList.value.length
       }
     })
   }
 }
 
-// 格式化文件大小
-const formatFileSize = (size: number) => {
-  if (size < 1024) {
-    return size + ' B'
-  } else if (size < 1024 * 1024) {
-    return (size / 1024).toFixed(2) + ' KB'
-  } else {
-    return (size / (1024 * 1024)).toFixed(2) + ' MB'
+// 预览文档
+const previewDocument = async (id: number) => {
+  try {
+    const res = await request.get(`/documents/${id}`)
+    if (res.code === 200 && res.data) {
+      ElMessage.success('获取文档信息成功')
+    }
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '预览文档失败')
   }
 }
 
-// 预览文档
-const previewDocument = (_id: number) => {
-  // 这里应该调用API预览文档
-  ElMessage.success('预览文档功能已触发')
-}
-
 // 下载文档
-const downloadDocument = (id: number) => {
-  // 这里应该调用API下载文档
-  ElMessage.success('下载文档功能已触发')
-  
-  // 模拟更新下载次数
-  const index = docsList.value.findIndex(item => item.id === id)
-  if (index !== -1 && docsList.value[index]) {
-    docsList.value[index].downloadCount++
+const downloadDocument = async (id: number) => {
+  try {
+    const res = await request.get(`/documents/${id}/download`)
+    if (res.code === 200) {
+      ElMessage.success('下载文档成功')
+    }
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '下载文档失败')
   }
 }
 
 // 编辑文档
-const editDocument = (_id: number) => {
-  // 这里应该跳转到编辑文档页面
-  ElMessage.success('编辑文档功能已触发')
+const editDocument = async () => {
+  try {
+    ElMessage.success('编辑文档功能已触发')
+  } catch (error: any) {
+    ElMessage.error(error.response?.data?.message || '编辑文档失败')
+  }
 }
 
 // 删除文档
-const deleteDocument = (id: number) => {
-  ElMessageBox.confirm('确定要删除这个文档吗？', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    // 这里应该调用API删除文档
-    ElMessage.success('删除文档成功')
+const deleteDocument = async (id: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个文档吗？此操作不可恢复！', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'error'
+    })
     
-    // 模拟删除数据
-    const index = docsList.value.findIndex(item => item.id === id)
-    if (index !== -1) {
-      docsList.value.splice(index, 1)
-      pagination.total = docsList.value.length
+    await request.delete(`/documents/${id}`)
+    ElMessage.success('删除文档成功')
+    getDocList()
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.response?.data?.message || '删除文档失败')
     }
-  }).catch(() => {
-    // 取消删除
-  })
+  }
 }
 </script>
 

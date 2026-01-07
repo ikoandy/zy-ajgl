@@ -35,11 +35,29 @@ const routes: RouteRecordRaw[] = [
         }
       },
       {
+        path: 'case/create',
+        name: 'case-create',
+        component: () => import('../views/case/create.vue'),
+        meta: {
+          title: '新建案件',
+          hidden: true
+        }
+      },
+      {
         path: 'case/:id',
         name: 'case-detail',
         component: () => import('../views/case/detail.vue'),
         meta: {
           title: '案件详情',
+          hidden: true
+        }
+      },
+      {
+        path: 'case/:id/edit',
+        name: 'case-edit',
+        component: () => import('../views/case/edit.vue'),
+        meta: {
+          title: '编辑案件',
           hidden: true
         }
       },
