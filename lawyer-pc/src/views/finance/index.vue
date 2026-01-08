@@ -186,7 +186,7 @@ const getFinanceList = async () => {
     if (searchForm.minAmount) params.minAmount = searchForm.minAmount
     if (searchForm.maxAmount) params.maxAmount = searchForm.maxAmount
     
-    const res = await request.get('/finance', params)
+    const res = await request.get('/financial', params)
     if (res.code === 200 && res.data) {
       financeList.value = res.data.list || []
       pagination.total = res.data.total || 0
@@ -237,7 +237,7 @@ const createFinance = async () => {
 // 查看财务记录详情
 const viewFinance = async (id: number) => {
   try {
-    const res = await request.get(`/finance/${id}`)
+    const res = await request.get(`/financial/${id}`)
     if (res.code === 200 && res.data) {
       ElMessage.success('获取详情成功')
     }
@@ -258,7 +258,7 @@ const editFinance = async () => {
 // 删除财务记录
 const deleteFinance = async (id: number) => {
   try {
-    await request.delete(`/finance/${id}`)
+    await request.delete(`/financial/${id}`)
     ElMessage.success('删除记录成功')
     getFinanceList()
   } catch (error: any) {

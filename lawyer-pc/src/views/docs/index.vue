@@ -101,7 +101,7 @@
               <el-button
                 type="warning"
                 size="small"
-                @click="editDocument()"
+                @click="editDocument(scope.row.id)"
                 plain
               >
                 <i class="el-icon-edit"></i>
@@ -265,11 +265,6 @@ const getCaseList = async () => {
   }
 }
 
-// 初始化获取案件列表
-onMounted(() => {
-  getCaseList()
-})
-
 // 文件列表
 const fileList = ref<FileItem[]>([])
 
@@ -287,14 +282,13 @@ const docRules = {
   ],
   caseId: [
     { required: true, message: '请选择所属案件', trigger: 'change' }
-  ],
-  file: [
-    { required: true, message: '请选择要上传的文件', trigger: 'change' }
   ]
-}
+};
 
-// 生命周期钩子，用于获取文档列表数据
-onMounted(() => {
+// 生命周期钩子，用于初始化数据
+onMounted(async () => {
+  // 先获取案件列表，再获取文档列表
+  await getCaseList()
   getDocList()
 })
 
@@ -311,7 +305,16 @@ const getDocList = async () => {
     
     const res = await request.get('/documents', params)
     if (res.code === 200 && res.data) {
-      docsList.value = res.data.list || []
+      // 转换数据格式，确保前端表格能正确显示
+      docsList.value = (res.data.list || []).map((doc: any) => ({
+        ...doc,
+        // 将案件ID转换为案件名称（如果有案件列表的话）
+        caseName: caseList.value.find((caseItem: any) => caseItem.id === doc.caseId)?.name || '未关联案件',
+        // 将uploadedBy转换为uploadUser
+        uploadUser: doc.uploadedBy,
+        // 添加默认下载次数
+        downloadCount: doc.downloadCount || 0
+      }))
       pagination.total = res.data.total || 0
     }
   } catch (error) {
@@ -371,7 +374,7 @@ const handleFileChange = (file: FileItem) => {
   fileList.value = [file]
 }
 
-// 上传文档
+// 上传文档（新建或编辑）
 const uploadDocument = async () => {
   if (docFormRef.value) {
     docFormRef.value.validate(async (valid: boolean) => {
@@ -385,14 +388,26 @@ const uploadDocument = async () => {
             formData.append('file', docForm.file)
           }
           
-          await request.post('/documents/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-          })
-          ElMessage.success('上传文档成功')
+          if (docForm.id) {
+            // 如果有ID，说明是编辑现有文档
+            await request.put(`/documents/${docForm.id}`, {
+              name: docForm.name,
+              caseId: docForm.caseId,
+              description: docForm.description
+            })
+            ElMessage.success('编辑文档成功')
+          } else {
+            // 否则是新建文档
+            await request.post('/documents/upload', formData, {
+              headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            ElMessage.success('上传文档成功')
+          }
+          
           uploadDialogVisible.value = false
           getDocList()
         } catch (error: any) {
-          ElMessage.error(error.response?.data?.message || '上传文档失败')
+          ElMessage.error(error.response?.data?.message || '操作文档失败')
         }
       }
     })
@@ -404,7 +419,9 @@ const previewDocument = async (id: number) => {
   try {
     const res = await request.get(`/documents/${id}`)
     if (res.code === 200 && res.data) {
-      ElMessage.success('获取文档信息成功')
+      // 这里可以实现更复杂的预览逻辑，比如打开预览对话框
+      // 暂时先显示文档信息
+      ElMessage.success(`预览文档：${res.data.name}，类型：${res.data.type}`)
     }
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '预览文档失败')
@@ -415,8 +432,10 @@ const previewDocument = async (id: number) => {
 const downloadDocument = async (id: number) => {
   try {
     const res = await request.get(`/documents/${id}/download`)
-    if (res.code === 200) {
-      ElMessage.success('下载文档成功')
+    if (res.code === 200 && res.data) {
+      // 尝试打开下载链接
+      window.open(res.data.downloadUrl, '_blank')
+      ElMessage.success('开始下载文档')
     }
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '下载文档失败')
@@ -424,9 +443,19 @@ const downloadDocument = async (id: number) => {
 }
 
 // 编辑文档
-const editDocument = async () => {
+const editDocument = async (id: number) => {
   try {
-    ElMessage.success('编辑文档功能已触发')
+    const res = await request.get(`/documents/${id}`)
+    if (res.code === 200 && res.data) {
+      // 填充编辑表单
+      docForm.id = res.data.id
+      docForm.name = res.data.name
+      docForm.caseId = res.data.caseId
+      docForm.description = res.data.description || ''
+      // 打开编辑对话框
+      uploadDialogVisible.value = true
+      ElMessage.success('获取文档信息成功，可以开始编辑')
+    }
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '编辑文档失败')
   }

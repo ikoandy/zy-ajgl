@@ -3,225 +3,67 @@
     <h1 class="page-title">个人中心</h1>
     
     <!-- 用户信息概览卡片 -->
-    <el-card class="profile-card overview-card">
-      <div class="overview-content">
-        <div class="avatar-section">
-          <el-avatar :size="120" :src="userInfo.avatar">
-            {{ userInfo.realName.substring(0, 1) }}
-          </el-avatar>
-          <div class="status-indicator">
-            <el-tag :type="userInfo.status === '在线' ? 'success' : 'info'" effect="dark">
-              {{ userInfo.status }}
-            </el-tag>
-          </div>
-        </div>
-        <div class="basic-info-section">
-          <h2 class="user-name">{{ userInfo.realName }}</h2>
-          <p class="user-title">{{ userInfo.position }} | {{ userInfo.lawFirm }}</p>
-          <div class="user-meta">
-            <span class="meta-item">{{ userInfo.professionalField }}</span>
-            <span class="meta-item">{{ userInfo.practiceYears }}年执业经验</span>
-          </div>
-        </div>
-      </div>
-    </el-card>
+    <ProfileHeader :user-info="userInfo" />
     
     <!-- 详细信息卡片 -->
-    <el-card class="profile-card detail-card">
-      <template #header>
-        <div class="card-header">
-          <span>详细信息</span>
-        </div>
-      </template>
-      
-      <div class="detail-content">
-        <!-- 个人基本信息 -->
-        <div class="detail-section">
-          <h3 class="section-title">个人基本信息</h3>
-          <div class="info-grid">
-            <div class="profile-item">
-              <label>用户名：</label>
-              <span>{{ userInfo.username }}</span>
-            </div>
-            <div class="profile-item">
-              <label>性别：</label>
-              <span>{{ userInfo.gender }}</span>
-            </div>
-            <div class="profile-item">
-              <label>出生日期：</label>
-              <span>{{ userInfo.birthDate }}</span>
-            </div>
-            <div class="profile-item">
-              <label>邮箱：</label>
-              <span>{{ userInfo.email }}</span>
-            </div>
-            <div class="profile-item">
-              <label>手机号：</label>
-              <span>{{ userInfo.phone }}</span>
-            </div>
-            <div class="profile-item">
-              <label>执业证号：</label>
-              <span>{{ userInfo.practiceCertificate }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 执业信息 -->
-        <div class="detail-section">
-          <h3 class="section-title">执业信息</h3>
-          <div class="info-grid">
-            <div class="profile-item">
-              <label>律师事务所：</label>
-              <span>{{ userInfo.lawFirm }}</span>
-            </div>
-            <div class="profile-item">
-              <label>职位：</label>
-              <span>{{ userInfo.position }}</span>
-            </div>
-            <div class="profile-item">
-              <label>执业领域：</label>
-              <span>{{ userInfo.professionalField }}</span>
-            </div>
-            <div class="profile-item">
-              <label>执业年限：</label>
-              <span>{{ userInfo.practiceYears }}年</span>
-            </div>
-            <div class="profile-item">
-              <label>办公地址：</label>
-              <span>{{ userInfo.officeAddress }}</span>
-            </div>
-            <div class="profile-item">
-              <label>资格证书：</label>
-              <span>{{ userInfo.qualifications }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 教育背景 -->
-        <div class="detail-section">
-          <h3 class="section-title">教育背景</h3>
-          <div class="info-grid">
-            <div class="profile-item full-width">
-              <label>学历：</label>
-              <span>{{ userInfo.education }}</span>
-            </div>
-          </div>
-        </div>
-        
-        <!-- 个人简介 -->
-        <div class="detail-section">
-          <h3 class="section-title">个人简介</h3>
-          <div class="profile-item full-width description">
-            <label>简介：</label>
-            <span>{{ userInfo.introduction }}</span>
-          </div>
-        </div>
-        
-        <!-- 系统信息 -->
-        <div class="detail-section">
-          <h3 class="section-title">系统信息</h3>
-          <div class="info-grid">
-            <div class="profile-item">
-              <label>角色：</label>
-              <span>{{ userInfo.role }}</span>
-            </div>
-            <div class="profile-item">
-              <label>加入时间：</label>
-              <span>{{ userInfo.joinTime }}</span>
-            </div>
-            <div class="profile-item">
-              <label>最后登录：</label>
-              <span>{{ userInfo.lastLoginTime }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="profile-actions">
-        <el-button type="primary">
-          <i class="el-icon-edit"></i>
-          编辑信息
-        </el-button>
-        <el-button type="warning">
-          <i class="el-icon-lock"></i>
-          修改密码
-        </el-button>
-        <el-button type="info">
-          <i class="el-icon-upload"></i>
-          更新头像
-        </el-button>
-      </div>
-    </el-card>
+    <ProfileDetail 
+      :user-info="userInfo"
+      @edit-info="handleEditInfo"
+      @change-password="handleChangePassword"
+      @update-avatar="handleUpdateAvatar"
+    />
     
     <!-- 账号设置卡片 -->
-    <el-card class="profile-card settings-card">
-      <template #header>
-        <div class="card-header">
-          <span>账号设置</span>
-        </div>
-      </template>
-      <div class="settings-content">
-        <el-form :model="settingsForm" label-width="150px" class="settings-form">
-          <el-form-item label="消息通知">
-            <el-switch v-model="settingsForm.notification" active-text="开启" inactive-text="关闭"></el-switch>
-          </el-form-item>
-          <el-form-item label="邮件通知">
-            <el-switch v-model="settingsForm.emailNotification" active-text="开启" inactive-text="关闭"></el-switch>
-          </el-form-item>
-          <el-form-item label="自动登录">
-            <el-switch v-model="settingsForm.autoLogin" active-text="开启" inactive-text="关闭"></el-switch>
-          </el-form-item>
-          <el-form-item label="通知提醒方式">
-            <el-select v-model="settingsForm.notificationType" multiple placeholder="请选择">
-              <el-option label="站内消息" value="inSite"></el-option>
-              <el-option label="短信" value="sms"></el-option>
-              <el-option label="邮件" value="email"></el-option>
-            </el-select>
-          </el-form-item>
-          <el-form-item label="语言偏好">
-            <el-select v-model="settingsForm.language" placeholder="请选择">
-              <el-option label="简体中文" value="zh-CN"></el-option>
-              <el-option label="English" value="en"></el-option>
-            </el-select>
-          </el-form-item>
-        </el-form>
-      </div>
-      <div class="profile-actions">
-        <el-button type="primary">
-          <i class="el-icon-check"></i>
-          保存设置
-        </el-button>
-      </div>
-    </el-card>
+    <ProfileSettings 
+      :settings-form="settingsForm"
+      :loading="loading.saveSettings"
+      @save-settings="handleSaveSettings"
+    />
+    
+    <!-- 编辑信息对话框 -->
+    <EditInfoDialog 
+      v-model:visible="editInfoVisible"
+      :initial-form="editFormInitialData"
+      :loading="loading.editInfo"
+      @submit="submitEditInfo"
+    />
+    
+    <!-- 修改密码对话框 -->
+    <ChangePasswordDialog 
+      v-model:visible="changePasswordVisible"
+      :loading="loading.changePassword"
+      @submit="submitChangePassword"
+    />
+    
+    <!-- 更新头像对话框 -->
+    <UpdateAvatarDialog 
+      v-model:visible="updateAvatarVisible"
+      :initial-avatar="userInfo.avatar"
+      :loading="loading.updateAvatar"
+      @submit="submitUpdateAvatar"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
+import { ElMessage } from 'element-plus'
+import request from '../../utils/request'
+import { useUserStore } from '../../stores/user'
 
-// 用户信息
-const userInfo = ref({
-  username: 'lawyer001',
-  realName: '王律师',
-  avatar: 'https://via.placeholder.com/80',
-  gender: '男',
-  birthDate: '1985-05-15',
-  email: 'lawyer@example.com',
-  phone: '13800138000',
-  role: '律师',
-  practiceCertificate: '11101200010123456',
-  lawFirm: '北京市XX律师事务所',
-  professionalField: '合同纠纷、知识产权、企业法律顾问',
-  practiceYears: '15',
-  position: '高级合伙人',
-  officeAddress: '北京市朝阳区建国路88号',
-  education: '北京大学法学院 法学博士',
-  qualifications: '中国律师执业资格证、专利代理人资格证',
-  introduction: '专注于合同纠纷、知识产权保护和企业法律顾问服务，拥有丰富的诉讼和非诉经验，曾为多家知名企业提供法律服务。',
-  joinTime: '2025-01-01',
-  lastLoginTime: '2025-12-31 14:30:00',
-  status: '在线'
-})
+// 导入组件
+import ProfileHeader from '../../components/profile/ProfileHeader.vue'
+import ProfileDetail from '../../components/profile/ProfileDetail.vue'
+import ProfileSettings from '../../components/profile/ProfileSettings.vue'
+import EditInfoDialog from '../../components/profile/EditInfoDialog.vue'
+import ChangePasswordDialog from '../../components/profile/ChangePasswordDialog.vue'
+import UpdateAvatarDialog from '../../components/profile/UpdateAvatarDialog.vue'
+
+const userStore = useUserStore()
+
+// 用户信息，从store获取
+const userInfo = computed(() => userStore.userInfo)
+
 
 // 设置表单
 const settingsForm = reactive({
@@ -231,6 +73,121 @@ const settingsForm = reactive({
   notificationType: ['inSite', 'email'],
   language: 'zh-CN'
 })
+
+// 对话框可见性
+const editInfoVisible = ref(false)
+const changePasswordVisible = ref(false)
+const updateAvatarVisible = ref(false)
+
+// 加载状态
+const loading = reactive({
+  editInfo: false,
+  changePassword: false,
+  updateAvatar: false,
+  saveSettings: false
+})
+
+// 编辑表单初始数据
+const editFormInitialData = computed(() => ({
+  realName: userInfo.value.realName,
+  gender: userInfo.value.gender,
+  birthDate: userInfo.value.birthDate,
+  email: userInfo.value.email,
+  phone: userInfo.value.phone,
+  introduction: userInfo.value.introduction
+}))
+
+// 编辑信息按钮点击事件
+const handleEditInfo = () => {
+  editInfoVisible.value = true
+}
+
+// 修改密码按钮点击事件
+const handleChangePassword = () => {
+  changePasswordVisible.value = true
+}
+
+// 更新头像按钮点击事件
+const handleUpdateAvatar = () => {
+  updateAvatarVisible.value = true
+}
+
+// 提交编辑信息
+const submitEditInfo = (formData) => {
+  loading.editInfo = true
+  
+  // 模拟API请求
+  setTimeout(() => {
+    // 更新用户信息
+    userInfo.value.realName = formData.realName
+    userInfo.value.gender = formData.gender
+    userInfo.value.birthDate = formData.birthDate
+    userInfo.value.email = formData.email
+    userInfo.value.phone = formData.phone
+    userInfo.value.introduction = formData.introduction
+    
+    editInfoVisible.value = false
+    ElMessage.success('信息更新成功')
+    loading.editInfo = false
+  }, 800)
+}
+
+// 提交修改密码
+const submitChangePassword = (formData) => {
+  loading.changePassword = true
+  
+  // 模拟API请求
+  setTimeout(() => {
+    changePasswordVisible.value = false
+    ElMessage.success('密码修改成功')
+    loading.changePassword = false
+  }, 800)
+}
+
+// 提交更新头像
+const submitUpdateAvatar = async (file: File) => {
+  loading.updateAvatar = true
+  
+  try {
+    // 构建FormData
+    const formData = new FormData()
+    formData.append('avatar', file)
+    
+    // 调用API上传头像
+    const res = await request.post('/users/avatar/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    
+    if (res.code === 200) {
+      // 更新用户头像，添加时间戳防止浏览器缓存
+      const avatarUrl = `${res.data.url}?t=${Date.now()}`
+      // 使用store更新头像，这样所有组件都会自动更新
+      userStore.updateAvatar(avatarUrl)
+      updateAvatarVisible.value = false
+      ElMessage.success('头像更新成功')
+    } else {
+      ElMessage.error(res.message || '头像更新失败')
+    }
+  } catch (error) {
+    console.error('头像更新失败:', error)
+    ElMessage.error('头像更新失败')
+  } finally {
+    loading.updateAvatar = false
+  }
+}
+
+// 保存设置
+const handleSaveSettings = () => {
+  loading.saveSettings = true
+  
+  // 模拟API请求
+  setTimeout(() => {
+    ElMessage.success('设置保存成功')
+    loading.saveSettings = false
+  }, 800)
+}
 </script>
 
 <style scoped>
@@ -243,254 +200,5 @@ const settingsForm = reactive({
   color: var(--primary-color);
   font-size: 24px;
   font-weight: 600;
-}
-
-/* 通用卡片样式 */
-.profile-card {
-  margin-bottom: 24px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
-  transition: all 0.3s ease;
-}
-
-.profile-card:hover {
-  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.12);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0;
-}
-
-/* 概览卡片样式 */
-.overview-card {
-  background: linear-gradient(135deg, var(--primary-color) 0%, #2d3748 100%);
-  color: #fff;
-  border-radius: 12px;
-}
-
-.overview-content {
-  display: flex;
-  align-items: center;
-  padding: 32px;
-  gap: 32px;
-}
-
-.avatar-section {
-  position: relative;
-}
-
-.avatar-section .el-avatar {
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.status-indicator {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: #fff;
-  border-radius: 50%;
-  padding: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.status-indicator .el-tag {
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.basic-info-section {
-  flex: 1;
-}
-
-.user-name {
-  margin: 0 0 8px 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: #fff;
-}
-
-.user-title {
-  margin: 0 0 16px 0;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.user-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.meta-item {
-  display: inline-block;
-  padding: 6px 16px;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 20px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* 详细信息卡片样式 */
-.detail-content {
-  padding: 20px 0;
-}
-
-.detail-section {
-  margin-bottom: 32px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.detail-section:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
-}
-
-.section-title {
-  margin: 0 0 16px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--primary-color);
-  display: flex;
-  align-items: center;
-}
-
-.section-title::before {
-  content: '';
-  display: inline-block;
-  width: 4px;
-  height: 20px;
-  background: var(--accent-color);
-  margin-right: 8px;
-  border-radius: 2px;
-}
-
-/* 信息网格布局 */
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-}
-
-.profile-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.profile-item:last-child {
-  border-bottom: none;
-}
-
-.profile-item label {
-  display: inline-block;
-  width: 100px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-right: 10px;
-  flex-shrink: 0;
-  text-align: right;
-}
-
-.profile-item span {
-  display: inline-block;
-  vertical-align: top;
-  flex: 1;
-  color: var(--text-secondary);
-  word-break: break-word;
-}
-
-/* 全宽项目 */
-.profile-item.full-width {
-  grid-column: 1 / -1;
-}
-
-.profile-item.description {
-  align-items: flex-start;
-}
-
-.profile-item.description label {
-  margin-top: 4px;
-}
-
-.profile-item.description span {
-  line-height: 1.6;
-}
-
-/* 设置表单样式 */
-.settings-form {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  align-items: center;
-}
-
-.settings-content {
-  padding: 20px 0;
-}
-
-/* 操作按钮样式 */
-.profile-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding: 20px 0 0;
-  gap: 12px;
-  border-top: 1px solid var(--border-color);
-}
-
-.profile-actions .el-button {
-  border-radius: 6px;
-  padding: 8px 20px;
-  font-size: 14px;
-  transition: all 0.2s ease;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .overview-content {
-    flex-direction: column;
-    text-align: center;
-  }
-  
-  .basic-info-section {
-    text-align: center;
-  }
-  
-  .user-meta {
-    justify-content: center;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .settings-form {
-    grid-template-columns: 1fr;
-  }
-  
-  .profile-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .profile-item label {
-    width: auto;
-    text-align: left;
-    margin-right: 0;
-    margin-bottom: 4px;
-  }
-  
-  .profile-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
 }
 </style>

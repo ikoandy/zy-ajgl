@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import multer from 'multer';
 import { testConnection } from './config/database';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/logger';
@@ -19,6 +20,7 @@ import scheduleRoutes from './routes/schedules';
 import todoRoutes from './routes/todos';
 import messageRoutes from './routes/messages';
 import dashboardRoutes from './routes/dashboard';
+import lawyerRoutes from './routes/lawyers';
 
 dotenv.config();
 
@@ -50,9 +52,38 @@ app.use(cors({
   credentials: true
 }));
 
+// 配置multer中间件处理文件上传
+const path = require('path');
+const fs = require('fs');
+
+// 创建上传目录
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// 使用diskStorage将文件存储到磁盘
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    // 生成唯一文件名，避免冲突
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const fileExt = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + fileExt);
+  }
+});
+
+const upload = multer({ 
+  storage: storage, 
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB文件大小限制
+});
+
 // 中间件
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' })); // 增加JSON请求大小限制
+app.use(express.urlencoded({ extended: true, limit: '50mb' })); // 增加表单请求大小限制
+app.use(upload.any()); // 处理所有文件上传
 app.use(requestLogger);
 
 // 健康检查路由
@@ -76,6 +107,7 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/todos', todoRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/lawyers', lawyerRoutes);
 
 // 404处理
 app.use('*', (req, res) => {

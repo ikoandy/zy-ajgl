@@ -19,5 +19,15 @@ export default defineConfig({
         rewrite: (path) => path
       }
     }
+  },
+  // 添加版本号到静态资源链接，避免浏览器缓存问题
+  build: {
+    rollupOptions: {
+      output: {
+        assetFileNames: '[name]-[hash][extname]',
+        chunkFileNames: '[name]-[hash].js',
+        entryFileNames: '[name]-[hash].js'
+      }
+    }
   }
 })

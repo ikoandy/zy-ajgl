@@ -12,18 +12,7 @@ export const dbConfig = {
   database: process.env.DB_NAME || 'law_firm_management',
   charset: 'utf8mb4',
   timezone: '+08:00',
-  connectionLimit: 10,
-  acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true,
-  
-  // 连接池配置
-  pool: {
-    max: 10,
-    min: 2,
-    acquireTimeout: 30000,
-    idleTimeout: 60000
-  }
+  connectionLimit: 10
 };
 
 // 创建连接池

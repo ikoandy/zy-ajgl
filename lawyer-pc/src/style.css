@@ -94,21 +94,6 @@ a:hover {
   text-align: left;
 }
 
-/* Element Plus 主题定制 */
-:root {
-  --el-color-primary: var(--primary-color);
-  --el-color-primary-dark-2: #2c5282;
-  --el-color-success: var(--success-color);
-  --el-color-warning: var(--warning-color);
-  --el-color-danger: var(--error-color);
-  --el-text-color-primary: var(--text-primary);
-  --el-text-color-regular: var(--text-secondary);
-  --el-border-color-base: var(--border-color);
-  --el-bg-color: var(--background-color);
-  --el-bg-color-page: var(--background-color);
-  --el-bg-color-overlay: #ffffff;
-}
-
 /* 表格样式优化 */
 .el-table {
   border-radius: 8px;
@@ -125,76 +110,6 @@ a:hover {
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.08);
   border: none;
   overflow: hidden;
-}
-
-/* 按钮样式优化 */
-.el-button--primary {
-  background-color: var(--primary-color);
-  border-color: var(--primary-color);
-}
-
-.el-button--primary:hover,
-.el-button--primary:focus {
-  background-color: #2c5282;
-  border-color: #2c5282;
-}
-
-/* 朴素按钮样式优化 */
-.el-button--plain {
-  color: currentColor;
-  background-color: transparent;
-}
-
-/* 主色朴素按钮 */
-.el-button--primary.is-plain {
-  color: var(--accent-color);
-  border-color: var(--accent-color);
-  background-color: transparent;
-}
-
-.el-button--primary.is-plain:hover,
-.el-button--primary.is-plain:focus {
-  background-color: var(--accent-color);
-  color: #fff;
-}
-
-/* 警告色朴素按钮 */
-.el-button--warning.is-plain {
-  color: var(--warning-color);
-  border-color: var(--warning-color);
-  background-color: transparent;
-}
-
-.el-button--warning.is-plain:hover,
-.el-button--warning.is-plain:focus {
-  background-color: var(--warning-color);
-  color: #fff;
-}
-
-/* 危险色朴素按钮 */
-.el-button--danger.is-plain {
-  color: var(--error-color);
-  border-color: var(--error-color);
-  background-color: transparent;
-}
-
-.el-button--danger.is-plain:hover,
-.el-button--danger.is-plain:focus {
-  background-color: var(--error-color);
-  color: #fff;
-}
-
-/* 成功色朴素按钮 */
-.el-button--success.is-plain {
-  color: var(--success-color);
-  border-color: var(--success-color);
-  background-color: transparent;
-}
-
-.el-button--success.is-plain:hover,
-.el-button--success.is-plain:focus {
-  background-color: var(--success-color);
-  color: #fff;
 }
 
 /* 输入框样式优化 */

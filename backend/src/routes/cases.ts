@@ -224,6 +224,12 @@ router.post('/:id/timeline', (req, res) => {
   });
 });
 
+// 导入文件类型映射工具
+import { getFileTypeFromFilename, getFileExtension } from '../utils/fileTypeMapper';
+
+// 导入其他路由的documents数组
+import { documents } from './documents';
+
 // 上传案件文档
 router.post('/:id/documents', (req, res) => {
   const id = Number(req.params.id);
@@ -236,30 +242,48 @@ router.post('/:id/documents', (req, res) => {
     });
   }
   
-  const { name } = req.body;
+  // 获取文档名称，优先从req.body获取，没有则使用默认值
+  const name = req.body.name || '新上传文档';
   
-  if (!name) {
-    return res.status(400).json({
-      code: 400,
-      message: '文档名称不能为空'
-    });
-  }
+  // 获取上传的文件，注意upload.any()会将文件存储在req.files数组中
+  const files = req.files as Array<any>;
+  const file = files && files.length > 0 ? files[0] : req.file;
+  const size = req.body.size || file?.size || 1024 * 1024; // 默认1MB
+  const filePath = file?.path || "";
+  const originalName = file?.originalname || name;
   
-  // 生成唯一ID
-  const documentId = cases[caseIndex].documents.length > 0 ? Math.max(...cases[caseIndex].documents.map((item: any) => item.id)) + 1 : 1;
+  // 使用文件类型映射工具获取文件类型
+  const fileType = getFileTypeFromFilename(originalName);
+  // 获取文件扩展名
+  const fileExt = getFileExtension(originalName);
   
-  // 模拟文件上传，实际应处理文件流
+  // 生成全局唯一ID
+  const globalDocId = documents.length > 0 ? Math.max(...documents.map(item => item.id)) + 1 : 1;
+  
+  // 创建新文档对象
   const newDocument = {
-    id: documentId,
+    id: globalDocId,
+    caseId: id,
     name: String(name),
-    type: 'pdf', // 实际应从文件中获取
-    size: 1024 * 1024, // 模拟文件大小
+    originalName: originalName,
+    type: fileType, // 根据文件名获取的文件类型
+    extension: fileExt, // 文件扩展名
+    size: Number(size), // 文件大小
+    filePath: filePath, // 实际文件路径
     uploadTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-    url: '#', // 模拟文件URL
+    url: `/api/documents/${globalDocId}/file`, // 使用全局文档下载URL，确保一致性
     uploadedBy: 'admin' // 实际应为当前登录用户
   };
   
-  cases[caseIndex].documents.push(newDocument);
+  // 将文档添加到案件的文档列表中
+  cases[caseIndex].documents.push({
+    ...newDocument
+  });
+  
+  // 将文档添加到全局文档列表中，实现数据同步
+  documents.push({
+    ...newDocument
+  });
   
   return res.json({
     code: 200,
@@ -268,4 +292,104 @@ router.post('/:id/documents', (req, res) => {
   });
 });
 
+// 下载案件文档
+router.get('/:id/documents/:docId/download', (req, res) => {
+  const caseId = Number(req.params.id);
+  const docId = Number(req.params.docId);
+  
+  // 首先从全局文档列表中查找，确保文件路径的一致性
+  const document = documents.find(item => item.id === docId && item.caseId === caseId);
+  
+  if (document) {
+    // 生成真实下载URL
+    const encodedName = encodeURIComponent(document.name);
+    const downloadUrl = `/api/cases/${caseId}/documents/${docId}/file?name=${encodedName}`;
+    
+    return res.json({
+      code: 200,
+      message: '下载文档成功',
+      data: {
+        downloadUrl: downloadUrl,
+        fileName: document.name,
+        fileType: document.type,
+        fileSize: document.size
+      }
+    });
+  } else {
+    return res.status(404).json({
+      code: 404,
+      message: '文档不存在'
+    });
+  }
+});
+
+// 实际下载案件文档文件
+router.get('/:id/documents/:docId/file', (req, res) => {
+  const caseId = Number(req.params.id);
+  const docId = Number(req.params.docId);
+  const fs = require('fs');
+  const path = require('path');
+  
+  // 首先从全局文档列表中查找，确保文件路径的一致性
+  const document = documents.find(item => item.id === docId && item.caseId === caseId);
+  
+  if (document) {
+    // 检查文件是否存在
+    if (document.filePath && fs.existsSync(document.filePath)) {
+      // 设置正确的MIME类型
+      const mime = require('mime-types');
+      const contentType = mime.lookup(document.filePath) || 'application/octet-stream';
+      
+      // 获取原始文件名
+      const filename = document.originalName || `${document.name}.${document.extension}`;
+      
+      // 返回真实文件
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', contentType);
+      return res.sendFile(document.filePath);
+    } else {
+      // 如果文件不存在，返回错误信息
+      res.status(404).json({
+        code: 404,
+        message: "文件不存在或已被删除"
+      });
+    }
+  } else {
+    return res.status(404).json({
+      code: 404,
+      message: '文档不存在'
+    });
+  }
+});
+
+// 删除案件文档
+router.delete('/:id/documents/:docId', (req, res) => {
+  const caseId = Number(req.params.id);
+  const docId = Number(req.params.docId);
+  const caseIndex = cases.findIndex(item => item.id === caseId);
+  
+  if (caseIndex === -1) {
+    return res.status(404).json({
+      code: 404,
+      message: '案件不存在'
+    });
+  }
+  
+  const initialLength = cases[caseIndex].documents.length;
+  cases[caseIndex].documents = cases[caseIndex].documents.filter((item: any) => item.id !== docId);
+  
+  if (cases[caseIndex].documents.length < initialLength) {
+    return res.json({
+      code: 200,
+      message: '删除文档成功'
+    });
+  } else {
+    return res.status(404).json({
+      code: 404,
+      message: '文档不存在'
+    });
+  }
+});
+
+export { cases };
 export default router;

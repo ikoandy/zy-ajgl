@@ -97,10 +97,18 @@
           <el-table-column prop="type" label="文档类型" width="100"></el-table-column>
           <el-table-column prop="size" label="文档大小" width="100"></el-table-column>
           <el-table-column prop="uploadTime" label="上传时间" width="180"></el-table-column>
-          <el-table-column label="操作" width="150" fixed="right">
+          <el-table-column label="操作" width="200" fixed="right">
             <template #default="scope">
               <el-button
                 type="primary"
+                size="small"
+                @click="handlePreviewDocument(scope.row)"
+                style="margin-right: 5px;"
+              >
+                预览
+              </el-button>
+              <el-button
+                type="success"
                 size="small"
                 @click="downloadDocument(scope.row.id)"
                 style="margin-right: 5px;"
@@ -182,12 +190,12 @@
             v-model:file-list="fileList"
             :auto-upload="false"
             :on-change="handleFileChange"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif"
           >
             <el-button type="primary">选择文件</el-button>
             <template #tip>
               <div class="el-upload__tip">
-                请上传 PDF、Word、Excel 或 TXT 文件
+                请上传 PDF、Word、Excel、TXT 或图片文件
               </div>
             </template>
           </el-upload>
@@ -200,13 +208,47 @@
         </span>
       </template>
     </el-dialog>
+    
+    <!-- 文档预览对话框 -->
+    <el-dialog
+      v-model="previewDialogVisible"
+      :title="`文档预览 - ${previewDocument.value.name}`"
+      width="90%"
+      fullscreen
+    >
+      <div class="preview-container">
+        <div v-if="isImageFile" class="image-preview">
+          <img :src="previewUrl" alt="文档预览" />
+        </div>
+        <div v-else-if="isPdfFile" class="pdf-preview">
+          <iframe :src="previewUrl" frameborder="0"></iframe>
+        </div>
+        <div v-else-if="isTextFile" class="text-preview">
+          <pre>{{ textContent }}</pre>
+        </div>
+        <div v-else class="office-preview">
+          <el-alert
+            title="提示"
+            type="warning"
+            description="该类型文件不支持在线预览，请下载查看"
+            show-icon
+          >
+            <template #default>
+              <el-button type="primary" size="small" @click="downloadDocument(previewDocument.value.id)">
+                立即下载
+              </el-button>
+            </template>
+          </el-alert>
+        </div>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import request from '@/utils/request'
 
@@ -262,6 +304,33 @@ const fileList = ref<Array<any>>([])
 const documentRules = reactive<FormRules>({
   name: [{ required: true, message: '请输入文档名称', trigger: 'blur' }],
   file: [{ required: true, message: '请选择文件', trigger: 'change' }]
+})
+
+// 文档预览相关变量
+const previewDialogVisible = ref(false)
+const previewDocument = ref({
+  id: 0,
+  name: '',
+  type: '',
+  url: ''
+})
+const previewUrl = ref('')
+const textContent = ref('')
+
+// 文件类型判断
+const isImageFile = computed(() => {
+  const ext = previewDocument.value.name.split('.').pop()?.toLowerCase() || ''
+  return ['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)
+})
+
+const isPdfFile = computed(() => {
+  const ext = previewDocument.value.name.split('.').pop()?.toLowerCase() || ''
+  return ext === 'pdf'
+})
+
+const isTextFile = computed(() => {
+  const ext = previewDocument.value.name.split('.').pop()?.toLowerCase() || ''
+  return ext === 'txt'
 })
 
 // 获取状态类型
@@ -348,9 +417,65 @@ const submitProgress = async () => {
 }
 
 // 下载文档
-const downloadDocument = (_id: number) => {
-  // 这里应该调用API下载文档
-  ElMessage.success('下载文档功能已触发')
+const downloadDocument = async (docId: number) => {
+  try {
+    const res = await request.get(`/cases/${caseDetail.value.id}/documents/${docId}/download`)
+    if (res.code === 200 && res.data) {
+      window.open(res.data.downloadUrl, '_blank')
+      ElMessage.success('开始下载文档')
+    }
+  } catch (error) {
+    console.error('下载文档失败:', error)
+    ElMessage.error('下载文档失败')
+  }
+}
+
+// 预览文档
+const handlePreviewDocument = async (document: any) => {
+  try {
+    console.log('开始预览文档:', document)
+    
+    // 直接设置当前预览的文档
+    previewDocument.value = {
+      id: document.id,
+      name: document.name,
+      type: document.type,
+      url: document.url
+    }
+    
+    // 尝试生成预览URL
+    try {
+      const res = await request.get(`/cases/${caseDetail.value.id}/documents/${document.id}/download`)
+      console.log('获取下载URL成功:', res.data)
+      
+      if (res.code === 200 && res.data) {
+        previewUrl.value = res.data.downloadUrl
+        
+        // 如果是文本文件，获取文件内容
+        if (isTextFile.value) {
+          try {
+            const textRes = await fetch(previewUrl.value)
+            textContent.value = await textRes.text()
+            console.log('获取文本内容成功')
+          } catch (textError) {
+            console.error('获取文本内容失败:', textError)
+            textContent.value = '无法加载文本内容'
+          }
+        }
+      }
+    } catch (apiError) {
+      console.error('获取下载URL失败:', apiError)
+      // 即使API请求失败，也打开弹窗，显示错误信息
+      ElMessage.warning('无法获取完整预览信息，将显示基本内容')
+    }
+    
+    // 无论如何都打开预览对话框
+    console.log('打开预览对话框')
+    previewDialogVisible.value = true
+  } catch (error) {
+    console.error('预览文档失败:', error)
+    ElMessage.error('预览文档失败')
+  }
 }
 
 // 上传文档
@@ -362,6 +487,47 @@ const uploadDocument = () => {
 // 处理文件变化
 const handleFileChange = (file: any) => {
   documentForm.file = file.raw
+  // 自动填充文档名称（如果未手动输入）
+  if (!documentForm.name) {
+    documentForm.name = file.raw.name
+  }
+}
+
+// 获取文件类型图标
+const getFileIcon = (filename: string): string => {
+  const ext = filename.split('.').pop()?.toLowerCase() || ''
+  const iconMap: Record<string, string> = {
+    pdf: '📄',
+    doc: '📝',
+    docx: '📝',
+    xls: '📊',
+    xlsx: '📊',
+    ppt: '📋',
+    pptx: '📋',
+    txt: '📄',
+    jpg: '🖼️',
+    jpeg: '🖼️',
+    png: '🖼️',
+    gif: '🖼️',
+    svg: '🖼️',
+    mp3: '🎵',
+    wav: '🎵',
+    mp4: '🎬',
+    mov: '🎬',
+    zip: '📦',
+    rar: '📦',
+    '7z': '📦'
+  }
+  return iconMap[ext] || '📄'
+}
+
+// 格式化文件大小
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 // 重置文档表单
@@ -385,6 +551,8 @@ const submitDocument = async () => {
     formData.append('name', documentForm.name)
     if (documentForm.file) {
       formData.append('file', documentForm.file)
+      // 添加文件大小信息
+      formData.append('size', String(documentForm.file.size))
     }
     
     // 调用API上传文档
@@ -405,9 +573,23 @@ const submitDocument = async () => {
 }
 
 // 删除文档
-const deleteDocument = (_id: number) => {
-  // 这里应该调用API删除文档
-  ElMessage.success('删除文档功能已触发')
+const deleteDocument = async (docId: number) => {
+  try {
+    await ElMessageBox.confirm('确定要删除这个文档吗？此操作不可恢复！', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'error'
+    })
+    
+    await request.delete(`/cases/${caseDetail.value.id}/documents/${docId}`)
+    ElMessage.success('删除文档成功')
+    // 重新获取案件详情，更新文档列表
+    getCaseDetail(caseDetail.value.id)
+  } catch (error: any) {
+    if (error !== 'cancel') {
+      ElMessage.error(error.response?.data?.message || '删除文档失败')
+    }
+  }
 }
 </script>
 
@@ -503,5 +685,86 @@ const deleteDocument = (_id: number) => {
 
 .document-list {
   padding: 10px 0;
+}
+
+/* 预览弹窗样式 */
+.preview-container {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  overflow: auto;
+}
+
+/* 图片预览样式 */
+.image-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background: #f5f5f5;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* PDF预览样式 */
+.pdf-preview {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+}
+
+.pdf-preview iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  border: none;
+}
+
+/* 文本预览样式 */
+.text-preview {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  padding: 20px;
+  background: #f5f5f5;
+  overflow: auto;
+}
+
+.text-preview pre {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow: auto;
+}
+
+/* Office文件预览样式 */
+.office-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  background: #f5f5f5;
+}
+
+/* 全屏对话框样式 */
+:deep(.el-dialog__body) {
+  padding: 0 !important;
+  overflow: hidden;
 }
 </style>

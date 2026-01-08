@@ -50,13 +50,14 @@
             <div class="user-info">
               <span class="welcome-text">欢迎，</span>
               <el-dropdown>
-                <div class="user-avatar-wrapper">
-                  <div class="user-avatar">
-                    <span class="avatar-text">{{ username.slice(0, 1) }}</span>
-                  </div>
-                  <span class="username-text">{{ username }}</span>
-                  <i class="el-icon-arrow-down el-icon--right"></i>
+              <div class="user-avatar-wrapper">
+                <div class="user-avatar">
+                  <img v-if="avatar" :src="avatar" class="avatar-img" :alt="realName" />
+                  <span v-else class="avatar-text">{{ realName.slice(0, 1) }}</span>
                 </div>
+                <span class="username-text">{{ realName }}</span>
+                <i class="el-icon-arrow-down el-icon--right"></i>
+              </div>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item @click="goToProfile">个人中心</el-dropdown-item>
@@ -80,10 +81,19 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUserStore } from '../stores/user'
 
 const router = useRouter()
 const isCollapse = ref(false)
-const username = ref('律师用户')
+const userStore = useUserStore()
+
+// 初始化用户信息
+userStore.initUserInfo()
+
+// 获取用户名和头像
+const username = computed(() => userStore.userInfo.username)
+const realName = computed(() => userStore.userInfo.realName)
+const avatar = computed(() => userStore.userInfo.avatar)
 
 // 静态菜单数据，避免直接依赖路由meta属性
 const menuItems = computed(() => {
@@ -343,6 +353,14 @@ const logout = () => {
   justify-content: center;
   box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.user-avatar .avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .user-avatar:hover {

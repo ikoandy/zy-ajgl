@@ -13,9 +13,9 @@
         </div>
         <div class="stat-footer">
           <div class="stat-label">当前案件数</div>
-          <div class="stat-trend">
+          <div class="stat-trend" v-if="caseCount > 0">
             <span class="trend-icon up">↑</span>
-            <span class="trend-value">5.2%</span>
+            <span class="trend-value">{{ caseCount }}%</span>
           </div>
         </div>
       </div>
@@ -28,9 +28,9 @@
         </div>
         <div class="stat-footer">
           <div class="stat-label">待办事项</div>
-          <div class="stat-trend">
+          <div class="stat-trend" v-if="todoCount > 0">
             <span class="trend-icon down">↓</span>
-            <span class="trend-value">2.8%</span>
+            <span class="trend-value">{{ todoCount }}%</span>
           </div>
         </div>
       </div>
@@ -43,9 +43,9 @@
         </div>
         <div class="stat-footer">
           <div class="stat-label">客户数量</div>
-          <div class="stat-trend">
+          <div class="stat-trend" v-if="clientCount > 0">
             <span class="trend-icon up">↑</span>
-            <span class="trend-value">8.5%</span>
+            <span class="trend-value">{{ clientCount }}%</span>
           </div>
         </div>
       </div>
@@ -58,9 +58,9 @@
         </div>
         <div class="stat-footer">
           <div class="stat-label">未读消息</div>
-          <div class="stat-trend">
+          <div class="stat-trend" v-if="messageCount > 0">
             <span class="trend-icon up">↑</span>
-            <span class="trend-value">3.1%</span>
+            <span class="trend-value">{{ messageCount }}%</span>
           </div>
         </div>
       </div>
@@ -249,7 +249,7 @@
             <span class="monitor-value">{{ onlineUsers }}</span>
           </div>
           <div class="monitor-progress">
-            <el-progress type="line" :percentage="65" :stroke-width="8" :color="'#3182ce'" />
+            <el-progress type="line" :percentage="onlineUsers" :stroke-width="8" :color="'#3182ce'" />
           </div>
         </div>
         <div class="monitor-item">
@@ -267,7 +267,7 @@
             <span class="monitor-value">{{ dbConnections }}</span>
           </div>
           <div class="monitor-progress">
-            <el-progress type="line" :percentage="45" :stroke-width="8" :color="'#38a169'" />
+            <el-progress type="line" :percentage="dbConnections" :stroke-width="8" :color="'#38a169'" />
           </div>
         </div>
       </div>
@@ -473,13 +473,6 @@ const initData = async () => {
     console.error('初始化数据失败:', error)
   }
 }
-
-// 生命周期钩子
-onMounted(() => {
-  initData()
-  initCharts()
-  window.addEventListener('resize', handleResize)
-})
 
 // 初始化图表
 const initCharts = () => {
@@ -722,7 +715,7 @@ const handleResize = () => {
 
 // 生命周期钩子
 onMounted(() => {
-  initCharts()
+  initData()
   window.addEventListener('resize', handleResize)
 })
 
