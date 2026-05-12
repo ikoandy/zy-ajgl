@@ -3170,7 +3170,8 @@ var typeChartInstance = null;
 
 async function loadDashboard() {
     try {
-        var stats = await api.get('/cases/stats');
+        var res = await api.get('/cases/stats');
+        var stats = res.data || res;
         renderDashboardStats(stats);
         renderDashboardCharts(stats);
         renderDashboardTimeline(stats);
@@ -3181,20 +3182,21 @@ async function loadDashboard() {
 }
 
 function renderDashboardStats(stats) {
-    document.getElementById('stat-total').textContent = (stats.total || 0).toLocaleString();
+    var summary = stats.summary || {};
+    document.getElementById('stat-total').textContent = (summary.total_cases || 0).toLocaleString();
 
-    var rate = stats.successRate;
+    var rate = summary.success_rate;
     document.getElementById('stat-rate').textContent = (rate !== undefined ? rate : '--') + (typeof rate === 'number' ? '%' : '');
 
-    document.getElementById('stat-ongoing').textContent = stats.ongoing !== undefined ? stats.ongoing : '--';
+    document.getElementById('stat-ongoing').textContent = summary.mediating !== undefined ? summary.mediating : '--';
 
-    var cycle = stats.avgCycle;
+    var cycle = summary.avg_duration;
     document.getElementById('stat-cycle').textContent = cycle !== undefined ? cycle + '天' : '--';
 
-    updateStatChange('stat-change-1', stats.totalChange, stats.totalTrend);
-    updateStatChange('stat-change-2', stats.successRateChange, stats.successRateTrend);
-    updateStatChange('stat-change-3', stats.ongoingChange, stats.ongoingTrend);
-    updateStatChange('stat-change-4', stats.avgCycleChange, stats.avgCycleTrend);
+    updateStatChange('stat-change-1', null, null);
+    updateStatChange('stat-change-2', null, null);
+    updateStatChange('stat-change-3', null, null);
+    updateStatChange('stat-change-4', null, null);
 }
 
 function updateStatChange(elId, changeText, trend) {
@@ -3216,9 +3218,13 @@ function renderDashboardCharts(stats) {
     if (trendChartInstance) trendChartInstance.destroy();
     if (typeChartInstance) typeChartInstance.destroy();
 
-    var trendLabels = stats.trendLabels || ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-    var trendNew = stats.trendNew || [];
-    var trendClosed = stats.trendClosed || [];
+    var monthly = stats.monthly_stats || [];
+    var trendLabels = monthly.map(function(m) {
+        var d = m.stat_date || '';
+        return d.substring(5, 7) + '/' + d.substring(8, 10);
+    }).slice(-12);
+    var trendNew = monthly.map(function(m) { return m.new_cases || 0; }).slice(-12);
+    var trendClosed = monthly.map(function(m) { return m.closed_cases || 0; }).slice(-12);
 
     var trendCtx = document.getElementById('trendChart').getContext('2d');
     trendChartInstance = new Chart(trendCtx, {
@@ -3274,8 +3280,10 @@ function renderDashboardCharts(stats) {
         }
     });
 
-    var typeLabels = stats.typeLabels || [];
-    var typeData = stats.typeData || [];
+    var typeDist = stats.type_distribution || [];
+    var typeLabels = typeDist.map(function(t) { return t.name || ''; });
+    var typeData = typeDist.map(function(t) { return t.count || 0; });
+    var typeColors = typeDist.map(function(t) { return (t.color || '#c9a84c').replace(')', ', 0.8)').replace('rgb', 'rgba'); });
 
     var typeCtx = document.getElementById('typeChart').getContext('2d');
     typeChartInstance = new Chart(typeCtx, {
@@ -3284,7 +3292,7 @@ function renderDashboardCharts(stats) {
             labels: typeLabels,
             datasets: [{
                 data: typeData,
-                backgroundColor: [
+                backgroundColor: typeColors.length > 0 ? typeColors : [
                     'rgba(201, 168, 76, 0.8)',
                     'rgba(45, 212, 191, 0.8)',
                     'rgba(167, 139, 250, 0.8)',
@@ -3313,23 +3321,24 @@ function renderDashboardCharts(stats) {
 function renderDashboardTimeline(stats) {
     var container = document.getElementById('dashboard-timeline');
     if (!container) return;
-    var items = stats.timeline || [];
+    var items = stats.recent_activities || [];
     if (items.length === 0) {
         container.innerHTML = '<h3>最近动态</h3><div style="text-align:center;color:var(--text-muted);padding:20px">暂无动态</div>';
         return;
     }
 
-    var colors = ['var(--accent-gold)', 'var(--accent-teal)', 'var(--accent-violet)', 'var(--accent-rose)'];
+    var statusColors = { pending: 'var(--accent-gold)', accepted: 'var(--accent-teal)', mediating: 'var(--accent-violet)', agreed: 'var(--accent-teal)', terminated: 'var(--accent-rose)', closed: 'var(--text-muted)' };
+    var statusLabels = { pending: '待受理', accepted: '已受理', mediating: '调解中', agreed: '已达成协议', terminated: '已终止', closed: '已结案' };
     var html = '<h3>最近动态</h3>';
     items.forEach(function(item, i) {
-        var color = item.color ? 'var(--accent-' + item.color + ')' : colors[i % colors.length];
+        var color = statusColors[item.status] || 'var(--accent-gold)';
         html += '<div class="timeline-item">' +
             '<div class="timeline-dot" style="background:' + color + '"></div>' +
             '<div class="tl-content">' +
-            '<div class="tl-title">' + escapeHtml(item.title || '') + '</div>' +
-            '<div class="tl-desc">' + escapeHtml(item.desc || item.description || '') + '</div>' +
+            '<div class="tl-title">' + escapeHtml(item.case_number || '') + ' ' + escapeHtml(item.title || '') + '</div>' +
+            '<div class="tl-desc">' + escapeHtml(item.mediator_name || '') + ' · ' + (statusLabels[item.status] || item.status || '') + '</div>' +
             '</div>' +
-            '<div class="tl-time">' + escapeHtml(item.time || '') + '</div>' +
+            '<div class="tl-time">' + escapeHtml(item.updated_at ? item.updated_at.substring(5, 10).replace('-', '/') : '') + '</div>' +
             '</div>';
     });
     container.innerHTML = html;
@@ -3338,24 +3347,22 @@ function renderDashboardTimeline(stats) {
 function renderDashboardPerformance(stats) {
     var container = document.getElementById('dashboard-performance');
     if (!container) return;
-    var items = stats.performance || [];
+    var items = stats.top_mediators || [];
     if (items.length === 0) {
         container.innerHTML = '<h3>调解员绩效排名</h3><div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
         return;
     }
 
-    var colors = ['var(--accent-gold)', 'var(--accent-teal)', 'var(--accent-violet)', 'var(--text-muted)'];
     var medals = ['🥇', '🥈', '🥉'];
     var html = '<h3>调解员绩效排名</h3>';
     items.forEach(function(item, i) {
-        var color = item.color ? 'var(--accent-' + item.color + ')' : colors[Math.min(i, colors.length - 1)];
-        var rank = item.rank || (i + 1);
-        var rankDisplay = rank <= 3 ? medals[rank - 1] : rank;
+        var color = item.avatar_color || 'var(--accent-gold)';
+        var rankDisplay = i < 3 ? medals[i] : (i + 1);
         html += '<div class="timeline-item">' +
             '<div class="timeline-dot" style="background:' + color + '"></div>' +
             '<div class="tl-content">' +
-            '<div class="tl-title">' + escapeHtml(item.name || '') + ' — 成功率 ' + escapeHtml(String(item.rate || item.successRate || '')) + '</div>' +
-            '<div class="tl-desc">本月完成调解 ' + (item.count || item.caseCount || 0) + ' 件</div>' +
+            '<div class="tl-title">' + escapeHtml(item.real_name || '') + ' — 成功率 ' + ((item.success_rate || item.successRate) ? (item.success_rate || item.successRate).toFixed(1) : '--') + '%</div>' +
+            '<div class="tl-desc">调解案件 ' + (item.total_cases || 0) + ' 件 · 结案 ' + (item.closed_cases || 0) + ' 件</div>' +
             '</div>' +
             '<div class="tl-time">' + rankDisplay + '</div>' +
             '</div>';
