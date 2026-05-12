@@ -901,9 +901,19 @@
         }
 
         .status-tag.pending { background: var(--accent-gold-dim); color: var(--accent-gold); }
-        .status-tag.active { background: var(--accent-teal-dim); color: var(--accent-teal); }
+        .status-tag.accepted { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+        .status-tag.mediating { background: var(--accent-teal-dim); color: var(--accent-teal); }
+        .status-tag.agreed { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+        .status-tag.terminated { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
         .status-tag.closed { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
         .status-tag.urgent { background: var(--accent-rose-dim); color: var(--accent-rose); }
+        .status-tag.high { background: rgba(251, 146, 60, 0.15); color: #fb923c; }
+        .status-tag.normal { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+        .status-tag.low { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+        .status-tag.plaintiff { background: var(--accent-gold-dim); color: var(--accent-gold); }
+        .status-tag.defendant { background: var(--accent-teal-dim); color: var(--accent-teal); }
+        .status-tag.witness { background: var(--accent-violet-dim); color: var(--accent-violet); }
+        .status-tag.other { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
 
         /* ==================== ARCHIVE MANAGEMENT ==================== */
         .archive-grid {
@@ -2254,32 +2264,42 @@
                 <div class="page-header">
                     <h2>案件管理</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">download</span> 导出</button>
-                        <button class="btn btn-primary" onclick="showToast('请通过案件表单创建新案件','info')"><span class="material-icons-round" style="font-size:16px">add</span> 新建案件</button>
+                        <button class="btn btn-outline" onclick="exportCases()"><span class="material-icons-round" style="font-size:16px">download</span> 导出</button>
+                        <button class="btn btn-primary" onclick="showCaseModal()"><span class="material-icons-round" style="font-size:16px">add</span> 新建案件</button>
                     </div>
                 </div>
-                <div class="filter-bar" id="cases-filter-bar">
-                    <button class="filter-chip active" data-status="">全部</button>
-                    <button class="filter-chip" data-status="pending">待受理</button>
-                    <button class="filter-chip" data-status="active">调解中</button>
-                    <button class="filter-chip" data-status="closed">已结案</button>
-                    <button class="filter-chip" data-status="urgent">紧急</button>
+                <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+                    <div class="topbar-search" style="flex:1;min-width:200px;max-width:360px">
+                        <span class="material-icons-round" style="font-size:18px;color:var(--text-muted)">search</span>
+                        <input type="text" id="cases-search-input" placeholder="搜索案件编号或标题..." onkeydown="if(event.key==='Enter')searchCases()">
+                    </div>
+                    <div class="filter-bar" id="cases-filter-bar" style="margin-bottom:0;gap:6px">
+                        <button class="filter-chip active" data-status="">全部</button>
+                        <button class="filter-chip" data-status="pending">待受理</button>
+                        <button class="filter-chip" data-status="accepted">已受理</button>
+                        <button class="filter-chip" data-status="mediating">调解中</button>
+                        <button class="filter-chip" data-status="agreed">已达成</button>
+                        <button class="filter-chip" data-status="closed">已结案</button>
+                        <button class="filter-chip" data-status="terminated">已终止</button>
+                    </div>
                 </div>
                 <div class="data-table">
                     <table>
                         <thead>
                             <tr>
                                 <th>案件编号</th>
-                                <th>案件类型</th>
+                                <th>案件标题</th>
+                                <th>类型</th>
                                 <th>当事人</th>
                                 <th>调解员</th>
+                                <th>优先级</th>
                                 <th>状态</th>
                                 <th>创建日期</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="cases-tbody">
-                            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
+                            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -2687,6 +2707,64 @@
             </div>
 
         </div>
+    </div>
+</div>
+
+<!-- Modal: Case Create/Edit -->
+<div class="modal-overlay" id="modal-case" style="display:none" onclick="if(event.target===this)closeModal('modal-case')">
+    <div class="modal-content" style="width:640px">
+        <h3 id="modal-case-title">新建案件 <button class="modal-close" onclick="closeModal('modal-case')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <input type="hidden" id="case-edit-id">
+        <div class="modal-field">
+            <label>案件标题 <span style="color:var(--accent-rose)">*</span></label>
+            <input type="text" id="case-title" placeholder="请输入案件标题">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="modal-field">
+                <label>案件类型 <span style="color:var(--accent-rose)">*</span></label>
+                <select id="case-type">
+                    <option value="">请选择案件类型</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>优先级</label>
+                <select id="case-priority">
+                    <option value="low">低</option>
+                    <option value="normal" selected>普通</option>
+                    <option value="high">高</option>
+                    <option value="urgent">紧急</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-field">
+            <label>调解员</label>
+            <select id="case-mediator">
+                <option value="">请选择调解员（可后续指派）</option>
+            </select>
+        </div>
+        <div class="modal-field">
+            <label>案件描述</label>
+            <textarea id="case-description" placeholder="请输入案件描述"></textarea>
+        </div>
+        <div style="border-top:1px solid var(--border-subtle);padding-top:16px;margin-top:8px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <label style="font-size:13px;font-weight:600;color:var(--text-primary)">当事人信息</label>
+                <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="addCasePartyRow()">添加当事人</button>
+            </div>
+            <div id="case-parties-container"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-case')">取消</button>
+            <button class="btn btn-primary" id="case-submit-btn" onclick="submitCase()">创建案件</button>
+        </div>
+    </div>
+</div>
+
+<!-- Case Detail Overlay -->
+<div class="modal-overlay" id="modal-case-detail" style="display:none" onclick="if(event.target===this)closeModal('modal-case-detail')">
+    <div class="modal-content" style="width:800px;max-height:90vh">
+        <h3 id="case-detail-title">案件详情 <button class="modal-close" onclick="closeModal('modal-case-detail')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div id="case-detail-content" style="font-size:13px"></div>
     </div>
 </div>
 
@@ -3149,7 +3227,7 @@ async function loadPageData(pageId) {
     try {
         switch (pageId) {
             case 'dashboard': await loadDashboard(); break;
-            case 'cases': await loadCases(); break;
+            case 'cases': await loadCaseOptions(); await loadCases(); break;
             case 'archives': await loadArchives(); break;
             case 'documents': await loadDocuments(); break;
             case 'schedules': await loadSchedules(); break;
@@ -3376,6 +3454,189 @@ function renderDashboardPerformance(stats) {
 // ==================== CASES ====================
 var casesCurrentPage = 1;
 var casesCurrentStatus = '';
+var casesSearchKeyword = '';
+var caseTypeCache = null;
+var mediatorCache = null;
+
+var STATUS_LABELS = {
+    pending: '待受理', accepted: '已受理', mediating: '调解中',
+    agreed: '已达成协议', terminated: '已终止', closed: '已结案'
+};
+var PRIORITY_LABELS = { low: '低', normal: '普通', high: '高', urgent: '紧急' };
+var PARTY_TYPE_LABELS = { plaintiff: '申请方', defendant: '被申请方', witness: '证人', other: '其他' };
+
+async function loadCaseOptions() {
+    try {
+        var results = await Promise.all([
+            api.get('/cases', { pageSize: 1 }),
+            api.get('/users', { pageSize: 100 })
+        ]);
+        if (!caseTypeCache) {
+            var statsRes = await api.get('/cases/stats');
+            caseTypeCache = statsRes.type_distribution || [];
+        }
+        if (!mediatorCache) {
+            var usersData = results[1];
+            var allUsers = usersData.data || [];
+            mediatorCache = allUsers.filter(function(u) { return u.role_name === 'senior_mediator' || u.role_name === 'mediator' || u.role_id === 3 || u.role_id === 4; });
+        }
+    } catch (e) {}
+}
+
+function populateCaseFormOptions() {
+    var typeSelect = document.getElementById('case-type');
+    var mediatorSelect = document.getElementById('case-mediator');
+    if (typeSelect && caseTypeCache) {
+        typeSelect.innerHTML = '<option value="">请选择案件类型</option>';
+        caseTypeCache.forEach(function(ct) {
+            typeSelect.innerHTML += '<option value="' + ct.id + '">' + escapeHtml(ct.name) + '</option>';
+        });
+    }
+    if (mediatorSelect && mediatorCache) {
+        mediatorSelect.innerHTML = '<option value="">请选择调解员（可后续指派）</option>';
+        mediatorCache.forEach(function(m) {
+            mediatorSelect.innerHTML += '<option value="' + m.id + '">' + escapeHtml(m.real_name) + '</option>';
+        });
+    }
+}
+
+function addCasePartyRow(party) {
+    var container = document.getElementById('case-parties-container');
+    if (!container) return;
+    var idx = container.children.length;
+    var p = party || { party_type: 'plaintiff', name: '', id_number: '', phone: '' };
+    var row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:100px 1fr 1fr 1fr 32px;gap:8px;margin-bottom:8px;align-items:center';
+    row.innerHTML =
+        '<select class="party-type-select" style="padding:8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px">' +
+            '<option value="plaintiff"' + (p.party_type === 'plaintiff' ? ' selected' : '') + '>申请方</option>' +
+            '<option value="defendant"' + (p.party_type === 'defendant' ? ' selected' : '') + '>被申请方</option>' +
+            '<option value="witness"' + (p.party_type === 'witness' ? ' selected' : '') + '>证人</option>' +
+            '<option value="other"' + (p.party_type === 'other' ? ' selected' : '') + '>其他</option>' +
+        '</select>' +
+        '<input type="text" class="party-name-input" placeholder="姓名" value="' + escapeHtml(p.name || '') + '" style="padding:8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px">' +
+        '<input type="text" class="party-id-input" placeholder="身份证号" value="' + escapeHtml(p.id_number || '') + '" style="padding:8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px">' +
+        '<input type="text" class="party-phone-input" placeholder="手机号" value="' + escapeHtml(p.phone || '') + '" style="padding:8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px">' +
+        '<button onclick="this.parentElement.remove()" style="width:28px;height:28px;border-radius:50%;border:none;background:var(--accent-rose-dim);color:var(--accent-rose);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px">×</button>';
+    container.appendChild(row);
+}
+
+function getCasePartiesFromForm() {
+    var container = document.getElementById('case-parties-container');
+    if (!container) return [];
+    var parties = [];
+    var rows = container.children;
+    for (var i = 0; i < rows.length; i++) {
+        var row = rows[i];
+        var name = row.querySelector('.party-name-input');
+        if (name && name.value.trim()) {
+            parties.push({
+                party_type: row.querySelector('.party-type-select').value,
+                name: name.value.trim(),
+                id_number: (row.querySelector('.party-id-input') || {}).value || '',
+                phone: (row.querySelector('.party-phone-input') || {}).value || ''
+            });
+        }
+    }
+    return parties;
+}
+
+async function showCaseModal(caseId) {
+    await loadCaseOptions();
+    populateCaseFormOptions();
+
+    var editIdInput = document.getElementById('case-edit-id');
+    var titleEl = document.getElementById('modal-case-title');
+    var submitBtn = document.getElementById('case-submit-btn');
+    var container = document.getElementById('case-parties-container');
+    container.innerHTML = '';
+
+    if (caseId) {
+        editIdInput.value = caseId;
+        titleEl.firstChild.textContent = '编辑案件 ';
+        submitBtn.textContent = '保存修改';
+        try {
+            var c = await api.get('/cases/' + caseId);
+            document.getElementById('case-title').value = c.title || '';
+            document.getElementById('case-type').value = c.type_id || '';
+            document.getElementById('case-priority').value = c.priority || 'normal';
+            document.getElementById('case-mediator').value = c.mediator_id || '';
+            document.getElementById('case-description').value = c.description || '';
+            if (c.parties && c.parties.length > 0) {
+                c.parties.forEach(function(p) { addCasePartyRow(p); });
+            } else {
+                addCasePartyRow({ party_type: 'plaintiff' });
+                addCasePartyRow({ party_type: 'defendant' });
+            }
+        } catch (err) {
+            showToast('加载案件信息失败: ' + err.message);
+        }
+    } else {
+        editIdInput.value = '';
+        titleEl.firstChild.textContent = '新建案件 ';
+        submitBtn.textContent = '创建案件';
+        document.getElementById('case-title').value = '';
+        document.getElementById('case-type').value = '';
+        document.getElementById('case-priority').value = 'normal';
+        document.getElementById('case-mediator').value = '';
+        document.getElementById('case-description').value = '';
+        addCasePartyRow({ party_type: 'plaintiff' });
+        addCasePartyRow({ party_type: 'defendant' });
+    }
+
+    document.getElementById('modal-case').style.display = 'flex';
+}
+
+async function submitCase() {
+    var editId = document.getElementById('case-edit-id').value;
+    var title = document.getElementById('case-title').value.trim();
+    var typeId = document.getElementById('case-type').value;
+    var priority = document.getElementById('case-priority').value;
+    var mediatorId = document.getElementById('case-mediator').value;
+    var description = document.getElementById('case-description').value.trim();
+    var parties = getCasePartiesFromForm();
+
+    if (!title) { showToast('请输入案件标题'); return; }
+    if (!typeId) { showToast('请选择案件类型'); return; }
+
+    try {
+        if (editId) {
+            await api.put('/cases/' + editId, {
+                title: title, type_id: parseInt(typeId), priority: priority,
+                mediator_id: mediatorId ? parseInt(mediatorId) : null, description: description
+            });
+            showToast('案件更新成功', 'success');
+        } else {
+            await api.post('/cases', {
+                title: title, type_id: parseInt(typeId), priority: priority,
+                mediator_id: mediatorId ? parseInt(mediatorId) : null,
+                description: description, parties: parties
+            });
+            showToast('案件创建成功', 'success');
+        }
+        closeModal('modal-case');
+        await loadCases();
+    } catch (err) {
+        showToast('操作失败: ' + err.message);
+    }
+}
+
+async function deleteCase(id) {
+    if (!confirm('确定要删除此案件吗？此操作不可恢复。')) return;
+    try {
+        await api.delete('/cases/' + id);
+        showToast('案件已删除', 'success');
+        await loadCases();
+    } catch (err) {
+        showToast('删除失败: ' + err.message);
+    }
+}
+
+async function searchCases() {
+    casesSearchKeyword = document.getElementById('cases-search-input').value.trim();
+    casesCurrentPage = 1;
+    await loadCases();
+}
 
 async function loadCases(page, status) {
     if (page !== undefined) casesCurrentPage = page;
@@ -3387,6 +3648,7 @@ async function loadCases(page, status) {
             pageSize: 10
         };
         if (casesCurrentStatus) params.status = casesCurrentStatus;
+        if (casesSearchKeyword) params.search = casesSearchKeyword;
 
         var res = await api.get('/cases', params);
         var data = res.data || [];
@@ -3408,22 +3670,30 @@ function renderCasesTable(data) {
     if (!tbody) return;
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">暂无案件数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">暂无案件数据</td></tr>';
         return;
     }
 
     var html = '';
     data.forEach(function(c) {
-        var statusClass = c.status || 'pending';
-        var statusText = c.statusText || c.status || '';
+        var statusText = STATUS_LABELS[c.status] || c.status;
+        var priorityText = PRIORITY_LABELS[c.priority] || c.priority;
+        var partyNames = (c.parties || []).map(function(p) { return p.name; }).join('、');
+        var createdDate = (c.created_at || '').substring(0, 10);
         html += '<tr>' +
-            '<td style="color:var(--accent-gold);font-weight:600">' + escapeHtml(c.caseNumber || c.id || '') + '</td>' +
-            '<td>' + escapeHtml(c.type || c.caseType || '') + '</td>' +
-            '<td>' + escapeHtml(c.parties || '') + '</td>' +
-            '<td>' + escapeHtml(c.mediator || '') + '</td>' +
-            '<td><span class="status-tag ' + statusClass + '">' + escapeHtml(statusText) + '</span></td>' +
-            '<td>' + escapeHtml(c.createdAt || c.createdDate || '') + '</td>' +
-            '<td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="viewCaseDetail(\'' + (c.id || c._id || '') + '\')">查看</button></td>' +
+            '<td style="color:var(--accent-gold);font-weight:600;white-space:nowrap">' + escapeHtml(c.case_number || '') + '</td>' +
+            '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(c.title || '') + '">' + escapeHtml(c.title || '') + '</td>' +
+            '<td><span style="display:inline-flex;align-items:center;gap:4px"><span class="material-icons-round" style="font-size:14px;color:' + (c.type_color || 'var(--text-muted)') + '">' + escapeHtml(c.type_icon || 'gavel') + '</span>' + escapeHtml(c.type_name || '') + '</span></td>' +
+            '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(partyNames || '--') + '</td>' +
+            '<td>' + escapeHtml(c.mediator_name || '--') + '</td>' +
+            '<td><span class="status-tag ' + (c.priority || 'normal') + '">' + escapeHtml(priorityText) + '</span></td>' +
+            '<td><span class="status-tag ' + (c.status || 'pending') + '">' + escapeHtml(statusText) + '</span></td>' +
+            '<td style="white-space:nowrap">' + escapeHtml(createdDate) + '</td>' +
+            '<td style="white-space:nowrap">' +
+                '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="viewCaseDetail(' + c.id + ')">详情</button>' +
+                '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="showCaseModal(' + c.id + ')">编辑</button>' +
+                '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteCase(' + c.id + ')">删除</button>' +
+            '</td>' +
             '</tr>';
     });
     tbody.innerHTML = html;
@@ -3441,8 +3711,185 @@ function renderCasesPagination(totalPages, current) {
     container.innerHTML = html;
 }
 
-function viewCaseDetail(id) {
-    showToast('案件详情: ' + id, 'info');
+async function viewCaseDetail(id) {
+    try {
+        var c = await api.get('/cases/' + id);
+        var timeline = await api.get('/workflow/' + id + '/timeline');
+
+        var titleEl = document.getElementById('case-detail-title');
+        titleEl.firstChild.textContent = '案件详情 #' + (c.case_number || id) + ' ';
+
+        var statusText = STATUS_LABELS[c.status] || c.status;
+        var priorityText = PRIORITY_LABELS[c.priority] || c.priority;
+        var allowedTransitions = timeline.allowed_transitions || [];
+
+        var html = '';
+
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">';
+        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
+        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">案件标题</div>';
+        html += '<div style="font-weight:600;color:var(--text-primary)">' + escapeHtml(c.title || '') + '</div>';
+        html += '</div>';
+        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
+        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">案件类型</div>';
+        html += '<div style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:' + (c.type_color || 'var(--text-muted)') + '">' + escapeHtml(c.type_icon || 'gavel') + '</span>' + escapeHtml(c.type_name || '') + '</div>';
+        html += '</div>';
+        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
+        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">当前状态</div>';
+        html += '<span class="status-tag ' + c.status + '" style="font-size:13px">' + escapeHtml(statusText) + '</span>';
+        html += '</div>';
+        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
+        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">优先级</div>';
+        html += '<span class="status-tag ' + c.priority + '" style="font-size:13px">' + escapeHtml(priorityText) + '</span>';
+        html += '</div>';
+        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
+        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">调解员</div>';
+        html += '<div style="color:var(--text-primary)">' + escapeHtml(c.mediator_name || '未指派') + '</div>';
+        html += '</div>';
+        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
+        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">创建时间</div>';
+        html += '<div style="color:var(--text-primary)">' + escapeHtml((c.created_at || '').replace('T', ' ').substring(0, 19)) + '</div>';
+        html += '</div>';
+        html += '</div>';
+
+        if (c.description) {
+            html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px;margin-bottom:20px">';
+            html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">案件描述</div>';
+            html += '<div style="color:var(--text-secondary);line-height:1.7;white-space:pre-wrap">' + escapeHtml(c.description) + '</div>';
+            html += '</div>';
+        }
+
+        if (allowedTransitions.length > 0) {
+            html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px;margin-bottom:20px">';
+            html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">状态流转操作</div>';
+            html += '<div style="display:flex;gap:8px;flex-wrap:wrap">';
+            allowedTransitions.forEach(function(s) {
+                var btnClass = s === 'terminated' ? 'btn-outline' : 'btn-primary';
+                var btnStyle = s === 'terminated' ? 'color:var(--accent-rose);border-color:var(--accent-rose-dim)' : '';
+                html += '<button class="btn ' + btnClass + '" style="padding:6px 14px;font-size:12px;' + btnStyle + '" onclick="transitionCaseStatus(' + id + ',\'' + s + '\')">' + escapeHtml(STATUS_LABELS[s] || s) + '</button>';
+            });
+            html += '</div></div>';
+        }
+
+        if (!c.mediator_id) {
+            html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px;margin-bottom:20px">';
+            html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">指派调解员</div>';
+            html += '<div style="display:flex;gap:8px;align-items:center">';
+            html += '<select id="detail-assign-mediator" style="flex:1;padding:8px 12px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px">';
+            html += '<option value="">请选择调解员</option>';
+            if (mediatorCache) {
+                mediatorCache.forEach(function(m) {
+                    html += '<option value="' + m.id + '">' + escapeHtml(m.real_name) + '</option>';
+                });
+            }
+            html += '</select>';
+            html += '<button class="btn btn-primary" style="padding:6px 14px;font-size:12px" onclick="assignCaseMediator(' + id + ')">指派</button>';
+            html += '</div></div>';
+        }
+
+        if (c.parties && c.parties.length > 0) {
+            html += '<div style="margin-bottom:20px">';
+            html += '<div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px">当事人信息</div>';
+            html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);overflow:hidden">';
+            html += '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+            html += '<thead><tr style="background:var(--bg-card)"><th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:500">类型</th><th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:500">姓名</th><th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:500">身份证号</th><th style="padding:8px 12px;text-align:left;color:var(--text-muted);font-weight:500">手机号</th></tr></thead>';
+            html += '<tbody>';
+            c.parties.forEach(function(p) {
+                html += '<tr style="border-top:1px solid var(--border-subtle)">';
+                html += '<td style="padding:8px 12px"><span class="status-tag ' + p.party_type + '">' + escapeHtml(PARTY_TYPE_LABELS[p.party_type] || p.party_type) + '</span></td>';
+                html += '<td style="padding:8px 12px;color:var(--text-primary)">' + escapeHtml(p.name) + '</td>';
+                html += '<td style="padding:8px 12px;color:var(--text-secondary)">' + escapeHtml(p.id_number || '--') + '</td>';
+                html += '<td style="padding:8px 12px;color:var(--text-secondary)">' + escapeHtml(p.phone || '--') + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table></div></div>';
+        }
+
+        var timelineItems = timeline.timeline || [];
+        if (timelineItems.length > 0) {
+            html += '<div style="margin-bottom:20px">';
+            html += '<div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px">案件时间线</div>';
+            html += '<div style="padding-left:20px;border-left:2px solid var(--border-subtle)">';
+            timelineItems.forEach(function(t) {
+                html += '<div style="position:relative;padding:0 0 16px 16px">';
+                html += '<div style="position:absolute;left:-25px;top:2px;width:10px;height:10px;border-radius:50%;background:var(--accent-gold)"></div>';
+                html += '<div style="font-size:12px;color:var(--text-primary);font-weight:500">' + escapeHtml(t.action || '') + '</div>';
+                if (t.comment) html += '<div style="font-size:11px;color:var(--text-secondary);margin-top:2px">' + escapeHtml(t.comment) + '</div>';
+                html += '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' + escapeHtml((t.operator_name || '') + ' · ' + (t.created_at || '').replace('T', ' ').substring(0, 16)) + '</div>';
+                html += '</div>';
+            });
+            html += '</div></div>';
+        }
+
+        if (c.records && c.records.length > 0) {
+            html += '<div style="margin-bottom:20px">';
+            html += '<div style="font-size:13px;font-weight:600;color:var(--text-primary);margin-bottom:10px">调解记录</div>';
+            c.records.forEach(function(r) {
+                var typeLabels = { note: '调解笔录', audio: '录音', video: '录像', agreement: '协议' };
+                html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;margin-bottom:8px">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+                html += '<span style="font-size:12px;font-weight:500;color:var(--accent-gold)">' + escapeHtml(typeLabels[r.record_type] || r.record_type) + '</span>';
+                html += '<span style="font-size:11px;color:var(--text-muted)">' + escapeHtml((r.created_at || '').substring(0, 16)) + '</span>';
+                html += '</div>';
+                if (r.content) html += '<div style="font-size:12px;color:var(--text-secondary);margin-top:6px;white-space:pre-wrap">' + escapeHtml(r.content) + '</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+        }
+
+        html += '<div style="display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--border-subtle)">';
+        html += '<button class="btn btn-outline" style="padding:6px 14px;font-size:12px" onclick="closeModal(\'modal-case-detail\');showCaseModal(' + id + ')">编辑案件</button>';
+        html += '<button class="btn btn-outline" style="padding:6px 14px;font-size:12px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="closeModal(\'modal-case-detail\');deleteCase(' + id + ')">删除案件</button>';
+        html += '</div>';
+
+        document.getElementById('case-detail-content').innerHTML = html;
+        document.getElementById('modal-case-detail').style.display = 'flex';
+    } catch (err) {
+        showToast('加载案件详情失败: ' + err.message);
+    }
+}
+
+async function transitionCaseStatus(caseId, toStatus) {
+    var comment = prompt('请输入状态变更备注（可选）：');
+    if (comment === null) return;
+    try {
+        await api.post('/workflow/' + caseId + '/transition', { to_status: toStatus, comment: comment || '' });
+        showToast('案件状态已变更', 'success');
+        closeModal('modal-case-detail');
+        await loadCases();
+    } catch (err) {
+        showToast('状态变更失败: ' + err.message);
+    }
+}
+
+async function assignCaseMediator(caseId) {
+    var select = document.getElementById('detail-assign-mediator');
+    if (!select || !select.value) { showToast('请选择调解员'); return; }
+    try {
+        await api.post('/workflow/' + caseId + '/assign', { mediator_id: parseInt(select.value) });
+        showToast('调解员指派成功', 'success');
+        closeModal('modal-case-detail');
+        await loadCases();
+    } catch (err) {
+        showToast('指派失败: ' + err.message);
+    }
+}
+
+async function exportCases() {
+    try {
+        var res = await api.get('/reports/export', { type: 'cases', format: 'csv' });
+        if (typeof res === 'string') {
+            var blob = new Blob([res], { type: 'text/csv;charset=utf-8' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url; a.download = 'cases_export.csv'; a.click();
+            URL.revokeObjectURL(url);
+        } else {
+            showToast('导出功能处理中', 'info');
+        }
+    } catch (err) {
+        showToast('导出失败: ' + err.message);
+    }
 }
 
 // Cases filter chips
