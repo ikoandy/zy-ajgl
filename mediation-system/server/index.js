@@ -46,6 +46,12 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/files', fileRoutes);
 
 app.get('/{*path}', (req, res) => {
+  const pathVal = Array.isArray(req.params.path) ? req.params.path.join('/') : (req.params.path || '');
+  const ext = path.extname(pathVal);
+  const staticExts = ['.js', '.mjs', '.css', '.map', '.png', '.jpg', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot'];
+  if (staticExts.includes(ext)) {
+    return res.status(404).end();
+  }
   res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
