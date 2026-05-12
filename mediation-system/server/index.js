@@ -59,9 +59,9 @@ function start() {
   initDatabase();
   seed();
 
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n  ⚖  和调 · 调解机构管理平台`);
-    console.log(`  Server running at http://localhost:${PORT}`);
+    console.log(`  Server running at http://0.0.0.0:${PORT}`);
     console.log(`  API base URL: http://localhost:${PORT}/api`);
     console.log(`  Database: SQLite (${path.join(__dirname, '..', 'data', 'mediation.db')})\n`);
   });
