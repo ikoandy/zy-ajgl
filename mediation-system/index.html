@@ -2762,9 +2762,11 @@
 
 <!-- Modal: Case Create/Edit -->
 <div class="modal-overlay" id="modal-case" style="display:none" onclick="if(event.target===this)closeModal('modal-case')">
-    <div class="modal-content" style="width:640px">
+    <div class="modal-content" style="width:780px;max-height:90vh;overflow-y:auto">
         <h3 id="modal-case-title">新建案件 <button class="modal-close" onclick="closeModal('modal-case')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
         <input type="hidden" id="case-edit-id">
+
+        <div style="font-size:12px;font-weight:700;color:var(--accent-gold);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px">gavel</span> 基本信息</div>
         <div class="modal-field">
             <label>案件标题 <span style="color:var(--accent-rose)">*</span></label>
             <input type="text" id="case-title" placeholder="请输入案件标题">
@@ -2786,23 +2788,146 @@
                 </select>
             </div>
         </div>
-        <div class="modal-field">
-            <label>调解员</label>
-            <select id="case-mediator">
-                <option value="">请选择调解员（可后续指派）</option>
-            </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="modal-field">
+                <label>调解员</label>
+                <select id="case-mediator">
+                    <option value="">请选择调解员（可后续指派）</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>案件状态</label>
+                <select id="case-status">
+                    <option value="pending">待受理</option>
+                    <option value="accepted">已受理</option>
+                    <option value="mediating">调解中</option>
+                    <option value="agreed">已达成协议</option>
+                    <option value="terminated">已终止</option>
+                    <option value="closed">已结案</option>
+                </select>
+            </div>
         </div>
         <div class="modal-field">
             <label>案件描述</label>
             <textarea id="case-description" placeholder="请输入案件描述"></textarea>
         </div>
+
         <div style="border-top:1px solid var(--border-subtle);padding-top:16px;margin-top:8px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <label style="font-size:13px;font-weight:600;color:var(--text-primary)">当事人信息</label>
+                <label style="font-size:12px;font-weight:700;color:var(--accent-teal);display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px">people</span> 当事人信息</label>
                 <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="addCasePartyRow()">添加当事人</button>
             </div>
             <div id="case-parties-container"></div>
         </div>
+
+        <div style="border-top:1px solid var(--border-subtle);padding-top:16px;margin-top:16px">
+            <div style="font-size:12px;font-weight:700;color:var(--accent-gold);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px">account_balance</span> 金融借贷信息</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="modal-field"><label>借款合同号</label><input type="text" id="case-fin-contract" placeholder="如 HT-2024-001"></div>
+                <div class="modal-field"><label>贷款金额（元）</label><input type="number" id="case-fin-amount" step="0.01" placeholder="0.00"></div>
+                <div class="modal-field"><label>贷款余额（元）</label><input type="number" id="case-fin-balance" step="0.01" placeholder="0.00"></div>
+                <div class="modal-field"><label>贷款利率（%）</label><input type="number" id="case-fin-rate" step="0.01" placeholder="如 4.35"></div>
+                <div class="modal-field"><label>罚息利率（%）</label><input type="number" id="case-fin-penalty-rate" step="0.01" placeholder="如 8.70"></div>
+                <div class="modal-field"><label>贷款期限（月）</label><input type="number" id="case-fin-term" placeholder="如 24"></div>
+                <div class="modal-field"><label>贷款起始日</label><input type="date" id="case-fin-start"></div>
+                <div class="modal-field"><label>贷款到期日</label><input type="date" id="case-fin-due"></div>
+                <div class="modal-field"><label>贷款用途</label><input type="text" id="case-fin-purpose" placeholder="如 经营周转、消费贷款"></div>
+                <div class="modal-field">
+                    <label>还款方式</label>
+                    <select id="case-fin-repayment">
+                        <option value="">请选择</option>
+                        <option value="equal_installment">等额本息</option>
+                        <option value="equal_principal">等额本金</option>
+                        <option value="interest_first">先息后本</option>
+                        <option value="bullet">到期还本付息</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="modal-field">
+                    <label>担保方式</label>
+                    <select id="case-fin-collateral">
+                        <option value="">请选择</option>
+                        <option value="real_estate">房产抵押</option>
+                        <option value="vehicle">车辆抵押</option>
+                        <option value="deposit">存单质押</option>
+                        <option value="guarantee">保证担保</option>
+                        <option value="pledge">权利质押</option>
+                        <option value="none">无担保</option>
+                        <option value="other">其他</option>
+                    </select>
+                </div>
+                <div class="modal-field"><label>担保物估值（元）</label><input type="number" id="case-fin-collateral-value" step="0.01" placeholder="0.00"></div>
+            </div>
+            <div class="modal-field"><label>担保物描述</label><textarea id="case-fin-collateral-desc" placeholder="如 位于XX区XX路XX号住宅一套" style="min-height:48px"></textarea></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <div class="modal-field"><label>保证人姓名</label><input type="text" id="case-fin-guarantor"></div>
+                <div class="modal-field"><label>保证人身份证</label><input type="text" id="case-fin-guarantor-id"></div>
+                <div class="modal-field"><label>保证人电话</label><input type="text" id="case-fin-guarantor-phone"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <div class="modal-field"><label>逾期天数</label><input type="number" id="case-fin-overdue-days" value="0"></div>
+                <div class="modal-field"><label>逾期本金（元）</label><input type="number" id="case-fin-overdue-principal" step="0.01" value="0"></div>
+                <div class="modal-field"><label>逾期利息（元）</label><input type="number" id="case-fin-overdue-interest" step="0.01" value="0"></div>
+                <div class="modal-field"><label>债权总额（元）</label><input type="number" id="case-fin-total-claim" step="0.01" value="0"></div>
+                <div class="modal-field"><label>利息计算至</label><input type="date" id="case-fin-interest-to"></div>
+                <div class="modal-field"><label>实际结清日</label><input type="date" id="case-fin-actual-end"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <div class="modal-field">
+                    <label>诉讼阶段</label>
+                    <select id="case-fin-litigation">
+                        <option value="">请选择</option>
+                        <option value="none">未进入</option>
+                        <option value="pre_litigation">诉前</option>
+                        <option value="litigation">诉讼中</option>
+                        <option value="execution">执行中</option>
+                        <option value="post_execution">执行后</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>催收状态</label>
+                    <select id="case-fin-collection">
+                        <option value="">请选择</option>
+                        <option value="not_started">未开始</option>
+                        <option value="in_progress">催收中</option>
+                        <option value="suspended">已暂停</option>
+                        <option value="completed">已完成</option>
+                        <option value="failed">催收失败</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>风险等级</label>
+                    <select id="case-fin-risk">
+                        <option value="">请选择</option>
+                        <option value="normal">正常</option>
+                        <option value="concern">关注</option>
+                        <option value="substandard">次级</option>
+                        <option value="doubtful">可疑</option>
+                        <option value="loss">损失</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>核销状态</label>
+                    <select id="case-fin-writeoff">
+                        <option value="">请选择</option>
+                        <option value="none">未核销</option>
+                        <option value="partial">部分核销</option>
+                        <option value="full">全额核销</option>
+                    </select>
+                </div>
+                <div class="modal-field"><label>和解金额（元）</label><input type="number" id="case-fin-settlement-amount" step="0.01"></div>
+                <div class="modal-field"><label>和解日期</label><input type="date" id="case-fin-settlement-date"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+                <div class="modal-field"><label>金融机构</label><input type="text" id="case-fin-institution" placeholder="如 XX银行XX支行"></div>
+                <div class="modal-field"><label>机构联系人</label><input type="text" id="case-fin-inst-contact"></div>
+                <div class="modal-field"><label>联系电话</label><input type="text" id="case-fin-inst-phone"></div>
+            </div>
+            <div class="modal-field"><label>备注</label><textarea id="case-fin-remarks" placeholder="其他备注信息" style="min-height:48px"></textarea></div>
+        </div>
+
         <div class="modal-actions">
             <button class="btn btn-outline" onclick="closeModal('modal-case')">取消</button>
             <button class="btn btn-primary" id="case-submit-btn" onclick="submitCase()">创建案件</button>
@@ -3601,6 +3726,8 @@ async function showCaseModal(caseId) {
     var container = document.getElementById('case-parties-container');
     container.innerHTML = '';
 
+    resetCaseFinanceForm();
+
     if (caseId) {
         editIdInput.value = caseId;
         titleEl.firstChild.textContent = '编辑案件 ';
@@ -3611,12 +3738,48 @@ async function showCaseModal(caseId) {
             document.getElementById('case-type').value = c.type_id || '';
             document.getElementById('case-priority').value = c.priority || 'normal';
             document.getElementById('case-mediator').value = c.mediator_id || '';
+            document.getElementById('case-status').value = c.status || 'pending';
             document.getElementById('case-description').value = c.description || '';
             if (c.parties && c.parties.length > 0) {
                 c.parties.forEach(function(p) { addCasePartyRow(p); });
             } else {
                 addCasePartyRow({ party_type: 'plaintiff' });
                 addCasePartyRow({ party_type: 'defendant' });
+            }
+            if (c.finance) {
+                var f = c.finance;
+                document.getElementById('case-fin-contract').value = f.loan_contract_number || '';
+                document.getElementById('case-fin-amount').value = f.loan_amount || '';
+                document.getElementById('case-fin-balance').value = f.loan_balance || '';
+                document.getElementById('case-fin-rate').value = f.loan_interest_rate || '';
+                document.getElementById('case-fin-penalty-rate').value = f.loan_penalty_rate || '';
+                document.getElementById('case-fin-term').value = f.loan_term_months || '';
+                document.getElementById('case-fin-start').value = f.loan_start_date || '';
+                document.getElementById('case-fin-due').value = f.loan_due_date || '';
+                document.getElementById('case-fin-purpose').value = f.loan_purpose || '';
+                document.getElementById('case-fin-repayment').value = f.repayment_method || '';
+                document.getElementById('case-fin-collateral').value = f.collateral_type || '';
+                document.getElementById('case-fin-collateral-value').value = f.collateral_value || '';
+                document.getElementById('case-fin-collateral-desc').value = f.collateral_description || '';
+                document.getElementById('case-fin-guarantor').value = f.guarantor_name || '';
+                document.getElementById('case-fin-guarantor-id').value = f.guarantor_id_number || '';
+                document.getElementById('case-fin-guarantor-phone').value = f.guarantor_phone || '';
+                document.getElementById('case-fin-overdue-days').value = f.overdue_days || 0;
+                document.getElementById('case-fin-overdue-principal').value = f.overdue_principal || 0;
+                document.getElementById('case-fin-overdue-interest').value = f.overdue_interest || 0;
+                document.getElementById('case-fin-total-claim').value = f.total_claim_amount || 0;
+                document.getElementById('case-fin-interest-to').value = f.interest_calculated_to || '';
+                document.getElementById('case-fin-actual-end').value = f.loan_actual_end_date || '';
+                document.getElementById('case-fin-litigation').value = f.litigation_stage || '';
+                document.getElementById('case-fin-collection').value = f.collection_status || '';
+                document.getElementById('case-fin-risk').value = f.risk_level || '';
+                document.getElementById('case-fin-writeoff').value = f.write_off_status || '';
+                document.getElementById('case-fin-settlement-amount').value = f.settlement_amount || '';
+                document.getElementById('case-fin-settlement-date').value = f.settlement_date || '';
+                document.getElementById('case-fin-institution').value = f.institution_name || '';
+                document.getElementById('case-fin-inst-contact').value = f.institution_contact || '';
+                document.getElementById('case-fin-inst-phone').value = f.institution_contact_phone || '';
+                document.getElementById('case-fin-remarks').value = f.remarks || '';
             }
         } catch (err) {
             showToast('加载案件信息失败: ' + err.message);
@@ -3629,6 +3792,7 @@ async function showCaseModal(caseId) {
         document.getElementById('case-type').value = '';
         document.getElementById('case-priority').value = 'normal';
         document.getElementById('case-mediator').value = '';
+        document.getElementById('case-status').value = 'pending';
         document.getElementById('case-description').value = '';
         addCasePartyRow({ party_type: 'plaintiff' });
         addCasePartyRow({ party_type: 'defendant' });
@@ -3637,14 +3801,66 @@ async function showCaseModal(caseId) {
     document.getElementById('modal-case').style.display = 'flex';
 }
 
+function resetCaseFinanceForm() {
+    var fields = ['case-fin-contract', 'case-fin-amount', 'case-fin-balance', 'case-fin-rate', 'case-fin-penalty-rate', 'case-fin-term', 'case-fin-start', 'case-fin-due', 'case-fin-purpose', 'case-fin-collateral-value', 'case-fin-collateral-desc', 'case-fin-guarantor', 'case-fin-guarantor-id', 'case-fin-guarantor-phone', 'case-fin-interest-to', 'case-fin-actual-end', 'case-fin-settlement-amount', 'case-fin-settlement-date', 'case-fin-institution', 'case-fin-inst-contact', 'case-fin-inst-phone', 'case-fin-remarks'];
+    fields.forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    var selects = ['case-fin-repayment', 'case-fin-collateral', 'case-fin-litigation', 'case-fin-collection', 'case-fin-risk', 'case-fin-writeoff'];
+    selects.forEach(function(id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    var nums = ['case-fin-overdue-days', 'case-fin-overdue-principal', 'case-fin-overdue-interest', 'case-fin-total-claim'];
+    nums.forEach(function(id) { var el = document.getElementById(id); if (el) el.value = '0'; });
+}
+
+function getCaseFinanceFromForm() {
+    var hasData = document.getElementById('case-fin-contract').value.trim() ||
+                  document.getElementById('case-fin-amount').value ||
+                  document.getElementById('case-fin-institution').value.trim();
+    if (!hasData) return null;
+    return {
+        loan_contract_number: document.getElementById('case-fin-contract').value.trim(),
+        loan_amount: parseFloat(document.getElementById('case-fin-amount').value) || null,
+        loan_balance: parseFloat(document.getElementById('case-fin-balance').value) || null,
+        loan_interest_rate: parseFloat(document.getElementById('case-fin-rate').value) || null,
+        loan_penalty_rate: parseFloat(document.getElementById('case-fin-penalty-rate').value) || null,
+        loan_start_date: document.getElementById('case-fin-start').value || null,
+        loan_due_date: document.getElementById('case-fin-due').value || null,
+        loan_actual_end_date: document.getElementById('case-fin-actual-end').value || null,
+        loan_term_months: parseInt(document.getElementById('case-fin-term').value) || null,
+        loan_purpose: document.getElementById('case-fin-purpose').value.trim(),
+        repayment_method: document.getElementById('case-fin-repayment').value || null,
+        collateral_type: document.getElementById('case-fin-collateral').value || null,
+        collateral_description: document.getElementById('case-fin-collateral-desc').value.trim(),
+        collateral_value: parseFloat(document.getElementById('case-fin-collateral-value').value) || null,
+        guarantor_name: document.getElementById('case-fin-guarantor').value.trim(),
+        guarantor_id_number: document.getElementById('case-fin-guarantor-id').value.trim(),
+        guarantor_phone: document.getElementById('case-fin-guarantor-phone').value.trim(),
+        overdue_days: parseInt(document.getElementById('case-fin-overdue-days').value) || 0,
+        overdue_principal: parseFloat(document.getElementById('case-fin-overdue-principal').value) || 0,
+        overdue_interest: parseFloat(document.getElementById('case-fin-overdue-interest').value) || 0,
+        total_claim_amount: parseFloat(document.getElementById('case-fin-total-claim').value) || 0,
+        interest_calculated_to: document.getElementById('case-fin-interest-to').value || null,
+        litigation_stage: document.getElementById('case-fin-litigation').value || null,
+        collection_status: document.getElementById('case-fin-collection').value || null,
+        institution_name: document.getElementById('case-fin-institution').value.trim(),
+        institution_contact: document.getElementById('case-fin-inst-contact').value.trim(),
+        institution_contact_phone: document.getElementById('case-fin-inst-phone').value.trim(),
+        risk_level: document.getElementById('case-fin-risk').value || null,
+        write_off_status: document.getElementById('case-fin-writeoff').value || null,
+        settlement_amount: parseFloat(document.getElementById('case-fin-settlement-amount').value) || null,
+        settlement_date: document.getElementById('case-fin-settlement-date').value || null,
+        remarks: document.getElementById('case-fin-remarks').value.trim()
+    };
+}
+
 async function submitCase() {
     var editId = document.getElementById('case-edit-id').value;
     var title = document.getElementById('case-title').value.trim();
     var typeId = document.getElementById('case-type').value;
     var priority = document.getElementById('case-priority').value;
     var mediatorId = document.getElementById('case-mediator').value;
+    var status = document.getElementById('case-status').value;
     var description = document.getElementById('case-description').value.trim();
     var parties = getCasePartiesFromForm();
+    var finance = getCaseFinanceFromForm();
 
     if (!title) { showToast('请输入案件标题'); return; }
     if (!typeId) { showToast('请选择案件类型'); return; }
@@ -3655,13 +3871,19 @@ async function submitCase() {
                 title: title, type_id: parseInt(typeId), priority: priority,
                 mediator_id: mediatorId ? parseInt(mediatorId) : null, description: description
             });
+            if (finance) {
+                await api.put('/cases/' + editId + '/finance', finance);
+            }
             showToast('案件更新成功', 'success');
         } else {
-            await api.post('/cases', {
+            var caseRes = await api.post('/cases', {
                 title: title, type_id: parseInt(typeId), priority: priority,
                 mediator_id: mediatorId ? parseInt(mediatorId) : null,
                 description: description, parties: parties
             });
+            if (finance && caseRes && caseRes.id) {
+                await api.put('/cases/' + caseRes.id + '/finance', finance);
+            }
             showToast('案件创建成功', 'success');
         }
         closeModal('modal-case');
