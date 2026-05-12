@@ -5642,7 +5642,7 @@ async function submitArchiveFile() {
             formData.append('files', item.file);
         });
 
-        var token = localStorage.getItem('token');
+        var token = localStorage.getItem('auth_token');
         var resp = await fetch('/api/archives/' + archiveId + '/files', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + token },
@@ -5674,7 +5674,7 @@ async function deleteArchiveFile(archiveId, fileId) {
 }
 
 function downloadArchiveFile(archiveId, fileId) {
-    var token = localStorage.getItem('token');
+    var token = localStorage.getItem('auth_token');
     fetch('/api/archives/' + archiveId + '/files/' + fileId + '/download', {
         method: 'GET',
         headers: { 'Authorization': 'Bearer ' + token }
