@@ -3215,6 +3215,20 @@
     </div>
 </div>
 
+<!-- Modal: Archive File Preview -->
+<div class="modal-overlay" id="modal-archive-preview" style="display:none" onclick="if(event.target===this)closeModal('modal-archive-preview')">
+    <div class="modal-content" style="width:90vw;max-width:1100px;max-height:95vh;display:flex;flex-direction:column">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--border-subtle);margin-bottom:0;flex-shrink:0">
+            <h3 id="archive-preview-title" style="margin:0">文件预览</h3>
+            <div style="display:flex;align-items:center;gap:8px">
+                <button class="btn btn-outline" style="padding:6px 12px;font-size:12px" id="archive-preview-download-btn"><span class="material-icons-round" style="font-size:14px">download</span> 下载</button>
+                <button class="modal-close" onclick="closeModal('modal-archive-preview')"><span class="material-icons-round" style="font-size:18px">close</span></button>
+            </div>
+        </div>
+        <div id="archive-preview-content" style="flex:1;overflow:auto;min-height:400px;display:flex;align-items:center;justify-content:center"></div>
+    </div>
+</div>
+
 <!-- Modal: Schedule -->
 <div class="modal-overlay" id="modal-schedule" style="display:none" onclick="if(event.target===this)closeModal('modal-schedule')">
     <div class="modal-content">
@@ -5388,6 +5402,7 @@ async function viewArchiveDetail(id) {
                     '<td>' + escapeHtml(f.uploaded_by_name || '--') + '</td>' +
                     '<td style="white-space:nowrap">' + escapeHtml((f.created_at || '').substring(0, 10)) + '</td>' +
                     '<td style="white-space:nowrap">' +
+                        '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="previewArchiveFile(' + id + ',' + f.id + ',\'' + escapeHtml(displayName).replace(/'/g, "\\'") + '\',\'' + escapeHtml(f.file_type || '') + '\')"><span class="material-icons-round" style="font-size:12px">visibility</span> 预览</button>' +
                         '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="downloadArchiveFile(' + id + ',' + f.id + ')"><span class="material-icons-round" style="font-size:12px">download</span> 下载</button>' +
                         '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteArchiveFile(' + id + ',' + f.id + ')"><span class="material-icons-round" style="font-size:12px">delete</span></button>' +
                     '</td>' +
@@ -5699,6 +5714,92 @@ function downloadArchiveFile(archiveId, fileId) {
     }).catch(function(err) {
         showToast('文件下载失败: ' + err.message);
     });
+}
+
+function getPreviewUrl(archiveId, fileId) {
+    var token = localStorage.getItem('auth_token');
+    return '/api/archives/' + archiveId + '/files/' + fileId + '/preview?token=' + encodeURIComponent(token);
+}
+
+function previewArchiveFile(archiveId, fileId, fileName, fileType) {
+    var ext = (fileType || '').toLowerCase();
+    var displayName = fileName || '文件预览';
+    var previewUrl = getPreviewUrl(archiveId, fileId);
+
+    document.getElementById('archive-preview-title').textContent = displayName;
+    document.getElementById('archive-preview-download-btn').onclick = function() { downloadArchiveFile(archiveId, fileId); };
+
+    var contentEl = document.getElementById('archive-preview-content');
+    contentEl.innerHTML = '';
+
+    var imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+    var audioExts = ['mp3', 'wav'];
+    var videoExts = ['mp4', 'avi'];
+    var pdfExts = ['pdf'];
+    var docExts = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+    var textExts = ['txt', 'csv', 'md', 'json', 'xml', 'html'];
+
+    if (imageExts.indexOf(ext) >= 0) {
+        contentEl.innerHTML = '<img src="' + previewUrl + '" style="max-width:100%;max-height:80vh;object-fit:contain;border-radius:var(--radius-md)" alt="' + escapeHtml(displayName) + '">';
+    } else if (audioExts.indexOf(ext) >= 0) {
+        contentEl.innerHTML =
+            '<div style="text-align:center;width:100%;max-width:600px;padding:40px">' +
+            '<span class="material-icons-round" style="font-size:64px;color:var(--accent-gold);display:block;margin-bottom:20px">audiotrack</span>' +
+            '<div style="font-size:16px;color:var(--text-primary);margin-bottom:20px">' + escapeHtml(displayName) + '</div>' +
+            '<audio controls style="width:100%" src="' + previewUrl + '" autoplay>您的浏览器不支持音频播放</audio>' +
+            '</div>';
+    } else if (videoExts.indexOf(ext) >= 0) {
+        contentEl.innerHTML =
+            '<video controls style="max-width:100%;max-height:80vh;border-radius:var(--radius-md)" src="' + previewUrl + '" autoplay>您的浏览器不支持视频播放</video>';
+    } else if (pdfExts.indexOf(ext) >= 0) {
+        contentEl.innerHTML = '<iframe src="' + previewUrl + '" style="width:100%;height:80vh;border:none;border-radius:var(--radius-md)"></iframe>';
+    } else if (docExts.indexOf(ext) >= 0) {
+        var iconMap = { doc: 'description', docx: 'description', xls: 'table_chart', xlsx: 'table_chart', ppt: 'slideshow', pptx: 'slideshow' };
+        var icon = iconMap[ext] || 'description';
+        var typeLabel = ext.indexOf('doc') >= 0 ? 'Word 文档' : ext.indexOf('xls') >= 0 ? 'Excel 表格' : 'PPT 演示文稿';
+        contentEl.innerHTML =
+            '<div style="text-align:center;padding:40px">' +
+            '<span class="material-icons-round" style="font-size:72px;color:var(--accent-gold);display:block;margin-bottom:20px">' + icon + '</span>' +
+            '<div style="font-size:18px;color:var(--text-primary);margin-bottom:8px">' + escapeHtml(displayName) + '</div>' +
+            '<div style="font-size:13px;color:var(--text-muted);margin-bottom:24px">' + typeLabel + ' · .' + ext.toUpperCase() + '</div>' +
+            '<div style="display:flex;gap:12px;justify-content:center">' +
+            '<button class="btn btn-primary" onclick="downloadArchiveFile(' + archiveId + ',' + fileId + ')"><span class="material-icons-round" style="font-size:16px">download</span> 下载文件</button>' +
+            '<button class="btn btn-outline" onclick="previewDocOnline(' + archiveId + ',' + fileId + ',\'' + escapeHtml(displayName) + '\')"><span class="material-icons-round" style="font-size:16px">visibility</span> 在线预览</button>' +
+            '</div>' +
+            '</div>';
+    } else if (textExts.indexOf(ext) >= 0) {
+        var token = localStorage.getItem('auth_token');
+        fetch('/api/archives/' + archiveId + '/files/' + fileId + '/preview', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + token }
+        }).then(function(resp) {
+            if (!resp.ok) throw new Error('加载失败');
+            return resp.text();
+        }).then(function(text) {
+            contentEl.innerHTML =
+                '<pre style="width:100%;padding:20px;background:var(--bg-tertiary);border-radius:var(--radius-md);color:var(--text-primary);font-family:monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-all;max-height:80vh;overflow:auto;text-align:left">' + escapeHtml(text) + '</pre>';
+        }).catch(function(err) {
+            contentEl.innerHTML = '<div style="text-align:center;color:var(--text-muted)"><span class="material-icons-round" style="font-size:48px;display:block;margin-bottom:12px">error</span>文件加载失败</div>';
+        });
+    } else {
+        contentEl.innerHTML =
+            '<div style="text-align:center;padding:40px">' +
+            '<span class="material-icons-round" style="font-size:72px;color:var(--text-muted);display:block;margin-bottom:20px">insert_drive_file</span>' +
+            '<div style="font-size:18px;color:var(--text-primary);margin-bottom:8px">' + escapeHtml(displayName) + '</div>' +
+            '<div style="font-size:13px;color:var(--text-muted);margin-bottom:24px">此文件类型不支持在线预览</div>' +
+            '<button class="btn btn-primary" onclick="downloadArchiveFile(' + archiveId + ',' + fileId + ')"><span class="material-icons-round" style="font-size:16px">download</span> 下载文件</button>' +
+            '</div>';
+    }
+
+    document.getElementById('modal-archive-preview').style.display = 'flex';
+}
+
+function previewDocOnline(archiveId, fileId, fileName) {
+    var token = localStorage.getItem('auth_token');
+    var fileUrl = window.location.origin + '/api/archives/' + archiveId + '/files/' + fileId + '/preview?token=' + encodeURIComponent(token);
+    var viewerUrl = 'https://view.officeapps.live.com/op/embed.aspx?src=' + encodeURIComponent(fileUrl);
+    var contentEl = document.getElementById('archive-preview-content');
+    contentEl.innerHTML = '<iframe src="' + viewerUrl + '" style="width:100%;height:80vh;border:none;border-radius:var(--radius-md)" frameborder="0"></iframe>';
 }
 
 async function exportArchives() {

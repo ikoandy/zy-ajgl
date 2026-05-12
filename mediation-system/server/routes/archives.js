@@ -407,6 +407,53 @@ router.get('/:archiveId/files/:fileId/download', (req, res) => {
   res.download(file.file_path, file.file_name);
 });
 
+var MIME_TYPES = {
+  pdf: 'application/pdf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  bmp: 'image/bmp',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  mp4: 'video/mp4',
+  avi: 'video/x-msvideo',
+  txt: 'text/plain; charset=utf-8',
+  csv: 'text/csv; charset=utf-8',
+  html: 'text/html; charset=utf-8',
+  xml: 'text/xml; charset=utf-8',
+  json: 'application/json; charset=utf-8',
+  md: 'text/markdown; charset=utf-8'
+};
+
+router.get('/:archiveId/files/:fileId/preview', (req, res) => {
+  var db = getDb();
+  var file = db.prepare('SELECT * FROM archive_files WHERE id = ? AND archive_id = ?').get(req.params.fileId, req.params.archiveId);
+  if (!file) {
+    return res.status(404).json(formatError('文件不存在'));
+  }
+
+  if (!file.file_path || !fs.existsSync(file.file_path)) {
+    return res.status(404).json(formatError('文件在服务器上不存在'));
+  }
+
+  var ext = (file.file_type || '').toLowerCase();
+  var mimeType = MIME_TYPES[ext] || 'application/octet-stream';
+
+  res.setHeader('Content-Type', mimeType);
+  res.setHeader('Content-Disposition', 'inline; filename="' + encodeURIComponent(file.file_name) + '"');
+  res.setHeader('Cache-Control', 'private, max-age=3600');
+
+  var fileStream = fs.createReadStream(file.file_path);
+  fileStream.pipe(res);
+});
+
 router.get('/export/all', (req, res) => {
   const db = getDb();
   const { category_id, status, confidentiality_level, retention_period } = req.query;
