@@ -2265,6 +2265,7 @@
                     <h2>案件管理</h2>
                     <div class="page-header-actions">
                         <button class="btn btn-outline" onclick="exportCases()"><span class="material-icons-round" style="font-size:16px">download</span> 导出</button>
+                        <button class="btn btn-outline" onclick="showCaseImportModal()"><span class="material-icons-round" style="font-size:16px">upload</span> 导入</button>
                         <button class="btn btn-primary" onclick="showCaseModal()"><span class="material-icons-round" style="font-size:16px">add</span> 新建案件</button>
                     </div>
                 </div>
@@ -2706,6 +2707,55 @@
                 <div class="pagination" id="audit-pagination"></div>
             </div>
 
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Case Import -->
+<div class="modal-overlay" id="modal-case-import" style="display:none" onclick="if(event.target===this)closeModal('modal-case-import')">
+    <div class="modal-content" style="width:780px;max-height:90vh">
+        <h3>批量导入案件 <button class="modal-close" onclick="closeModal('modal-case-import')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div id="import-step-1">
+            <div style="text-align:center;padding:24px 0">
+                <div style="width:64px;height:64px;border-radius:50%;background:var(--accent-gold-dim);display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+                    <span class="material-icons-round" style="font-size:28px;color:var(--accent-gold)">upload_file</span>
+                </div>
+                <p style="color:var(--text-secondary);margin-bottom:16px;font-size:13px">上传 Excel 文件（.xls / .xlsx），系统将自动识别案件字段</p>
+                <div style="display:flex;gap:10px;justify-content:center;margin-bottom:16px">
+                    <button class="btn btn-outline" onclick="downloadImportTemplate()"><span class="material-icons-round" style="font-size:14px">download</span> 下载模板</button>
+                    <label class="btn btn-primary" style="cursor:pointer"><span class="material-icons-round" style="font-size:14px">upload</span> 选择文件
+                        <input type="file" id="import-file-input" accept=".xls,.xlsx,.csv" style="display:none" onchange="handleImportFile(this)">
+                    </label>
+                </div>
+                <div id="import-file-name" style="font-size:12px;color:var(--text-muted)"></div>
+            </div>
+        </div>
+        <div id="import-step-2" style="display:none">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <div style="font-size:13px;color:var(--text-secondary)">共 <span id="import-total-rows" style="color:var(--accent-gold);font-weight:600">0</span> 条数据，已匹配 <span id="import-matched-count" style="color:var(--accent-teal);font-weight:600">0</span> 个字段</div>
+                <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="resetImport()">重新选择</button>
+            </div>
+            <div style="margin-bottom:16px">
+                <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px">字段映射（可手动调整）</div>
+                <div id="import-field-mapping" style="max-height:200px;overflow-y:auto"></div>
+            </div>
+            <div style="margin-bottom:16px">
+                <div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px">数据预览（前5行）</div>
+                <div id="import-preview-table" style="overflow-x:auto;max-height:200px;overflow-y:auto"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" onclick="resetImport()">取消</button>
+                <button class="btn btn-primary" onclick="executeImport()"><span class="material-icons-round" style="font-size:14px">check</span> 确认导入</button>
+            </div>
+        </div>
+        <div id="import-step-3" style="display:none">
+            <div style="text-align:center;padding:20px 0">
+                <div id="import-result-icon" style="width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px"></div>
+                <div id="import-result-text" style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px"></div>
+                <div id="import-result-detail" style="font-size:13px;color:var(--text-secondary);margin-bottom:16px"></div>
+                <div id="import-error-list" style="text-align:left;max-height:150px;overflow-y:auto;font-size:12px;color:var(--accent-rose);margin-bottom:16px"></div>
+                <button class="btn btn-primary" onclick="closeModal('modal-case-import');loadCases()">完成</button>
+            </div>
         </div>
     </div>
 </div>
@@ -3901,6 +3951,227 @@ document.getElementById('cases-filter-bar').addEventListener('click', function(e
     var status = chip.getAttribute('data-status');
     loadCases(1, status);
 });
+
+// ==================== CASE IMPORT ====================
+var importFileData = null;
+var importFieldMapping = null;
+var importAvailableFields = null;
+
+function showCaseImportModal() {
+    resetImport();
+    document.getElementById('modal-case-import').style.display = 'flex';
+}
+
+function resetImport() {
+    importFileData = null;
+    importFieldMapping = null;
+    document.getElementById('import-step-1').style.display = '';
+    document.getElementById('import-step-2').style.display = 'none';
+    document.getElementById('import-step-3').style.display = 'none';
+    document.getElementById('import-file-input').value = '';
+    document.getElementById('import-file-name').textContent = '';
+}
+
+function downloadImportTemplate() {
+    var token = api.getToken();
+    var a = document.createElement('a');
+    a.href = '/api/cases/import/template';
+    a.download = 'case_import_template.xlsx';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', '/api/cases/import/template', true);
+    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
+    xhr.responseType = 'blob';
+    xhr.onload = function() {
+        if (xhr.status === 200) {
+            var url = URL.createObjectURL(xhr.response);
+            a.href = url;
+            a.click();
+            URL.revokeObjectURL(url);
+        } else {
+            showToast('下载模板失败');
+        }
+    };
+    xhr.send();
+}
+
+async function handleImportFile(input) {
+    if (!input.files || !input.files[0]) return;
+    var file = input.files[0];
+    var ext = file.name.split('.').pop().toLowerCase();
+    if (!['xls', 'xlsx', 'csv'].includes(ext)) {
+        showToast('仅支持 Excel (.xls/.xlsx) 和 CSV 文件');
+        return;
+    }
+
+    document.getElementById('import-file-name').textContent = '正在解析: ' + file.name + ' ...';
+
+    var formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        var token = api.getToken();
+        var response = await fetch('/api/cases/import/preview', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        });
+
+        var result = await response.json();
+        if (!result.success) {
+            showToast(result.error || '文件解析失败');
+            document.getElementById('import-file-name').textContent = '';
+            return;
+        }
+
+        var data = result.data;
+        importFileData = file;
+        importFieldMapping = data.field_mapping;
+        importAvailableFields = data.available_fields;
+
+        document.getElementById('import-total-rows').textContent = data.total_rows;
+        document.getElementById('import-matched-count').textContent = data.matched_count;
+        document.getElementById('import-file-name').textContent = file.name + ' (' + data.total_rows + ' 行)';
+
+        renderImportFieldMapping(data.headers, data.field_mapping);
+        renderImportPreview(data.headers, data.preview);
+
+        document.getElementById('import-step-1').style.display = 'none';
+        document.getElementById('import-step-2').style.display = '';
+    } catch (err) {
+        showToast('文件解析失败: ' + err.message);
+        document.getElementById('import-file-name').textContent = '';
+    }
+}
+
+function renderImportFieldMapping(headers, mapping) {
+    var container = document.getElementById('import-field-mapping');
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:12px">';
+    html += '<thead><tr style="background:var(--bg-card)"><th style="padding:6px 10px;text-align:left;color:var(--text-muted);font-weight:500">Excel 列名</th><th style="padding:6px 10px;text-align:left;color:var(--text-muted);font-weight:500">映射到字段</th><th style="padding:6px 10px;text-align:center;color:var(--text-muted);font-weight:500;width:40px">状态</th></tr></thead>';
+    html += '<tbody>';
+    headers.forEach(function(h) {
+        var mapped = mapping[h];
+        var statusIcon = mapped ? '<span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">check_circle</span>' : '<span class="material-icons-round" style="font-size:16px;color:var(--text-muted)">remove_circle_outline</span>';
+        html += '<tr style="border-top:1px solid var(--border-subtle)">';
+        html += '<td style="padding:6px 10px;color:var(--text-primary);font-weight:500">' + escapeHtml(h) + '</td>';
+        html += '<td style="padding:6px 10px"><select data-header="' + escapeHtml(h) + '" class="import-mapping-select" style="width:100%;padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px" onchange="updateFieldMapping(this)">';
+        html += '<option value="">-- 不导入 --</option>';
+        if (importAvailableFields) {
+            importAvailableFields.forEach(function(f) {
+                var selected = mapped === f.key ? ' selected' : '';
+                html += '<option value="' + f.key + '"' + selected + '>' + escapeHtml(f.label) + '</option>';
+            });
+        }
+        html += '</select></td>';
+        html += '<td style="padding:6px 10px;text-align:center">' + statusIcon + '</td>';
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function updateFieldMapping(select) {
+    var header = select.getAttribute('data-header');
+    importFieldMapping[header] = select.value || null;
+    var matchedCount = 0;
+    for (var k in importFieldMapping) {
+        if (importFieldMapping[k]) matchedCount++;
+    }
+    document.getElementById('import-matched-count').textContent = matchedCount;
+    var statusCell = select.closest('tr').querySelector('td:last-child .material-icons-round');
+    if (statusCell) {
+        if (select.value) {
+            statusCell.textContent = 'check_circle';
+            statusCell.style.color = 'var(--accent-teal)';
+        } else {
+            statusCell.textContent = 'remove_circle_outline';
+            statusCell.style.color = 'var(--text-muted)';
+        }
+    }
+}
+
+function renderImportPreview(headers, preview) {
+    var container = document.getElementById('import-preview-table');
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:600px">';
+    html += '<thead><tr style="background:var(--bg-card)">';
+    headers.forEach(function(h) {
+        var mapped = importFieldMapping[h];
+        var color = mapped ? 'var(--accent-teal)' : 'var(--text-muted)';
+        html += '<th style="padding:6px 8px;text-align:left;color:' + color + ';font-weight:500;white-space:nowrap">' + escapeHtml(h) + '</th>';
+    });
+    html += '</tr></thead><tbody>';
+    preview.forEach(function(row, idx) {
+        html += '<tr style="border-top:1px solid var(--border-subtle);' + (idx % 2 === 1 ? 'background:var(--bg-tertiary)' : '') + '">';
+        headers.forEach(function(h) {
+            html += '<td style="padding:5px 8px;color:var(--text-secondary);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(String(row[h] || '')) + '</td>';
+        });
+        html += '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+async function executeImport() {
+    if (!importFileData) { showToast('请先选择文件'); return; }
+
+    var formData = new FormData();
+    formData.append('file', importFileData);
+    formData.append('mapping', JSON.stringify(importFieldMapping));
+
+    try {
+        var token = api.getToken();
+        var response = await fetch('/api/cases/import/execute', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        });
+
+        var result = await response.json();
+        if (!result.success) {
+            showToast(result.error || '导入失败');
+            return;
+        }
+
+        var data = result.data;
+        document.getElementById('import-step-2').style.display = 'none';
+        document.getElementById('import-step-3').style.display = '';
+
+        var iconEl = document.getElementById('import-result-icon');
+        var textEl = document.getElementById('import-result-text');
+        var detailEl = document.getElementById('import-result-detail');
+        var errorListEl = document.getElementById('import-error-list');
+
+        if (data.failed === 0) {
+            iconEl.style.background = 'rgba(52, 211, 153, 0.15)';
+            iconEl.innerHTML = '<span class="material-icons-round" style="font-size:32px;color:#34d399">check_circle</span>';
+            textEl.textContent = '导入完成';
+            textEl.style.color = '#34d399';
+        } else if (data.success > 0) {
+            iconEl.style.background = 'var(--accent-gold-dim)';
+            iconEl.innerHTML = '<span class="material-icons-round" style="font-size:32px;color:var(--accent-gold)">warning</span>';
+            textEl.textContent = '部分导入成功';
+            textEl.style.color = 'var(--accent-gold)';
+        } else {
+            iconEl.style.background = 'var(--accent-rose-dim)';
+            iconEl.innerHTML = '<span class="material-icons-round" style="font-size:32px;color:var(--accent-rose)">error</span>';
+            textEl.textContent = '导入失败';
+            textEl.style.color = 'var(--accent-rose)';
+        }
+
+        detailEl.textContent = '总计 ' + data.total + ' 条，成功 ' + data.success + ' 条，失败 ' + data.failed + ' 条';
+
+        if (data.errors && data.errors.length > 0) {
+            var errHtml = data.errors.map(function(e) {
+                return '<div style="margin-bottom:4px">第 ' + e.row + ' 行: ' + escapeHtml(e.error) + '</div>';
+            }).join('');
+            if (data.failed > 20) errHtml += '<div style="margin-top:4px;color:var(--text-muted)">...仅显示前20条错误</div>';
+            errorListEl.innerHTML = errHtml;
+        } else {
+            errorListEl.innerHTML = '';
+        }
+    } catch (err) {
+        showToast('导入失败: ' + err.message);
+    }
+}
 
 // ==================== ARCHIVES ====================
 async function loadArchives() {

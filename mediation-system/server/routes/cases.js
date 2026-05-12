@@ -1,10 +1,258 @@
 const express = require('express');
+const multer = require('multer');
+const XLSX = require('xlsx');
 const { getDb } = require('../db');
 const { authMiddleware, roleMiddleware } = require('../middleware/auth');
 const { paginate, formatResponse, formatError, logAudit } = require('../utils/helpers');
 
 const router = express.Router();
 router.use(authMiddleware);
+
+const CASE_FIELDS = {
+  title: { label: '案件标题', aliases: ['标题', '案件标题', '案件名称', '名称', 'title', 'case_title', '案由'] },
+  type_name: { label: '案件类型', aliases: ['类型', '案件类型', '纠纷类型', 'type', 'case_type', 'type_name'] },
+  description: { label: '案件描述', aliases: ['描述', '案件描述', '简介', '详情', 'description', 'desc', '案情'] },
+  priority: { label: '优先级', aliases: ['优先级', '紧急程度', 'priority', '级别', '重要程度'] },
+  mediator_name: { label: '调解员', aliases: ['调解员', '调解员姓名', 'mediator', 'mediator_name', '负责人', '承办人'] },
+  status: { label: '状态', aliases: ['状态', '案件状态', 'status', 'case_status'] },
+  plaintiff_name: { label: '申请方', aliases: ['申请方', '申请人', '原告', '甲方', 'plaintiff', '申请方姓名'] },
+  plaintiff_phone: { label: '申请方电话', aliases: ['申请方电话', '申请人电话', '原告电话', '甲方电话', 'plaintiff_phone', '申请方手机'] },
+  plaintiff_id: { label: '申请方身份证', aliases: ['申请方身份证', '申请人身份证', '原告身份证', 'plaintiff_id', '申请方证件号'] },
+  defendant_name: { label: '被申请方', aliases: ['被申请方', '被申请人', '被告', '乙方', 'defendant', '被申请方姓名'] },
+  defendant_phone: { label: '被申请方电话', aliases: ['被申请方电话', '被申请人电话', '被告电话', '乙方电话', 'defendant_phone', '被申请方手机'] },
+  defendant_id: { label: '被申请方身份证', aliases: ['被申请方身份证', '被申请人身份证', '被告身份证', 'defendant_id', '被申请方证件号'] }
+};
+
+const PRIORITY_MAP = { '低': 'low', '普通': 'normal', '中': 'normal', '高': 'high', '紧急': 'urgent', '低优先级': 'low', '普通优先级': 'normal', '高优先级': 'high', '紧急优先级': 'urgent' };
+const STATUS_MAP = { '待受理': 'pending', '已受理': 'accepted', '调解中': 'mediating', '已达成协议': 'agreed', '已达成': 'agreed', '已终止': 'terminated', '已结案': 'closed' };
+
+function matchField(header) {
+  var h = String(header).trim().toLowerCase();
+  for (var key in CASE_FIELDS) {
+    var aliases = CASE_FIELDS[key].aliases;
+    for (var i = 0; i < aliases.length; i++) {
+      if (h === aliases[i].toLowerCase()) return key;
+    }
+  }
+  for (var key in CASE_FIELDS) {
+    var aliases = CASE_FIELDS[key].aliases;
+    for (var i = 0; i < aliases.length; i++) {
+      if (h.includes(aliases[i].toLowerCase()) || aliases[i].toLowerCase().includes(h)) return key;
+    }
+  }
+  return null;
+}
+
+const importUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    var ext = require('path').extname(file.originalname).toLowerCase();
+    if (['.xls', '.xlsx', '.csv'].includes(ext)) cb(null, true);
+    else cb(new Error('仅支持 Excel (.xls/.xlsx) 和 CSV 文件'));
+  }
+});
+
+router.post('/import/preview', importUpload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json(formatError('请上传文件'));
+
+  try {
+    var workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    var sheetName = workbook.SheetNames[0];
+    var sheet = workbook.Sheets[sheetName];
+    var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+    if (rows.length === 0) return res.status(400).json(formatError('文件中没有数据行'));
+
+    var headers = Object.keys(rows[0]);
+    var fieldMapping = {};
+    var matchedCount = 0;
+    headers.forEach(function(h) {
+      var matched = matchField(h);
+      if (matched) {
+        fieldMapping[h] = matched;
+        matchedCount++;
+      } else {
+        fieldMapping[h] = null;
+      }
+    });
+
+    var previewRows = rows.slice(0, 5).map(function(row) {
+      var item = {};
+      headers.forEach(function(h) {
+        item[h] = row[h];
+      });
+      return item;
+    });
+
+    res.json(formatResponse({
+      total_rows: rows.length,
+      headers: headers,
+      field_mapping: fieldMapping,
+      matched_count: matchedCount,
+      preview: previewRows,
+      available_fields: Object.keys(CASE_FIELDS).map(function(k) { return { key: k, label: CASE_FIELDS[k].label }; })
+    }));
+  } catch (e) {
+    res.status(400).json(formatError('文件解析失败: ' + e.message));
+  }
+});
+
+router.post('/import/execute', importUpload.single('file'), (req, res) => {
+  if (!req.file) return res.status(400).json(formatError('请上传文件'));
+
+  var customMapping = req.body.mapping ? JSON.parse(req.body.mapping) : null;
+
+  try {
+    var workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    var sheetName = workbook.SheetNames[0];
+    var sheet = workbook.Sheets[sheetName];
+    var rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+    if (rows.length === 0) return res.status(400).json(formatError('文件中没有数据行'));
+
+    var headers = Object.keys(rows[0]);
+    var fieldMapping = customMapping || {};
+    if (!customMapping) {
+      headers.forEach(function(h) {
+        fieldMapping[h] = matchField(h);
+      });
+    }
+
+    var db = getDb();
+    var caseTypes = db.prepare('SELECT id, name FROM case_types').all();
+    var typeMap = {};
+    caseTypes.forEach(function(ct) { typeMap[ct.name] = ct.id; });
+
+    var mediators = db.prepare("SELECT id, real_name FROM users WHERE role_id IN (3, 4) AND status = 'active'").all();
+    var mediatorMap = {};
+    mediators.forEach(function(m) { mediatorMap[m.real_name] = m.id; });
+
+    var lastCase = db.prepare("SELECT case_number FROM cases ORDER BY id DESC LIMIT 1").get();
+    var nextNum = lastCase ? parseInt(lastCase.case_number.split('-')[1]) + 1 : 1;
+
+    var successCount = 0;
+    var failCount = 0;
+    var errors = [];
+
+    var insertCase = db.prepare(
+      `INSERT INTO cases (case_number, title, type_id, description, status, priority, mediator_id, created_by, assigned_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    );
+    var insertParty = db.prepare(
+      'INSERT INTO case_parties (case_id, party_type, name, id_number, phone, email, address, description) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    );
+
+    var importAll = db.transaction(function() {
+      rows.forEach(function(row, idx) {
+        try {
+          var mapped = {};
+          for (var h in fieldMapping) {
+            var targetField = fieldMapping[h];
+            if (targetField && row[h] !== undefined && String(row[h]).trim() !== '') {
+              mapped[targetField] = String(row[h]).trim();
+            }
+          }
+
+          if (!mapped.title) {
+            failCount++;
+            errors.push({ row: idx + 2, error: '案件标题为空，跳过' });
+            return;
+          }
+
+          var typeId = null;
+          if (mapped.type_name) {
+            typeId = typeMap[mapped.type_name];
+            if (!typeId) {
+              for (var tn in typeMap) {
+                if (tn.includes(mapped.type_name) || mapped.type_name.includes(tn)) {
+                  typeId = typeMap[tn];
+                  break;
+                }
+              }
+            }
+          }
+          if (!typeId) typeId = 1;
+
+          var priority = 'normal';
+          if (mapped.priority) {
+            priority = PRIORITY_MAP[mapped.priority] || (['low', 'normal', 'high', 'urgent'].includes(mapped.priority.toLowerCase()) ? mapped.priority.toLowerCase() : 'normal');
+          }
+
+          var status = 'pending';
+          if (mapped.status) {
+            status = STATUS_MAP[mapped.status] || (['pending', 'accepted', 'mediating', 'agreed', 'terminated', 'closed'].includes(mapped.status.toLowerCase()) ? mapped.status.toLowerCase() : 'pending');
+          }
+
+          var mediatorId = null;
+          if (mapped.mediator_name) {
+            mediatorId = mediatorMap[mapped.mediator_name] || null;
+          }
+
+          var caseNumber = new Date().getFullYear() + '-' + String(nextNum).padStart(4, '0');
+          nextNum++;
+
+          var assignedAt = mediatorId ? new Date().toISOString() : null;
+          var acceptedAt = ['accepted', 'mediating', 'agreed', 'closed'].includes(status) ? new Date().toISOString() : null;
+          var closedAt = ['agreed', 'closed', 'terminated'].includes(status) ? new Date().toISOString() : null;
+
+          var result = insertCase.run(
+            caseNumber, mapped.title, typeId, mapped.description || '',
+            status, priority, mediatorId, req.user.id, assignedAt
+          );
+
+          if (acceptedAt) {
+            db.prepare('UPDATE cases SET accepted_at = ? WHERE id = ?').run(acceptedAt, result.lastInsertRowid);
+          }
+          if (closedAt) {
+            db.prepare('UPDATE cases SET closed_at = ? WHERE id = ?').run(closedAt, result.lastInsertRowid);
+          }
+
+          if (mapped.plaintiff_name) {
+            insertParty.run(result.lastInsertRowid, 'plaintiff', mapped.plaintiff_name, mapped.plaintiff_id || null, mapped.plaintiff_phone || null, null, null, null);
+          }
+          if (mapped.defendant_name) {
+            insertParty.run(result.lastInsertRowid, 'defendant', mapped.defendant_name, mapped.defendant_id || null, mapped.defendant_phone || null, null, null, null);
+          }
+
+          successCount++;
+        } catch (e) {
+          failCount++;
+          errors.push({ row: idx + 2, error: e.message });
+        }
+      });
+    });
+
+    importAll();
+
+    logAudit(db, req.user.id, 'IMPORT', 'case', null, `批量导入案件: 成功${successCount}条, 失败${failCount}条`, req);
+
+    res.json(formatResponse({
+      total: rows.length,
+      success: successCount,
+      failed: failCount,
+      errors: errors.slice(0, 20)
+    }, '导入完成'));
+  } catch (e) {
+    res.status(400).json(formatError('导入失败: ' + e.message));
+  }
+});
+
+router.get('/import/template', (req, res) => {
+  var headers = [
+    '案件标题', '案件类型', '案件描述', '优先级', '调解员', '状态',
+    '申请方', '申请方电话', '申请方身份证',
+    '被申请方', '被申请方电话', '被申请方身份证'
+  ];
+  var ws = XLSX.utils.aoa_to_sheet([headers]);
+  ws['!cols'] = headers.map(function() { return { wch: 16 }; });
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '案件导入模板');
+  var buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+  res.setHeader('Content-Disposition', 'attachment; filename=case_import_template.xlsx');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.send(buf);
+});
 
 router.get('/stats', (req, res) => {
   const db = getDb();
