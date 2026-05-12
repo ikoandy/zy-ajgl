@@ -3776,30 +3776,12 @@ async function viewCaseDetail(id) {
         var html = '';
 
         html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">';
-        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
-        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">案件标题</div>';
-        html += '<div style="font-weight:600;color:var(--text-primary)">' + escapeHtml(c.title || '') + '</div>';
-        html += '</div>';
-        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
-        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">案件类型</div>';
-        html += '<div style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:' + (c.type_color || 'var(--text-muted)') + '">' + escapeHtml(c.type_icon || 'gavel') + '</span>' + escapeHtml(c.type_name || '') + '</div>';
-        html += '</div>';
-        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
-        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">当前状态</div>';
-        html += '<span class="status-tag ' + c.status + '" style="font-size:13px">' + escapeHtml(statusText) + '</span>';
-        html += '</div>';
-        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
-        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">优先级</div>';
-        html += '<span class="status-tag ' + c.priority + '" style="font-size:13px">' + escapeHtml(priorityText) + '</span>';
-        html += '</div>';
-        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
-        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">调解员</div>';
-        html += '<div style="color:var(--text-primary)">' + escapeHtml(c.mediator_name || '未指派') + '</div>';
-        html += '</div>';
-        html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px">';
-        html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">创建时间</div>';
-        html += '<div style="color:var(--text-primary)">' + escapeHtml((c.created_at || '').replace('T', ' ').substring(0, 19)) + '</div>';
-        html += '</div>';
+        html += buildInfoCard('案件标题', escapeHtml(c.title || ''));
+        html += buildInfoCard('案件类型', '<span style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:' + (c.type_color || 'var(--text-muted)') + '">' + escapeHtml(c.type_icon || 'gavel') + '</span>' + escapeHtml(c.type_name || '') + '</span>');
+        html += buildInfoCard('当前状态', '<span class="status-tag ' + c.status + '" style="font-size:13px">' + escapeHtml(statusText) + '</span>');
+        html += buildInfoCard('优先级', '<span class="status-tag ' + c.priority + '" style="font-size:13px">' + escapeHtml(priorityText) + '</span>');
+        html += buildInfoCard('调解员', escapeHtml(c.mediator_name || '未指派'));
+        html += buildInfoCard('创建时间', escapeHtml((c.created_at || '').replace('T', ' ').substring(0, 19)));
         html += '</div>';
 
         if (c.description) {
@@ -3807,6 +3789,128 @@ async function viewCaseDetail(id) {
             html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">案件描述</div>';
             html += '<div style="color:var(--text-secondary);line-height:1.7;white-space:pre-wrap">' + escapeHtml(c.description) + '</div>';
             html += '</div>';
+        }
+
+        if (c.finance) {
+            var f = c.finance;
+            html += '<div style="margin-bottom:20px">';
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+            html += '<div style="font-size:14px;font-weight:700;color:var(--accent-gold);display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:18px">account_balance</span> 金融借贷信息</div>';
+            html += '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editCaseFinance(' + id + ')">编辑</button>';
+            html += '</div>';
+
+            var REPAYMENT_LABELS = { equal_installment: '等额本息', equal_principal: '等额本金', interest_first: '先息后本', bullet: '到期还本付息', other: '其他' };
+            var COLLATERAL_LABELS = { real_estate: '房产抵押', vehicle: '车辆抵押', deposit: '存单质押', guarantee: '保证担保', pledge: '权利质押', none: '无担保', other: '其他' };
+            var LITIGATION_LABELS = { pre_litigation: '诉前', litigation: '诉讼中', execution: '执行中', post_execution: '执行后', none: '未进入' };
+            var COLLECTION_LABELS = { not_started: '未开始', in_progress: '催收中', suspended: '已暂停', completed: '已完成', failed: '催收失败' };
+            var RISK_LABELS = { normal: '正常', concern: '关注', substandard: '次级', doubtful: '可疑', loss: '损失' };
+            var WRITEOFF_LABELS = { none: '未核销', partial: '部分核销', full: '全额核销' };
+
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">';
+            html += buildInfoCard('借款合同号', escapeHtml(f.loan_contract_number || '--'), true);
+            html += buildInfoCard('贷款金额', f.loan_amount ? (Number(f.loan_amount).toLocaleString() + ' 元') : '--', true);
+            html += buildInfoCard('贷款余额', f.loan_balance ? (Number(f.loan_balance).toLocaleString() + ' 元') : '--', true);
+            html += buildInfoCard('贷款利率', f.loan_interest_rate ? (f.loan_interest_rate + '%') : '--', true);
+            html += buildInfoCard('罚息利率', f.loan_penalty_rate ? (f.loan_penalty_rate + '%') : '--', true);
+            html += buildInfoCard('贷款期限', f.loan_term_months ? (f.loan_term_months + ' 个月') : '--', true);
+            html += buildInfoCard('贷款起始日', escapeHtml(f.loan_start_date || '--'), true);
+            html += buildInfoCard('贷款到期日', escapeHtml(f.loan_due_date || '--'), true);
+            html += buildInfoCard('实际结清日', escapeHtml(f.loan_actual_end_date || '--'), true);
+            html += buildInfoCard('贷款用途', escapeHtml(f.loan_purpose || '--'), true);
+            html += buildInfoCard('还款方式', REPAYMENT_LABELS[f.repayment_method] || '--', true);
+            html += buildInfoCard('担保方式', COLLATERAL_LABELS[f.collateral_type] || '--', true);
+            html += '</div>';
+
+            if (f.collateral_description) {
+                html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;margin-bottom:12px">';
+                html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">担保物详情</div>';
+                html += '<div style="font-size:12px;color:var(--text-secondary)">' + escapeHtml(f.collateral_description) + (f.collateral_value ? '（估值: ' + Number(f.collateral_value).toLocaleString() + ' 元）' : '') + '</div>';
+                html += '</div>';
+            }
+
+            if (f.guarantor_name) {
+                html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;margin-bottom:12px">';
+                html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">保证人信息</div>';
+                html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:12px">';
+                html += '<div><span style="color:var(--text-muted)">姓名：</span><span style="color:var(--text-primary)">' + escapeHtml(f.guarantor_name) + '</span></div>';
+                html += '<div><span style="color:var(--text-muted)">身份证：</span><span style="color:var(--text-primary)">' + escapeHtml(f.guarantor_id_number || '--') + '</span></div>';
+                html += '<div><span style="color:var(--text-muted)">电话：</span><span style="color:var(--text-primary)">' + escapeHtml(f.guarantor_phone || '--') + '</span></div>';
+                html += '</div></div>';
+            }
+
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">';
+            html += buildInfoCard('逾期天数', f.overdue_days ? (f.overdue_days + ' 天') : '0 天', true);
+            html += buildInfoCard('逾期本金', f.overdue_principal ? (Number(f.overdue_principal).toLocaleString() + ' 元') : '--', true);
+            html += buildInfoCard('逾期利息', f.overdue_interest ? (Number(f.overdue_interest).toLocaleString() + ' 元') : '--', true);
+            html += buildInfoCard('债权总额', f.total_claim_amount ? (Number(f.total_claim_amount).toLocaleString() + ' 元') : '--', true);
+            html += buildInfoCard('利息计算至', escapeHtml(f.interest_calculated_to || '--'), true);
+            html += '</div>';
+
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">';
+            html += buildInfoCard('诉讼阶段', LITIGATION_LABELS[f.litigation_stage] || '--', true);
+            html += buildInfoCard('催收状态', COLLECTION_LABELS[f.collection_status] || '--', true);
+            html += buildInfoCard('风险等级', '<span style="color:' + ({normal:'#34d399',concern:'#fbbf24',substandard:'#fb923c',doubtful:'#f472b6',loss:'#ef4444'}[f.risk_level] || 'var(--text-secondary)') + ';font-weight:600">' + (RISK_LABELS[f.risk_level] || '--') + '</span>', true);
+            html += buildInfoCard('核销状态', WRITEOFF_LABELS[f.write_off_status] || '--', true);
+            html += buildInfoCard('和解金额', f.settlement_amount ? (Number(f.settlement_amount).toLocaleString() + ' 元') : '--', true);
+            html += buildInfoCard('和解日期', escapeHtml(f.settlement_date || '--'), true);
+            html += '</div>';
+
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">';
+            html += buildInfoCard('金融机构', escapeHtml(f.institution_name || '--'), true);
+            html += buildInfoCard('机构联系人', escapeHtml(f.institution_contact || '--'), true);
+            html += buildInfoCard('联系电话', escapeHtml(f.institution_contact_phone || '--'), true);
+            html += '</div>';
+
+            if (f.remarks) {
+                html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;margin-bottom:12px">';
+                html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">备注</div>';
+                html += '<div style="font-size:12px;color:var(--text-secondary);white-space:pre-wrap">' + escapeHtml(f.remarks) + '</div>';
+                html += '</div>';
+            }
+            html += '</div>';
+        }
+
+        if (c.stages && c.stages.length > 0) {
+            var STAGE_TYPE_LABELS = { collection: '催收', negotiation: '协商', mediation: '调解', litigation: '诉讼', execution: '执行', settlement: '和解', other: '其他' };
+            var STAGE_STATUS_LABELS = { pending: '待处理', in_progress: '进行中', completed: '已完成', skipped: '已跳过', failed: '失败' };
+            var STAGE_STATUS_COLORS = { pending: 'var(--accent-gold)', in_progress: 'var(--accent-teal)', completed: '#34d399', skipped: 'var(--text-muted)', failed: 'var(--accent-rose)' };
+
+            html += '<div style="margin-bottom:20px">';
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+            html += '<div style="font-size:14px;font-weight:700;color:var(--accent-teal);display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:18px">timeline</span> 处置流程</div>';
+            html += '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="addCaseStage(' + id + ')">添加阶段</button>';
+            html += '</div>';
+
+            html += '<div style="position:relative;padding-left:32px">';
+            c.stages.forEach(function(s, idx) {
+                var isLast = idx === c.stages.length - 1;
+                var lineColor = s.status === 'completed' ? '#34d399' : (s.status === 'in_progress' ? 'var(--accent-teal)' : 'var(--border-subtle)');
+                var dotColor = STAGE_STATUS_COLORS[s.status] || 'var(--text-muted)';
+                html += '<div style="position:relative;padding-bottom:' + (isLast ? '0' : '20') + 'px">';
+                if (!isLast) html += '<div style="position:absolute;left:-26px;top:14px;bottom:0;width:2px;background:' + lineColor + '"></div>';
+                html += '<div style="position:absolute;left:-32px;top:4px;width:14px;height:14px;border-radius:50%;background:' + dotColor + ';border:2px solid var(--bg-secondary)"></div>';
+                html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:14px;border-left:3px solid ' + dotColor + '">';
+                html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+                html += '<div style="display:flex;align-items:center;gap:8px">';
+                html += '<span style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(s.stage_name) + '</span>';
+                html += '<span class="status-tag ' + s.status + '" style="font-size:10px">' + escapeHtml(STAGE_STATUS_LABELS[s.status] || s.status) + '</span>';
+                html += '<span style="font-size:10px;color:var(--text-muted);background:var(--bg-card);padding:2px 8px;border-radius:8px">' + escapeHtml(STAGE_TYPE_LABELS[s.stage_type] || s.stage_type) + '</span>';
+                html += '</div>';
+                html += '<div style="display:flex;gap:4px">';
+                html += '<button class="btn btn-outline" style="padding:2px 6px;font-size:10px" onclick="editCaseStage(' + id + ',' + s.id + ')">编辑</button>';
+                html += '<button class="btn btn-outline" style="padding:2px 6px;font-size:10px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteCaseStage(' + id + ',' + s.id + ')">删除</button>';
+                html += '</div></div>';
+                html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:11px">';
+                if (s.start_date) html += '<div><span style="color:var(--text-muted)">开始：</span><span style="color:var(--text-secondary)">' + escapeHtml(s.start_date) + '</span></div>';
+                if (s.end_date) html += '<div><span style="color:var(--text-muted)">结束：</span><span style="color:var(--text-secondary)">' + escapeHtml(s.end_date) + '</span></div>';
+                if (s.responsible_person) html += '<div><span style="color:var(--text-muted)">负责人：</span><span style="color:var(--text-secondary)">' + escapeHtml(s.responsible_person) + '</span></div>';
+                if (s.amount_involved) html += '<div><span style="color:var(--text-muted)">涉及金额：</span><span style="color:var(--accent-gold)">' + Number(s.amount_involved).toLocaleString() + ' 元</span></div>';
+                html += '</div>';
+                if (s.description) html += '<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;line-height:1.6">' + escapeHtml(s.description) + '</div>';
+                if (s.result) html += '<div style="font-size:11px;color:var(--accent-teal);margin-top:4px"><span style="color:var(--text-muted)">结果：</span>' + escapeHtml(s.result) + '</div>';
+                html += '</div></div>';
+            });
+            html += '</div></div>';
         }
 
         if (allowedTransitions.length > 0) {
@@ -3896,6 +4000,230 @@ async function viewCaseDetail(id) {
         document.getElementById('modal-case-detail').style.display = 'flex';
     } catch (err) {
         showToast('加载案件详情失败: ' + err.message);
+    }
+}
+
+function buildInfoCard(label, value, compact) {
+    var padding = compact ? '12px' : '16px';
+    return '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:' + padding + '">' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-bottom:' + (compact ? '2px' : '4px') + '">' + label + '</div>' +
+        '<div style="font-weight:' + (compact ? '500' : '600') + ';color:var(--text-primary);font-size:' + (compact ? '12px' : '13px') + '">' + value + '</div>' +
+        '</div>';
+}
+
+async function editCaseFinance(caseId) {
+    try {
+        var c = await api.get('/cases/' + caseId);
+        var f = c.finance || {};
+        var REPAYMENT_OPTS = [['equal_installment','等额本息'],['equal_principal','等额本金'],['interest_first','先息后本'],['bullet','到期还本付息'],['other','其他']];
+        var COLLATERAL_OPTS = [['real_estate','房产抵押'],['vehicle','车辆抵押'],['deposit','存单质押'],['guarantee','保证担保'],['pledge','权利质押'],['none','无担保'],['other','其他']];
+        var LITIGATION_OPTS = [['pre_litigation','诉前'],['litigation','诉讼中'],['execution','执行中'],['post_execution','执行后'],['none','未进入']];
+        var COLLECTION_OPTS = [['not_started','未开始'],['in_progress','催收中'],['suspended','已暂停'],['completed','已完成'],['failed','催收失败']];
+        var RISK_OPTS = [['normal','正常'],['concern','关注'],['substandard','次级'],['doubtful','可疑'],['loss','损失']];
+        var WRITEOFF_OPTS = [['none','未核销'],['partial','部分核销'],['full','全额核销']];
+
+        function optsHtml(arr, val) {
+            return arr.map(function(o) { return '<option value="' + o[0] + '"' + (val === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('');
+        }
+
+        var html = '<h3>编辑金融借贷信息 <button class="modal-close" onclick="closeModal(\'modal-case-finance\')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+        html += '<div class="modal-field"><label>借款合同号</label><input type="text" id="fin-contract" value="' + escapeHtml(f.loan_contract_number || '') + '"></div>';
+        html += '<div class="modal-field"><label>贷款金额（元）</label><input type="number" id="fin-amount" value="' + (f.loan_amount || '') + '" step="0.01"></div>';
+        html += '<div class="modal-field"><label>贷款余额（元）</label><input type="number" id="fin-balance" value="' + (f.loan_balance || '') + '" step="0.01"></div>';
+        html += '<div class="modal-field"><label>贷款利率（%）</label><input type="number" id="fin-rate" value="' + (f.loan_interest_rate || '') + '" step="0.01"></div>';
+        html += '<div class="modal-field"><label>罚息利率（%）</label><input type="number" id="fin-penalty-rate" value="' + (f.loan_penalty_rate || '') + '" step="0.01"></div>';
+        html += '<div class="modal-field"><label>贷款期限（月）</label><input type="number" id="fin-term" value="' + (f.loan_term_months || '') + '"></div>';
+        html += '<div class="modal-field"><label>贷款起始日</label><input type="date" id="fin-start" value="' + (f.loan_start_date || '') + '"></div>';
+        html += '<div class="modal-field"><label>贷款到期日</label><input type="date" id="fin-due" value="' + (f.loan_due_date || '') + '"></div>';
+        html += '<div class="modal-field"><label>贷款用途</label><input type="text" id="fin-purpose" value="' + escapeHtml(f.loan_purpose || '') + '"></div>';
+        html += '<div class="modal-field"><label>还款方式</label><select id="fin-repayment"><option value="">请选择</option>' + optsHtml(REPAYMENT_OPTS, f.repayment_method) + '</select></div>';
+        html += '<div class="modal-field"><label>担保方式</label><select id="fin-collateral"><option value="">请选择</option>' + optsHtml(COLLATERAL_OPTS, f.collateral_type) + '</select></div>';
+        html += '<div class="modal-field"><label>担保物估值（元）</label><input type="number" id="fin-collateral-value" value="' + (f.collateral_value || '') + '" step="0.01"></div>';
+        html += '</div>';
+        html += '<div class="modal-field"><label>担保物描述</label><textarea id="fin-collateral-desc">' + escapeHtml(f.collateral_description || '') + '</textarea></div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+        html += '<div class="modal-field"><label>保证人姓名</label><input type="text" id="fin-guarantor" value="' + escapeHtml(f.guarantor_name || '') + '"></div>';
+        html += '<div class="modal-field"><label>保证人身份证</label><input type="text" id="fin-guarantor-id" value="' + escapeHtml(f.guarantor_id_number || '') + '"></div>';
+        html += '<div class="modal-field"><label>保证人电话</label><input type="text" id="fin-guarantor-phone" value="' + escapeHtml(f.guarantor_phone || '') + '"></div>';
+        html += '</div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+        html += '<div class="modal-field"><label>逾期天数</label><input type="number" id="fin-overdue-days" value="' + (f.overdue_days || 0) + '"></div>';
+        html += '<div class="modal-field"><label>逾期本金（元）</label><input type="number" id="fin-overdue-principal" value="' + (f.overdue_principal || 0) + '" step="0.01"></div>';
+        html += '<div class="modal-field"><label>逾期利息（元）</label><input type="number" id="fin-overdue-interest" value="' + (f.overdue_interest || 0) + '" step="0.01"></div>';
+        html += '<div class="modal-field"><label>债权总额（元）</label><input type="number" id="fin-total-claim" value="' + (f.total_claim_amount || 0) + '" step="0.01"></div>';
+        html += '<div class="modal-field"><label>利息计算至</label><input type="date" id="fin-interest-to" value="' + (f.interest_calculated_to || '') + '"></div>';
+        html += '<div class="modal-field"><label>实际结清日</label><input type="date" id="fin-actual-end" value="' + (f.loan_actual_end_date || '') + '"></div>';
+        html += '</div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+        html += '<div class="modal-field"><label>诉讼阶段</label><select id="fin-litigation"><option value="">请选择</option>' + optsHtml(LITIGATION_OPTS, f.litigation_stage) + '</select></div>';
+        html += '<div class="modal-field"><label>催收状态</label><select id="fin-collection"><option value="">请选择</option>' + optsHtml(COLLECTION_OPTS, f.collection_status) + '</select></div>';
+        html += '<div class="modal-field"><label>风险等级</label><select id="fin-risk"><option value="">请选择</option>' + optsHtml(RISK_OPTS, f.risk_level) + '</select></div>';
+        html += '<div class="modal-field"><label>核销状态</label><select id="fin-writeoff"><option value="">请选择</option>' + optsHtml(WRITEOFF_OPTS, f.write_off_status) + '</select></div>';
+        html += '<div class="modal-field"><label>和解金额（元）</label><input type="number" id="fin-settlement-amount" value="' + (f.settlement_amount || '') + '" step="0.01"></div>';
+        html += '<div class="modal-field"><label>和解日期</label><input type="date" id="fin-settlement-date" value="' + (f.settlement_date || '') + '"></div>';
+        html += '</div>';
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">';
+        html += '<div class="modal-field"><label>金融机构</label><input type="text" id="fin-institution" value="' + escapeHtml(f.institution_name || '') + '"></div>';
+        html += '<div class="modal-field"><label>机构联系人</label><input type="text" id="fin-inst-contact" value="' + escapeHtml(f.institution_contact || '') + '"></div>';
+        html += '<div class="modal-field"><label>联系电话</label><input type="text" id="fin-inst-phone" value="' + escapeHtml(f.institution_contact_phone || '') + '"></div>';
+        html += '</div>';
+        html += '<div class="modal-field"><label>备注</label><textarea id="fin-remarks">' + escapeHtml(f.remarks || '') + '</textarea></div>';
+        html += '<div class="modal-actions"><button class="btn btn-outline" onclick="closeModal(\'modal-case-finance\')">取消</button><button class="btn btn-primary" onclick="saveCaseFinance(' + caseId + ')">保存</button></div>';
+
+        var modal = document.getElementById('modal-case-finance');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = 'modal-case-finance';
+            modal.style.display = 'none';
+            modal.setAttribute('onclick', "if(event.target===this)closeModal('modal-case-finance')");
+            modal.innerHTML = '<div class="modal-content" style="width:780px;max-height:90vh;overflow-y:auto"><div id="modal-case-finance-body"></div></div>';
+            document.body.appendChild(modal);
+        }
+        document.getElementById('modal-case-finance-body').innerHTML = html;
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载金融信息失败: ' + err.message);
+    }
+}
+
+async function saveCaseFinance(caseId) {
+    var data = {
+        loan_contract_number: document.getElementById('fin-contract').value.trim(),
+        loan_amount: parseFloat(document.getElementById('fin-amount').value) || null,
+        loan_balance: parseFloat(document.getElementById('fin-balance').value) || null,
+        loan_interest_rate: parseFloat(document.getElementById('fin-rate').value) || null,
+        loan_penalty_rate: parseFloat(document.getElementById('fin-penalty-rate').value) || null,
+        loan_start_date: document.getElementById('fin-start').value || null,
+        loan_due_date: document.getElementById('fin-due').value || null,
+        loan_actual_end_date: document.getElementById('fin-actual-end').value || null,
+        loan_term_months: parseInt(document.getElementById('fin-term').value) || null,
+        loan_purpose: document.getElementById('fin-purpose').value.trim(),
+        repayment_method: document.getElementById('fin-repayment').value || null,
+        collateral_type: document.getElementById('fin-collateral').value || null,
+        collateral_description: document.getElementById('fin-collateral-desc').value.trim(),
+        collateral_value: parseFloat(document.getElementById('fin-collateral-value').value) || null,
+        guarantor_name: document.getElementById('fin-guarantor').value.trim(),
+        guarantor_id_number: document.getElementById('fin-guarantor-id').value.trim(),
+        guarantor_phone: document.getElementById('fin-guarantor-phone').value.trim(),
+        overdue_days: parseInt(document.getElementById('fin-overdue-days').value) || 0,
+        overdue_principal: parseFloat(document.getElementById('fin-overdue-principal').value) || 0,
+        overdue_interest: parseFloat(document.getElementById('fin-overdue-interest').value) || 0,
+        total_claim_amount: parseFloat(document.getElementById('fin-total-claim').value) || 0,
+        interest_calculated_to: document.getElementById('fin-interest-to').value || null,
+        litigation_stage: document.getElementById('fin-litigation').value || null,
+        collection_status: document.getElementById('fin-collection').value || null,
+        institution_name: document.getElementById('fin-institution').value.trim(),
+        institution_contact: document.getElementById('fin-inst-contact').value.trim(),
+        institution_contact_phone: document.getElementById('fin-inst-phone').value.trim(),
+        risk_level: document.getElementById('fin-risk').value || null,
+        write_off_status: document.getElementById('fin-writeoff').value || null,
+        settlement_amount: parseFloat(document.getElementById('fin-settlement-amount').value) || null,
+        settlement_date: document.getElementById('fin-settlement-date').value || null,
+        remarks: document.getElementById('fin-remarks').value.trim()
+    };
+    try {
+        await api.put('/cases/' + caseId + '/finance', data);
+        showToast('金融信息保存成功', 'success');
+        closeModal('modal-case-finance');
+        viewCaseDetail(caseId);
+    } catch (err) {
+        showToast('保存失败: ' + err.message);
+    }
+}
+
+async function addCaseStage(caseId) {
+    var STAGE_TYPE_OPTS = [['collection','催收'],['negotiation','协商'],['mediation','调解'],['litigation','诉讼'],['execution','执行'],['settlement','和解'],['other','其他']];
+    var STAGE_STATUS_OPTS = [['pending','待处理'],['in_progress','进行中'],['completed','已完成'],['skipped','已跳过'],['failed','失败']];
+    var html = '<h3>添加处置阶段 <button class="modal-close" onclick="closeModal(\'modal-case-stage\')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>';
+    html += '<input type="hidden" id="stage-edit-id" value="">';
+    html += '<div class="modal-field"><label>阶段名称 <span style="color:var(--accent-rose)">*</span></label><input type="text" id="stage-name" placeholder="如：电话催收、诉前调解"></div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+    html += '<div class="modal-field"><label>阶段类型 <span style="color:var(--accent-rose)">*</span></label><select id="stage-type">' + STAGE_TYPE_OPTS.map(function(o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') + '</select></div>';
+    html += '<div class="modal-field"><label>状态</label><select id="stage-status">' + STAGE_STATUS_OPTS.map(function(o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') + '</select></div>';
+    html += '<div class="modal-field"><label>开始日期</label><input type="date" id="stage-start"></div>';
+    html += '<div class="modal-field"><label>结束日期</label><input type="date" id="stage-end"></div>';
+    html += '<div class="modal-field"><label>负责人</label><input type="text" id="stage-person" placeholder="负责人姓名"></div>';
+    html += '<div class="modal-field"><label>涉及金额（元）</label><input type="number" id="stage-amount" step="0.01"></div>';
+    html += '</div>';
+    html += '<div class="modal-field"><label>描述</label><textarea id="stage-desc" placeholder="阶段详情描述"></textarea></div>';
+    html += '<div class="modal-field"><label>结果</label><textarea id="stage-result" placeholder="阶段处理结果"></textarea></div>';
+    html += '<div class="modal-actions"><button class="btn btn-outline" onclick="closeModal(\'modal-case-stage\')">取消</button><button class="btn btn-primary" onclick="saveCaseStage(' + caseId + ')">保存</button></div>';
+
+    var modal = document.getElementById('modal-case-stage');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.id = 'modal-case-stage';
+        modal.style.display = 'none';
+        modal.setAttribute('onclick', "if(event.target===this)closeModal('modal-case-stage')");
+        modal.innerHTML = '<div class="modal-content" style="width:600px;max-height:85vh;overflow-y:auto"><div id="modal-case-stage-body"></div></div>';
+        document.body.appendChild(modal);
+    }
+    document.getElementById('modal-case-stage-body').innerHTML = html;
+    modal.style.display = 'flex';
+}
+
+async function editCaseStage(caseId, stageId) {
+    try {
+        var c = await api.get('/cases/' + caseId);
+        var stage = (c.stages || []).find(function(s) { return s.id === stageId; });
+        if (!stage) { showToast('阶段不存在'); return; }
+        await addCaseStage(caseId);
+        document.getElementById('stage-edit-id').value = stageId;
+        document.getElementById('stage-name').value = stage.stage_name || '';
+        document.getElementById('stage-type').value = stage.stage_type || 'collection';
+        document.getElementById('stage-status').value = stage.status || 'pending';
+        document.getElementById('stage-start').value = stage.start_date || '';
+        document.getElementById('stage-end').value = stage.end_date || '';
+        document.getElementById('stage-person').value = stage.responsible_person || '';
+        document.getElementById('stage-amount').value = stage.amount_involved || '';
+        document.getElementById('stage-desc').value = stage.description || '';
+        document.getElementById('stage-result').value = stage.result || '';
+        document.querySelector('#modal-case-stage h3').firstChild.textContent = '编辑处置阶段 ';
+    } catch (err) {
+        showToast('加载阶段信息失败: ' + err.message);
+    }
+}
+
+async function saveCaseStage(caseId) {
+    var editId = document.getElementById('stage-edit-id').value;
+    var data = {
+        stage_name: document.getElementById('stage-name').value.trim(),
+        stage_type: document.getElementById('stage-type').value,
+        status: document.getElementById('stage-status').value,
+        start_date: document.getElementById('stage-start').value || null,
+        end_date: document.getElementById('stage-end').value || null,
+        responsible_person: document.getElementById('stage-person').value.trim(),
+        amount_involved: parseFloat(document.getElementById('stage-amount').value) || null,
+        description: document.getElementById('stage-desc').value.trim(),
+        result: document.getElementById('stage-result').value.trim()
+    };
+    if (!data.stage_name) { showToast('请输入阶段名称'); return; }
+    try {
+        if (editId) {
+            await api.put('/cases/' + caseId + '/stages/' + editId, data);
+            showToast('阶段更新成功', 'success');
+        } else {
+            await api.post('/cases/' + caseId + '/stages', data);
+            showToast('阶段添加成功', 'success');
+        }
+        closeModal('modal-case-stage');
+        viewCaseDetail(caseId);
+    } catch (err) {
+        showToast('保存失败: ' + err.message);
+    }
+}
+
+async function deleteCaseStage(caseId, stageId) {
+    if (!confirm('确定删除此处置阶段？')) return;
+    try {
+        await api.delete('/cases/' + caseId + '/stages/' + stageId);
+        showToast('阶段已删除', 'success');
+        viewCaseDetail(caseId);
+    } catch (err) {
+        showToast('删除失败: ' + err.message);
     }
 }
 

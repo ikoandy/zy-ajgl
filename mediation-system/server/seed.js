@@ -345,6 +345,40 @@ function seed() {
   });
   fbInsert(feedbacks);
 
+  const insertFinance = db.prepare(
+    `INSERT INTO case_finance (case_id, loan_contract_number, loan_amount, loan_balance, loan_interest_rate, loan_penalty_rate, loan_start_date, loan_due_date, loan_term_months, loan_purpose, repayment_method, collateral_type, collateral_description, collateral_value, guarantor_name, guarantor_id_number, guarantor_phone, overdue_days, overdue_principal, overdue_interest, total_claim_amount, interest_calculated_to, litigation_stage, collection_status, institution_name, institution_contact, institution_contact_phone, risk_level, write_off_status, remarks)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const finances = [
+    [1, 'HT-2023-001', 500000, 320000, 4.35, 8.7, '2023-01-15', '2025-01-15', 24, '经营周转', 'equal_installment', 'real_estate', '位于XX区XX路XX号住宅一套', 800000, '王某某', '310XXXXXXXX', '13900001111', 90, 180000, 6525, 326525, '2025-03-15', 'pre_litigation', 'in_progress', 'XX银行XX支行', '李经理', '021-12345678', 'concern', 'none', '借款人因经营困难逾期，已进行电话催收'],
+    [2, 'HT-2023-045', 200000, 150000, 3.85, 7.7, '2023-06-01', '2024-12-01', 18, '消费贷款', 'equal_principal', 'vehicle', '沪A-XXXXX轿车一辆', 150000, '', '', '', 45, 80000, 1540, 81540, '2025-02-01', 'none', 'in_progress', 'XX消费金融', '张经理', '021-87654321', 'substandard', 'none', '借款人失联，已委托第三方催收'],
+    [5, 'HT-2024-012', 1000000, 750000, 4.75, 9.5, '2024-01-10', '2027-01-10', 36, '企业经营', 'bullet', 'guarantee', '第三方担保', 0, '赵某某', '310YYYYYYYY', '13800005555', 30, 200000, 9375, 759375, '2025-04-10', 'none', 'not_started', 'XX商业银行', '王经理', '021-55556666', 'normal', 'none', '企业暂时性资金周转困难']
+  ];
+  const finInsert = db.transaction((rows) => {
+    for (const f of rows) insertFinance.run(...f);
+  });
+  finInsert(finances);
+
+  const insertStage = db.prepare(
+    `INSERT INTO case_stages (case_id, stage_name, stage_type, status, start_date, end_date, responsible_person, description, result, amount_involved)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const stages = [
+    [1, '电话催收', 'collection', 'completed', '2025-01-16', '2025-02-28', '催收员A', '对借款人进行电话催收，共联系15次', '借款人承诺还款但未履行', 326525],
+    [1, '上门催收', 'collection', 'completed', '2025-03-01', '2025-03-15', '催收员A', '上门走访借款人住所和经营场所', '借款人经营困难，提出分期还款方案', 326525],
+    [1, '诉前调解', 'negotiation', 'in_progress', '2025-03-16', null, '调解员李某某', '组织双方进行诉前调解', null, 326525],
+    [1, '诉讼准备', 'litigation', 'pending', null, null, '法务部', '准备诉讼材料，评估诉讼风险', null, 326525],
+    [2, '短信催收', 'collection', 'completed', '2024-12-15', '2025-01-10', '系统自动', '发送催收短信通知', '借款人已读未回复', 81540],
+    [2, '电话催收', 'collection', 'completed', '2025-01-11', '2025-02-15', '催收员B', '多次电话联系借款人', '前3次接听后失联', 81540],
+    [2, '委外催收', 'collection', 'in_progress', '2025-02-16', null, 'XX催收公司', '委托第三方催收机构处理', '正在查找借款人下落', 81540],
+    [5, '贷后检查', 'collection', 'completed', '2024-06-01', '2024-12-31', '客户经理C', '定期贷后检查，了解企业经营状况', '发现企业资金链紧张', 759375],
+    [5, '协商还款', 'negotiation', 'in_progress', '2025-01-15', null, '调解员张某某', '与企业协商调整还款计划', null, 759375]
+  ];
+  const stgInsert = db.transaction((rows) => {
+    for (const s of rows) insertStage.run(...s);
+  });
+  stgInsert(stages);
+
   console.log('Database seeded successfully!');
   return db;
 }

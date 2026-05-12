@@ -20,7 +20,21 @@ const CASE_FIELDS = {
   plaintiff_id: { label: '申请方身份证', aliases: ['申请方身份证', '申请人身份证', '原告身份证', 'plaintiff_id', '申请方证件号'] },
   defendant_name: { label: '被申请方', aliases: ['被申请方', '被申请人', '被告', '乙方', 'defendant', '被申请方姓名'] },
   defendant_phone: { label: '被申请方电话', aliases: ['被申请方电话', '被申请人电话', '被告电话', '乙方电话', 'defendant_phone', '被申请方手机'] },
-  defendant_id: { label: '被申请方身份证', aliases: ['被申请方身份证', '被申请人身份证', '被告身份证', 'defendant_id', '被申请方证件号'] }
+  defendant_id: { label: '被申请方身份证', aliases: ['被申请方身份证', '被申请人身份证', '被告身份证', 'defendant_id', '被申请方证件号'] },
+  loan_contract_number: { label: '借款合同号', aliases: ['合同号', '借款合同号', '贷款合同号', '合同编号', 'loan_contract_number', 'contract_no'] },
+  loan_amount: { label: '贷款金额', aliases: ['贷款金额', '借款金额', 'loan_amount', 'loan_principal', '本金'] },
+  loan_balance: { label: '贷款余额', aliases: ['贷款余额', '借款余额', 'loan_balance', '剩余本金', '未还本金'] },
+  loan_interest_rate: { label: '贷款利率', aliases: ['贷款利率', '利率', 'loan_interest_rate', '年利率', 'interest_rate'] },
+  loan_start_date: { label: '贷款起始日', aliases: ['贷款起始日', '放款日期', 'loan_start_date', '起贷日'] },
+  loan_due_date: { label: '贷款到期日', aliases: ['贷款到期日', '到期日', 'loan_due_date', '还款到期日'] },
+  loan_purpose: { label: '贷款用途', aliases: ['贷款用途', '借款用途', 'loan_purpose', '用途'] },
+  collateral_type: { label: '担保方式', aliases: ['担保方式', '抵押方式', 'collateral_type', '担保类型'] },
+  guarantor_name: { label: '保证人', aliases: ['保证人', '担保人', 'guarantor_name', 'guarantor'] },
+  overdue_days: { label: '逾期天数', aliases: ['逾期天数', 'overdue_days', '逾期时间'] },
+  overdue_principal: { label: '逾期本金', aliases: ['逾期本金', 'overdue_principal'] },
+  total_claim_amount: { label: '债权总额', aliases: ['债权总额', 'total_claim_amount', '诉讼标的', '标的额'] },
+  institution_name: { label: '金融机构', aliases: ['金融机构', '贷款机构', 'institution_name', '银行', '出借方'] },
+  risk_level: { label: '风险等级', aliases: ['风险等级', 'risk_level', '风险级别', '五级分类'] }
 };
 
 const PRIORITY_MAP = { '低': 'low', '普通': 'normal', '中': 'normal', '高': 'high', '紧急': 'urgent', '低优先级': 'low', '普通优先级': 'normal', '高优先级': 'high', '紧急优先级': 'urgent' };
@@ -215,6 +229,35 @@ router.post('/import/execute', importUpload.single('file'), (req, res) => {
             insertParty.run(result.lastInsertRowid, 'defendant', mapped.defendant_name, mapped.defendant_id || null, mapped.defendant_phone || null, null, null, null);
           }
 
+          var hasFinanceData = mapped.loan_contract_number || mapped.loan_amount || mapped.loan_balance || mapped.loan_interest_rate || mapped.institution_name;
+          if (hasFinanceData) {
+            var COLLATERAL_MAP = { '房产抵押': 'real_estate', '车辆抵押': 'vehicle', '存单质押': 'deposit', '保证担保': 'guarantee', '权利质押': 'pledge', '无担保': 'none', '无': 'none' };
+            var RISK_MAP = { '正常': 'normal', '关注': 'concern', '次级': 'substandard', '可疑': 'doubtful', '损失': 'loss' };
+            var collateralType = mapped.collateral_type ? (COLLATERAL_MAP[mapped.collateral_type] || mapped.collateral_type) : null;
+            var riskLevel = mapped.risk_level ? (RISK_MAP[mapped.risk_level] || mapped.risk_level) : null;
+
+            db.prepare(
+              `INSERT INTO case_finance (case_id, loan_contract_number, loan_amount, loan_balance, loan_interest_rate, loan_start_date, loan_due_date, loan_purpose, collateral_type, guarantor_name, overdue_days, overdue_principal, total_claim_amount, institution_name, risk_level)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            ).run(
+              result.lastInsertRowid,
+              mapped.loan_contract_number || null,
+              mapped.loan_amount ? parseFloat(mapped.loan_amount) : null,
+              mapped.loan_balance ? parseFloat(mapped.loan_balance) : null,
+              mapped.loan_interest_rate ? parseFloat(mapped.loan_interest_rate) : null,
+              mapped.loan_start_date || null,
+              mapped.loan_due_date || null,
+              mapped.loan_purpose || null,
+              collateralType,
+              mapped.guarantor_name || null,
+              mapped.overdue_days ? parseInt(mapped.overdue_days) : 0,
+              mapped.overdue_principal ? parseFloat(mapped.overdue_principal) : 0,
+              mapped.total_claim_amount ? parseFloat(mapped.total_claim_amount) : 0,
+              mapped.institution_name || null,
+              riskLevel
+            );
+          }
+
           successCount++;
         } catch (e) {
           failCount++;
@@ -242,7 +285,10 @@ router.get('/import/template', (req, res) => {
   var headers = [
     '案件标题', '案件类型', '案件描述', '优先级', '调解员', '状态',
     '申请方', '申请方电话', '申请方身份证',
-    '被申请方', '被申请方电话', '被申请方身份证'
+    '被申请方', '被申请方电话', '被申请方身份证',
+    '借款合同号', '贷款金额', '贷款余额', '贷款利率', '贷款起始日', '贷款到期日',
+    '贷款用途', '担保方式', '保证人', '逾期天数', '逾期本金', '债权总额',
+    '金融机构', '风险等级'
   ];
   var ws = XLSX.utils.aoa_to_sheet([headers]);
   ws['!cols'] = headers.map(function() { return { wch: 16 }; });
@@ -378,8 +424,10 @@ router.get('/:id', (req, res) => {
     SELECT dr.*, dt.name as template_name FROM document_records dr
     LEFT JOIN document_templates dt ON dr.template_id = dt.id WHERE dr.case_id = ? ORDER BY dr.generated_at DESC
   `).all(req.params.id);
+  const finance = db.prepare('SELECT * FROM case_finance WHERE case_id = ?').get(req.params.id);
+  const stages = db.prepare('SELECT * FROM case_stages WHERE case_id = ? ORDER BY start_date ASC, id ASC').all(req.params.id);
 
-  res.json(formatResponse({ ...caseData, parties, records, documents }));
+  res.json(formatResponse({ ...caseData, parties, records, documents, finance, stages }));
 });
 
 router.post('/', roleMiddleware('super_admin', 'org_admin', 'senior_mediator'), (req, res) => {
@@ -503,6 +551,94 @@ router.post('/:id/records', (req, res) => {
 
   logAudit(db, req.user.id, 'ADD_RECORD', 'case', req.params.id, `添加调解记录`, req);
   res.status(201).json(formatResponse({ id: result.lastInsertRowid }, '调解记录添加成功'));
+});
+
+router.put('/:id/finance', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM cases WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json(formatError('案件不存在'));
+
+  const f = req.body;
+  const fields = [
+    'loan_contract_number', 'loan_amount', 'loan_balance', 'loan_interest_rate', 'loan_penalty_rate',
+    'loan_start_date', 'loan_due_date', 'loan_actual_end_date', 'loan_term_months', 'loan_purpose',
+    'repayment_method', 'collateral_type', 'collateral_description', 'collateral_value',
+    'guarantor_name', 'guarantor_id_number', 'guarantor_phone',
+    'overdue_days', 'overdue_principal', 'overdue_interest', 'total_claim_amount', 'interest_calculated_to',
+    'litigation_stage', 'collection_status',
+    'institution_name', 'institution_contact', 'institution_contact_phone',
+    'risk_level', 'write_off_status', 'settlement_amount', 'settlement_date', 'remarks'
+  ];
+
+  const existingFinance = db.prepare('SELECT id FROM case_finance WHERE case_id = ?').get(req.params.id);
+
+  if (existingFinance) {
+    const updates = [];
+    const values = [];
+    fields.forEach(function(field) {
+      if (f[field] !== undefined) { updates.push(field + ' = ?'); values.push(f[field]); }
+    });
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(req.params.id);
+    db.prepare('UPDATE case_finance SET ' + updates.join(', ') + ' WHERE case_id = ?').run(...values);
+  } else {
+    const cols = ['case_id'];
+    const vals = [req.params.id];
+    const placeholders = ['?'];
+    fields.forEach(function(field) {
+      if (f[field] !== undefined) { cols.push(field); vals.push(f[field]); placeholders.push('?'); }
+    });
+    db.prepare('INSERT INTO case_finance (' + cols.join(', ') + ') VALUES (' + placeholders.join(', ') + ')').run(...vals);
+  }
+
+  logAudit(db, req.user.id, 'UPDATE', 'case_finance', req.params.id, '更新案件金融信息', req);
+  res.json(formatResponse(null, '金融信息保存成功'));
+});
+
+router.post('/:id/stages', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT * FROM cases WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json(formatError('案件不存在'));
+
+  const { stage_name, stage_type, status, start_date, end_date, responsible_person, description, result, amount_involved, documents } = req.body;
+  if (!stage_name || !stage_type) return res.status(400).json(formatError('阶段名称和类型不能为空'));
+
+  const r = db.prepare(
+    `INSERT INTO case_stages (case_id, stage_name, stage_type, status, start_date, end_date, responsible_person, description, result, amount_involved, documents)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(req.params.id, stage_name, stage_type, status || 'pending', start_date || null, end_date || null, responsible_person || null, description || null, result || null, amount_involved || null, documents || null);
+
+  logAudit(db, req.user.id, 'ADD_STAGE', 'case', req.params.id, `添加处置阶段: ${stage_name}`, req);
+  res.status(201).json(formatResponse({ id: r.lastInsertRowid }, '处置阶段添加成功'));
+});
+
+router.put('/:id/stages/:stageId', (req, res) => {
+  const db = getDb();
+  const stage = db.prepare('SELECT * FROM case_stages WHERE id = ? AND case_id = ?').get(req.params.stageId, req.params.id);
+  if (!stage) return res.status(404).json(formatError('处置阶段不存在'));
+
+  const fields = ['stage_name', 'stage_type', 'status', 'start_date', 'end_date', 'responsible_person', 'description', 'result', 'amount_involved', 'documents'];
+  const updates = [];
+  const values = [];
+  fields.forEach(function(field) {
+    if (req.body[field] !== undefined) { updates.push(field + ' = ?'); values.push(req.body[field]); }
+  });
+  updates.push('updated_at = CURRENT_TIMESTAMP');
+  values.push(req.params.stageId);
+
+  db.prepare('UPDATE case_stages SET ' + updates.join(', ') + ' WHERE id = ?').run(...values);
+  logAudit(db, req.user.id, 'UPDATE_STAGE', 'case', req.params.id, `更新处置阶段: ${stage.stage_name}`, req);
+  res.json(formatResponse(null, '处置阶段更新成功'));
+});
+
+router.delete('/:id/stages/:stageId', (req, res) => {
+  const db = getDb();
+  const stage = db.prepare('SELECT * FROM case_stages WHERE id = ? AND case_id = ?').get(req.params.stageId, req.params.id);
+  if (!stage) return res.status(404).json(formatError('处置阶段不存在'));
+
+  db.prepare('DELETE FROM case_stages WHERE id = ?').run(req.params.stageId);
+  logAudit(db, req.user.id, 'DELETE_STAGE', 'case', req.params.id, `删除处置阶段: ${stage.stage_name}`, req);
+  res.json(formatResponse(null, '处置阶段已删除'));
 });
 
 module.exports = router;

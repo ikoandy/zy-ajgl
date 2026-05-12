@@ -70,6 +70,64 @@ function initDatabase() {
       FOREIGN KEY (created_by) REFERENCES users(id)
     );
 
+    CREATE TABLE IF NOT EXISTS case_finance (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL UNIQUE,
+      loan_contract_number TEXT,
+      loan_amount REAL,
+      loan_balance REAL,
+      loan_interest_rate REAL,
+      loan_penalty_rate REAL,
+      loan_start_date DATE,
+      loan_due_date DATE,
+      loan_actual_end_date DATE,
+      loan_term_months INTEGER,
+      loan_purpose TEXT,
+      repayment_method TEXT CHECK(repayment_method IN ('equal_installment', 'equal_principal', 'interest_first', 'bullet', 'other')),
+      collateral_type TEXT CHECK(collateral_type IN ('real_estate', 'vehicle', 'deposit', 'guarantee', 'pledge', 'none', 'other')),
+      collateral_description TEXT,
+      collateral_value REAL,
+      guarantor_name TEXT,
+      guarantor_id_number TEXT,
+      guarantor_phone TEXT,
+      overdue_days INTEGER DEFAULT 0,
+      overdue_principal REAL DEFAULT 0,
+      overdue_interest REAL DEFAULT 0,
+      total_claim_amount REAL DEFAULT 0,
+      interest_calculated_to DATE,
+      litigation_stage TEXT CHECK(litigation_stage IN ('pre_litigation', 'litigation', 'execution', 'post_execution', 'none')),
+      collection_status TEXT CHECK(collection_status IN ('not_started', 'in_progress', 'suspended', 'completed', 'failed')),
+      institution_name TEXT,
+      institution_contact TEXT,
+      institution_contact_phone TEXT,
+      risk_level TEXT CHECK(risk_level IN ('normal', 'concern', 'substandard', 'doubtful', 'loss')),
+      write_off_status TEXT CHECK(write_off_status IN ('none', 'partial', 'full')),
+      settlement_amount REAL,
+      settlement_date DATE,
+      remarks TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS case_stages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL,
+      stage_name TEXT NOT NULL,
+      stage_type TEXT NOT NULL CHECK(stage_type IN ('collection', 'negotiation', 'mediation', 'litigation', 'execution', 'settlement', 'other')),
+      status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'in_progress', 'completed', 'skipped', 'failed')),
+      start_date DATE,
+      end_date DATE,
+      responsible_person TEXT,
+      description TEXT,
+      result TEXT,
+      amount_involved REAL,
+      documents TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS case_parties (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       case_id INTEGER NOT NULL,
