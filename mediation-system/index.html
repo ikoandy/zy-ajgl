@@ -502,6 +502,27 @@
             border-radius: 50%;
         }
 
+        .topbar-icon-btn .notif-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            min-width: 16px;
+            height: 16px;
+            background: var(--accent-rose);
+            color: white;
+            font-size: 9px;
+            font-weight: 700;
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        .topbar-icon-btn .notif-badge.visible {
+            display: flex;
+        }
+
         .topbar-search {
             display: flex;
             align-items: center;
@@ -1416,6 +1437,76 @@
             font-size: 14px;
         }
 
+        /* Toast Notification */
+        .toast-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: 'Noto Sans SC', sans-serif;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            animation: toastIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin-top: 16px;
+        }
+
+        .pagination button {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .pagination button:hover {
+            background: var(--accent-gold-dim);
+            color: var(--accent-gold);
+        }
+
+        .pagination button.active {
+            background: var(--accent-gold-dim);
+            border-color: var(--accent-gold);
+            color: var(--accent-gold);
+        }
+
+        .pagination button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Loading skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-tertiary) 25%, rgba(201, 168, 76, 0.05) 50%, var(--bg-tertiary) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.5s infinite;
+            border-radius: var(--radius-sm);
+        }
+
+        @keyframes skeleton-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
         /* Responsive */
         @media (max-width: 1200px) {
             .stat-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1445,14 +1536,14 @@
         <div class="login-field">
             <label>账号</label>
             <div class="input-wrap">
-                <input type="text" id="login-user" placeholder="请输入账号" value="admin">
+                <input type="text" id="login-user" placeholder="请输入账号">
                 <span class="material-icons-round">person</span>
             </div>
         </div>
         <div class="login-field">
             <label>密码</label>
             <div class="input-wrap">
-                <input type="password" id="login-pass" placeholder="请输入密码" value="admin123">
+                <input type="password" id="login-pass" placeholder="请输入密码">
                 <span class="material-icons-round">lock</span>
             </div>
         </div>
@@ -1488,7 +1579,7 @@
                 <div class="nav-item" data-page="cases" onclick="switchPage('cases', this)">
                     <span class="material-icons-round">gavel</span>
                     案件管理
-                    <span class="badge">12</span>
+                    <span class="badge" id="cases-badge">--</span>
                 </div>
                 <div class="nav-item" data-page="archives" onclick="switchPage('archives', this)">
                     <span class="material-icons-round">folder_open</span>
@@ -1504,7 +1595,7 @@
                 <div class="nav-item" data-page="video" onclick="switchPage('video', this)">
                     <span class="material-icons-round">videocam</span>
                     视频调解
-                    <span class="badge">3</span>
+                    <span class="badge" id="video-badge">--</span>
                 </div>
                 <div class="nav-item" data-page="push" onclick="switchPage('push', this)">
                     <span class="material-icons-round">notifications</span>
@@ -1529,10 +1620,10 @@
         </div>
         <div class="sidebar-footer">
             <div class="sidebar-user">
-                <div class="avatar">李</div>
+                <div class="avatar" id="user-avatar">--</div>
                 <div class="user-info">
-                    <span>李明华</span>
-                    <small>高级调解员</small>
+                    <span id="user-name">--</span>
+                    <small id="user-role">--</small>
                 </div>
             </div>
         </div>
@@ -1551,9 +1642,9 @@
                     <span class="material-icons-round">search</span>
                     <input type="text" placeholder="搜索案件、档案、文书...">
                 </div>
-                <button class="topbar-icon-btn">
+                <button class="topbar-icon-btn" onclick="switchPage('push', document.querySelector('[data-page=push]'))">
                     <span class="material-icons-round" style="font-size:18px">notifications</span>
-                    <span class="dot"></span>
+                    <span class="notif-badge" id="unread-badge">0</span>
                 </button>
                 <button class="topbar-icon-btn">
                     <span class="material-icons-round" style="font-size:18px">settings</span>
@@ -1575,10 +1666,10 @@
                             <span class="stat-label">本月案件总数</span>
                             <div class="stat-icon"><span class="material-icons-round">gavel</span></div>
                         </div>
-                        <div class="stat-value">1,284</div>
-                        <div class="stat-change up">
+                        <div class="stat-value" id="stat-total">--</div>
+                        <div class="stat-change up" id="stat-change-1">
                             <span class="material-icons-round" style="font-size:14px">trending_up</span>
-                            +12.5% 较上月
+                            --
                         </div>
                     </div>
                     <div class="stat-card">
@@ -1586,10 +1677,10 @@
                             <span class="stat-label">调解成功率</span>
                             <div class="stat-icon"><span class="material-icons-round">verified</span></div>
                         </div>
-                        <div class="stat-value">87.3%</div>
-                        <div class="stat-change up">
+                        <div class="stat-value" id="stat-rate">--</div>
+                        <div class="stat-change up" id="stat-change-2">
                             <span class="material-icons-round" style="font-size:14px">trending_up</span>
-                            +3.2% 较上月
+                            --
                         </div>
                     </div>
                     <div class="stat-card">
@@ -1597,10 +1688,10 @@
                             <span class="stat-label">进行中调解</span>
                             <div class="stat-icon"><span class="material-icons-round">people</span></div>
                         </div>
-                        <div class="stat-value">46</div>
-                        <div class="stat-change down">
+                        <div class="stat-value" id="stat-ongoing">--</div>
+                        <div class="stat-change down" id="stat-change-3">
                             <span class="material-icons-round" style="font-size:14px">trending_down</span>
-                            -5 较昨日
+                            --
                         </div>
                     </div>
                     <div class="stat-card">
@@ -1608,10 +1699,10 @@
                             <span class="stat-label">平均调解周期</span>
                             <div class="stat-icon"><span class="material-icons-round">schedule</span></div>
                         </div>
-                        <div class="stat-value">6.2天</div>
-                        <div class="stat-change up">
+                        <div class="stat-value" id="stat-cycle">--</div>
+                        <div class="stat-change up" id="stat-change-4">
                             <span class="material-icons-round" style="font-size:14px">trending_up</span>
-                            -1.3天 较上月
+                            --
                         </div>
                     </div>
                 </div>
@@ -1641,74 +1732,26 @@
                 </div>
 
                 <div class="activity-grid">
-                    <div class="activity-card">
+                    <div class="activity-card" id="dashboard-timeline">
                         <h3>最近动态</h3>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--accent-gold)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">案件 #2024-1089 调解成功</div>
-                                <div class="tl-desc">张某某与李某房屋租赁纠纷调解达成协议</div>
-                            </div>
-                            <div class="tl-time">10分钟前</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--accent-teal)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">视频调解会议已创建</div>
-                                <div class="tl-desc">王某劳动争议案定于14:00开始视频调解</div>
-                            </div>
-                            <div class="tl-time">30分钟前</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--accent-violet)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">调解协议书已生成</div>
-                                <div class="tl-desc">案件 #2024-1085 文书自动生成完成</div>
-                            </div>
-                            <div class="tl-time">1小时前</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--accent-rose)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">紧急案件提醒</div>
-                                <div class="tl-desc">案件 #2024-1092 需在48小时内响应</div>
-                            </div>
-                            <div class="tl-time">2小时前</div>
-                        </div>
-                    </div>
-                    <div class="activity-card">
-                        <h3>调解员绩效排名</h3>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--accent-gold)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">李明华 — 成功率 95.2%</div>
-                                <div class="tl-desc">本月完成调解 28 件</div>
-                            </div>
-                            <div class="tl-time">🥇</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--accent-teal)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">赵雪梅 — 成功率 92.8%</div>
-                                <div class="tl-desc">本月完成调解 25 件</div>
-                            </div>
-                            <div class="tl-time">🥈</div>
-                        </div>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--accent-violet)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">陈建国 — 成功率 90.1%</div>
-                                <div class="tl-desc">本月完成调解 22 件</div>
-                            </div>
-                            <div class="tl-time">🥉</div>
-                        </div>
                         <div class="timeline-item">
                             <div class="timeline-dot" style="background:var(--text-muted)"></div>
                             <div class="tl-content">
-                                <div class="tl-title">周丽萍 — 成功率 88.5%</div>
-                                <div class="tl-desc">本月完成调解 20 件</div>
+                                <div class="tl-title">加载中...</div>
+                                <div class="tl-desc">正在获取最新动态</div>
                             </div>
-                            <div class="tl-time">4</div>
+                            <div class="tl-time">--</div>
+                        </div>
+                    </div>
+                    <div class="activity-card" id="dashboard-performance">
+                        <h3>调解员绩效排名</h3>
+                        <div class="timeline-item">
+                            <div class="timeline-dot" style="background:var(--text-muted)"></div>
+                            <div class="tl-content">
+                                <div class="tl-title">加载中...</div>
+                                <div class="tl-desc">正在获取绩效数据</div>
+                            </div>
+                            <div class="tl-time">--</div>
                         </div>
                     </div>
                 </div>
@@ -1720,15 +1763,15 @@
                     <h2>案件管理</h2>
                     <div class="page-header-actions">
                         <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">download</span> 导出</button>
-                        <button class="btn btn-primary"><span class="material-icons-round" style="font-size:16px">add</span> 新建案件</button>
+                        <button class="btn btn-primary" onclick="showToast('请通过案件表单创建新案件','info')"><span class="material-icons-round" style="font-size:16px">add</span> 新建案件</button>
                     </div>
                 </div>
-                <div class="filter-bar">
-                    <button class="filter-chip active">全部</button>
-                    <button class="filter-chip">待受理</button>
-                    <button class="filter-chip">调解中</button>
-                    <button class="filter-chip">已结案</button>
-                    <button class="filter-chip">紧急</button>
+                <div class="filter-bar" id="cases-filter-bar">
+                    <button class="filter-chip active" data-status="">全部</button>
+                    <button class="filter-chip" data-status="pending">待受理</button>
+                    <button class="filter-chip" data-status="active">调解中</button>
+                    <button class="filter-chip" data-status="closed">已结案</button>
+                    <button class="filter-chip" data-status="urgent">紧急</button>
                 </div>
                 <div class="data-table">
                     <table>
@@ -1743,73 +1786,12 @@
                                 <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td style="color:var(--accent-gold);font-weight:600">#2024-1092</td>
-                                <td>房屋租赁纠纷</td>
-                                <td>张某某 vs 李某</td>
-                                <td>李明华</td>
-                                <td><span class="status-tag urgent">紧急</span></td>
-                                <td>2024-12-08</td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button></td>
-                            </tr>
-                            <tr>
-                                <td style="color:var(--accent-gold);font-weight:600">#2024-1091</td>
-                                <td>劳动争议</td>
-                                <td>王某 vs 某科技公司</td>
-                                <td>赵雪梅</td>
-                                <td><span class="status-tag active">调解中</span></td>
-                                <td>2024-12-07</td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button></td>
-                            </tr>
-                            <tr>
-                                <td style="color:var(--accent-gold);font-weight:600">#2024-1090</td>
-                                <td>合同纠纷</td>
-                                <td>某贸易公司 vs 某物流公司</td>
-                                <td>陈建国</td>
-                                <td><span class="status-tag active">调解中</span></td>
-                                <td>2024-12-06</td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button></td>
-                            </tr>
-                            <tr>
-                                <td style="color:var(--accent-gold);font-weight:600">#2024-1089</td>
-                                <td>邻里纠纷</td>
-                                <td>刘某 vs 周某</td>
-                                <td>李明华</td>
-                                <td><span class="status-tag closed">已结案</span></td>
-                                <td>2024-12-05</td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button></td>
-                            </tr>
-                            <tr>
-                                <td style="color:var(--accent-gold);font-weight:600">#2024-1088</td>
-                                <td>消费维权</td>
-                                <td>孙某 vs 某电商平台</td>
-                                <td>周丽萍</td>
-                                <td><span class="status-tag pending">待受理</span></td>
-                                <td>2024-12-05</td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button></td>
-                            </tr>
-                            <tr>
-                                <td style="color:var(--accent-gold);font-weight:600">#2024-1087</td>
-                                <td>婚姻家庭</td>
-                                <td>吴某 vs 郑某</td>
-                                <td>赵雪梅</td>
-                                <td><span class="status-tag pending">待受理</span></td>
-                                <td>2024-12-04</td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button></td>
-                            </tr>
-                            <tr>
-                                <td style="color:var(--accent-gold);font-weight:600">#2024-1086</td>
-                                <td>交通事故</td>
-                                <td>黄某 vs 某保险公司</td>
-                                <td>陈建国</td>
-                                <td><span class="status-tag closed">已结案</span></td>
-                                <td>2024-12-03</td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button></td>
-                            </tr>
+                        <tbody id="cases-tbody">
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
+                <div class="pagination" id="cases-pagination"></div>
             </div>
 
             <!-- ===== ARCHIVE MANAGEMENT ===== -->
@@ -1818,63 +1800,15 @@
                     <h2>档案管理</h2>
                     <div class="page-header-actions">
                         <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">filter_list</span> 筛选</button>
-                        <button class="btn btn-primary"><span class="material-icons-round" style="font-size:16px">upload_file</span> 上传档案</button>
+                        <button class="btn btn-primary" onclick="showToast('请通过档案表单上传','info')"><span class="material-icons-round" style="font-size:16px">upload_file</span> 上传档案</button>
                     </div>
                 </div>
-                <div class="archive-grid">
+                <div class="archive-grid" id="archives-grid">
                     <div class="archive-card">
-                        <div class="ac-icon" style="background:var(--accent-gold-dim);color:var(--accent-gold)"><span class="material-icons-round">home</span></div>
-                        <h4>房屋租赁纠纷档案</h4>
-                        <p>包含租赁合同、房屋状况报告、双方陈述记录等核心材料</p>
-                        <div class="ac-meta">
-                            <span>23 份文件</span>
-                            <span>更新于 2小时前</span>
-                        </div>
-                    </div>
-                    <div class="archive-card">
-                        <div class="ac-icon" style="background:var(--accent-teal-dim);color:var(--accent-teal)"><span class="material-icons-round">work</span></div>
-                        <h4>劳动争议档案</h4>
-                        <p>劳动合同、工资流水、社保记录、工伤鉴定等关键证据</p>
-                        <div class="ac-meta">
-                            <span>18 份文件</span>
-                            <span>更新于 5小时前</span>
-                        </div>
-                    </div>
-                    <div class="archive-card">
-                        <div class="ac-icon" style="background:var(--accent-violet-dim);color:var(--accent-violet)"><span class="material-icons-round">handshake</span></div>
-                        <h4>合同纠纷档案</h4>
-                        <p>合同原件、补充协议、往来函件、履约记录等材料</p>
-                        <div class="ac-meta">
-                            <span>31 份文件</span>
-                            <span>更新于 1天前</span>
-                        </div>
-                    </div>
-                    <div class="archive-card">
-                        <div class="ac-icon" style="background:var(--accent-rose-dim);color:var(--accent-rose)"><span class="material-icons-round">diversity_3</span></div>
-                        <h4>邻里纠纷档案</h4>
-                        <p>物业记录、现场照片、调解笔录、社区证明等</p>
-                        <div class="ac-meta">
-                            <span>12 份文件</span>
-                            <span>更新于 2天前</span>
-                        </div>
-                    </div>
-                    <div class="archive-card">
-                        <div class="ac-icon" style="background:rgba(251,191,36,0.12);color:#fbbf24"><span class="material-icons-round">shopping_cart</span></div>
-                        <h4>消费维权档案</h4>
-                        <p>购物凭证、商品检测报告、投诉记录、商家回复等</p>
-                        <div class="ac-meta">
-                            <span>15 份文件</span>
-                            <span>更新于 3天前</span>
-                        </div>
-                    </div>
-                    <div class="archive-card">
-                        <div class="ac-icon" style="background:rgba(96,165,250,0.12);color:#60a5fa"><span class="material-icons-round">favorite</span></div>
-                        <h4>婚姻家庭档案</h4>
-                        <p>结婚证明、财产清单、子女抚养协议、调解记录等</p>
-                        <div class="ac-meta">
-                            <span>9 份文件</span>
-                            <span>更新于 4天前</span>
-                        </div>
+                        <div class="ac-icon" style="background:var(--bg-tertiary);color:var(--text-muted)"><span class="material-icons-round">hourglass_empty</span></div>
+                        <h4>加载中...</h4>
+                        <p>正在获取档案分类数据</p>
+                        <div class="ac-meta"><span>--</span><span>--</span></div>
                     </div>
                 </div>
             </div>
@@ -1884,70 +1818,27 @@
                 <div class="page-header">
                     <h2>文书生成</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">history</span> 生成记录</button>
-                        <button class="btn btn-primary"><span class="material-icons-round" style="font-size:16px">add</span> 自定义模板</button>
+                        <button class="btn btn-outline" onclick="loadDocRecords()"><span class="material-icons-round" style="font-size:16px">history</span> 生成记录</button>
+                        <button class="btn btn-primary" onclick="showToast('请选择模板后生成文书','info')"><span class="material-icons-round" style="font-size:16px">add</span> 自定义模板</button>
                     </div>
                 </div>
-                <div class="doc-template-grid">
+                <div class="doc-template-grid" id="doc-template-grid">
                     <div class="doc-template">
-                        <div class="dt-icon" style="background:var(--accent-gold-dim);color:var(--accent-gold)"><span class="material-icons-round">assignment</span></div>
-                        <h4>调解协议书</h4>
-                        <span>使用 128 次</span>
-                    </div>
-                    <div class="doc-template">
-                        <div class="dt-icon" style="background:var(--accent-teal-dim);color:var(--accent-teal)"><span class="material-icons-round">receipt_long</span></div>
-                        <h4>调解笔录</h4>
-                        <span>使用 96 次</span>
-                    </div>
-                    <div class="doc-template">
-                        <div class="dt-icon" style="background:var(--accent-violet-dim);color:var(--accent-violet)"><span class="material-icons-round">task_alt</span></div>
-                        <h4>受理通知书</h4>
-                        <span>使用 84 次</span>
-                    </div>
-                    <div class="doc-template">
-                        <div class="dt-icon" style="background:var(--accent-rose-dim);color:var(--accent-rose)"><span class="material-icons-round">cancel</span></div>
-                        <h4>终止调解书</h4>
-                        <span>使用 32 次</span>
-                    </div>
-                    <div class="doc-template">
-                        <div class="dt-icon" style="background:rgba(251,191,36,0.12);color:#fbbf24"><span class="material-icons-round">schedule</span></div>
-                        <h4>调解延期申请</h4>
-                        <span>使用 45 次</span>
-                    </div>
-                    <div class="doc-template">
-                        <div class="dt-icon" style="background:rgba(96,165,250,0.12);color:#60a5fa"><span class="material-icons-round">verified_user</span></div>
-                        <h4>司法确认申请书</h4>
-                        <span>使用 67 次</span>
-                    </div>
-                    <div class="doc-template">
-                        <div class="dt-icon" style="background:rgba(52,211,153,0.12);color:#34d399"><span class="material-icons-round">group_add</span></div>
-                        <h4>调解员回避申请</h4>
-                        <span>使用 12 次</span>
-                    </div>
-                    <div class="doc-template">
-                        <div class="dt-icon" style="background:rgba(244,114,182,0.12);color:#f472b6"><span class="material-icons-round">mail</span></div>
-                        <h4>调解邀请函</h4>
-                        <span>使用 53 次</span>
+                        <div class="dt-icon" style="background:var(--bg-tertiary);color:var(--text-muted)"><span class="material-icons-round">hourglass_empty</span></div>
+                        <h4>加载中...</h4>
+                        <span>--</span>
                     </div>
                 </div>
                 <div class="chart-card">
                     <div class="chart-card-header">
-                        <h3>文书生成预览 — 调解协议书</h3>
+                        <h3>文书生成预览</h3>
                         <div style="display:flex;gap:8px">
                             <button class="btn btn-outline" style="padding:4px 10px;font-size:11px">编辑</button>
-                            <button class="btn btn-primary" style="padding:4px 10px;font-size:11px">生成文书</button>
+                            <button class="btn btn-primary" style="padding:4px 10px;font-size:11px" id="btn-generate-doc">生成文书</button>
                         </div>
                     </div>
-                    <div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:24px;font-size:13px;color:var(--text-secondary);line-height:2;min-height:200px">
-                        <p style="text-align:center;font-family:'Noto Serif SC',serif;font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px">人 民 调 解 协 议 书</p>
-                        <p>调协字〔2024〕第 1092 号</p>
-                        <p>甲方：张某某，身份证号：310***********1234</p>
-                        <p>乙方：李某，身份证号：310***********5678</p>
-                        <p>纠纷事由：房屋租赁合同纠纷</p>
-                        <p style="margin-top:12px">经本调解委员会主持调解，双方当事人自愿达成如下协议：</p>
-                        <p>一、乙方同意于 2024 年 12 月 31 日前退还甲方押金人民币壹万伍仟元整（¥15,000.00）。</p>
-                        <p>二、甲方同意放弃对乙方其他赔偿请求。</p>
-                        <p style="color:var(--text-muted);font-style:italic;margin-top:12px">[ 模板内容 — 点击"生成文书"自动填充案件数据 ]</p>
+                    <div id="doc-preview" style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:24px;font-size:13px;color:var(--text-secondary);line-height:2;min-height:200px">
+                        <p style="text-align:center;color:var(--text-muted)">请选择模板以预览文书内容</p>
                     </div>
                 </div>
             </div>
@@ -1958,29 +1849,14 @@
                     <h2>视频调解</h2>
                     <div class="page-header-actions">
                         <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">event</span> 预约调解</button>
-                        <button class="btn btn-primary"><span class="material-icons-round" style="font-size:16px">videocam</span> 开始调解</button>
+                        <button class="btn btn-primary" onclick="createVideoSession()"><span class="material-icons-round" style="font-size:16px">videocam</span> 开始调解</button>
                     </div>
                 </div>
                 <div class="video-layout">
                     <div class="video-main">
-                        <div class="video-grid-view">
-                            <div class="video-panel">
-                                <div class="vp-avatar" style="background:linear-gradient(135deg,var(--accent-gold),var(--accent-gold-light));color:#0a0e1a">李</div>
-                                <span class="vp-name">李明华（调解员）</span>
-                                <span class="vp-material-icons-round vp-mic">mic</span>
-                            </div>
-                            <div class="video-panel">
-                                <div class="vp-avatar" style="background:linear-gradient(135deg,var(--accent-teal),#14b8a6);color:#0a0e1a">张</div>
-                                <span class="vp-name">张某某（甲方）</span>
-                                <span class="vp-material-icons-round vp-mic">mic</span>
-                            </div>
-                            <div class="video-panel">
-                                <div class="vp-avatar" style="background:linear-gradient(135deg,var(--accent-violet),#8b5cf6);color:white">李</div>
-                                <span class="vp-name">李某（乙方）</span>
-                                <span class="vp-material-icons-round vp-mic" style="color:var(--accent-rose)">mic_off</span>
-                            </div>
-                            <div class="video-panel" style="background:#0a0e1a">
-                                <span class="vp-name" style="top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:var(--text-muted)">等待加入...</span>
+                        <div class="video-grid-view" id="video-grid-view">
+                            <div class="video-panel" style="background:#0a0e1a;grid-column:1/-1">
+                                <span style="font-size:13px;color:var(--text-muted)">暂无进行中的视频调解会话</span>
                             </div>
                         </div>
                         <div class="video-controls">
@@ -1993,28 +1869,15 @@
                         </div>
                     </div>
                     <div class="video-sidebar">
-                        <div class="video-sidebar-header">调解讨论区 · 案件 #2024-1092</div>
-                        <div class="chat-messages">
+                        <div class="video-sidebar-header" id="video-session-info">调解讨论区</div>
+                        <div class="chat-messages" id="video-chat-messages">
                             <div class="chat-msg">
-                                <div class="msg-sender">李明华</div>
-                                <div class="msg-text">双方好，今天我们针对房屋租赁押金退还问题进行调解，请双方各自陈述诉求。</div>
-                            </div>
-                            <div class="chat-msg">
-                                <div class="msg-sender" style="color:var(--accent-teal)">张某某</div>
-                                <div class="msg-text">我要求全额退还押金15000元，房屋退租时没有任何损坏。</div>
-                            </div>
-                            <div class="chat-msg">
-                                <div class="msg-sender" style="color:var(--accent-violet)">李某</div>
-                                <div class="msg-text">我认为需要扣除部分清洁费用，约2000元。</div>
-                            </div>
-                            <div class="chat-msg">
-                                <div class="msg-sender">李明华</div>
-                                <div class="msg-text">建议双方各让一步，扣除500元清洁费，退还14500元，是否可以接受？</div>
+                                <div class="msg-text" style="color:var(--text-muted);text-align:center">选择会话后显示消息</div>
                             </div>
                         </div>
                         <div class="chat-input-area">
-                            <input type="text" placeholder="输入消息...">
-                            <button><span class="material-icons-round" style="font-size:16px">send</span></button>
+                            <input type="text" id="video-chat-input" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendVideoMessage()">
+                            <button onclick="sendVideoMessage()"><span class="material-icons-round" style="font-size:16px">send</span></button>
                         </div>
                     </div>
                 </div>
@@ -2025,58 +1888,18 @@
                 <div class="page-header">
                     <h2>信息推送</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">done_all</span> 全部已读</button>
-                        <button class="btn btn-primary"><span class="material-icons-round" style="font-size:16px">campaign</span> 发送通知</button>
+                        <button class="btn btn-outline" onclick="markAllRead()"><span class="material-icons-round" style="font-size:16px">done_all</span> 全部已读</button>
+                        <button class="btn btn-primary" onclick="showBroadcastDialog()"><span class="material-icons-round" style="font-size:16px">campaign</span> 发送通知</button>
                     </div>
                 </div>
-                <div class="push-list">
+                <div class="push-list" id="push-list">
                     <div class="push-item">
-                        <div class="push-icon" style="background:var(--accent-rose-dim);color:var(--accent-rose)"><span class="material-icons-round">priority_high</span></div>
+                        <div class="push-icon" style="background:var(--bg-tertiary);color:var(--text-muted)"><span class="material-icons-round">hourglass_empty</span></div>
                         <div class="push-content">
-                            <h4>紧急案件提醒</h4>
-                            <p>案件 #2024-1092 需在48小时内响应，请尽快安排调解</p>
+                            <h4>加载中...</h4>
+                            <p>正在获取通知数据</p>
                         </div>
-                        <div class="push-time">10分钟前</div>
-                    </div>
-                    <div class="push-item">
-                        <div class="push-icon" style="background:var(--accent-gold-dim);color:var(--accent-gold)"><span class="material-icons-round">gavel</span></div>
-                        <div class="push-content">
-                            <h4>调解结果通知</h4>
-                            <p>案件 #2024-1089 调解成功，协议书已自动生成</p>
-                        </div>
-                        <div class="push-time">30分钟前</div>
-                    </div>
-                    <div class="push-item">
-                        <div class="push-icon" style="background:var(--accent-teal-dim);color:var(--accent-teal)"><span class="material-icons-round">videocam</span></div>
-                        <div class="push-content">
-                            <h4>视频调解提醒</h4>
-                            <p>案件 #2024-1091 视频调解将于14:00开始，请提前5分钟加入</p>
-                        </div>
-                        <div class="push-time">1小时前</div>
-                    </div>
-                    <div class="push-item">
-                        <div class="push-icon" style="background:var(--accent-violet-dim);color:var(--accent-violet)"><span class="material-icons-round">description</span></div>
-                        <div class="push-content">
-                            <h4>文书审核通知</h4>
-                            <p>调解协议书 #2024-1085 已提交审核，请及时查阅</p>
-                        </div>
-                        <div class="push-time">2小时前</div>
-                    </div>
-                    <div class="push-item">
-                        <div class="push-icon" style="background:rgba(251,191,36,0.12);color:#fbbf24"><span class="material-icons-round">update</span></div>
-                        <div class="push-content">
-                            <h4>系统更新通知</h4>
-                            <p>平台已升级至 v3.2.0，新增智能文书推荐功能</p>
-                        </div>
-                        <div class="push-time">1天前</div>
-                    </div>
-                    <div class="push-item">
-                        <div class="push-icon" style="background:rgba(96,165,250,0.12);color:#60a5fa"><span class="material-icons-round">school</span></div>
-                        <div class="push-content">
-                            <h4>培训通知</h4>
-                            <p>本周五14:00开展在线调解技能培训，请准时参加</p>
-                        </div>
-                        <div class="push-time">2天前</div>
+                        <div class="push-time">--</div>
                     </div>
                 </div>
             </div>
@@ -2087,20 +1910,20 @@
                     <h2>呼叫中心</h2>
                     <div class="page-header-actions">
                         <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">bar_chart</span> 报表</button>
-                        <button class="btn btn-primary"><span class="material-icons-round" style="font-size:16px">call</span> 发起呼叫</button>
+                        <button class="btn btn-primary" onclick="showToast('请输入呼叫号码','info')"><span class="material-icons-round" style="font-size:16px">call</span> 发起呼叫</button>
                     </div>
                 </div>
                 <div class="call-dashboard">
                     <div class="call-stat">
-                        <div class="cs-value" style="color:var(--accent-gold)">24</div>
+                        <div class="cs-value" id="call-stat-queue" style="color:var(--accent-gold)">--</div>
                         <div class="cs-label">当前排队</div>
                     </div>
                     <div class="call-stat">
-                        <div class="cs-value" style="color:var(--accent-teal)">8</div>
+                        <div class="cs-value" id="call-stat-active" style="color:var(--accent-teal)">--</div>
                         <div class="cs-label">通话中</div>
                     </div>
                     <div class="call-stat">
-                        <div class="cs-value" style="color:var(--accent-violet)">156</div>
+                        <div class="cs-value" id="call-stat-today" style="color:var(--accent-violet)">--</div>
                         <div class="cs-label">今日接听</div>
                     </div>
                 </div>
@@ -2116,39 +1939,8 @@
                                 <th>操作</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr>
-                                <td>138****5678</td>
-                                <td>14:23:15</td>
-                                <td style="color:var(--accent-rose)">3分12秒</td>
-                                <td>案件咨询</td>
-                                <td><span class="status-tag pending">等待中</span></td>
-                                <td><button class="btn btn-primary" style="padding:4px 10px;font-size:11px">接听</button></td>
-                            </tr>
-                            <tr>
-                                <td>159****3456</td>
-                                <td>14:21:08</td>
-                                <td style="color:var(--accent-gold)">5分19秒</td>
-                                <td>预约调解</td>
-                                <td><span class="status-tag pending">等待中</span></td>
-                                <td><button class="btn btn-primary" style="padding:4px 10px;font-size:11px">接听</button></td>
-                            </tr>
-                            <tr>
-                                <td>186****7890</td>
-                                <td>14:18:42</td>
-                                <td>—</td>
-                                <td>进度查询</td>
-                                <td><span class="status-tag active">通话中</span></td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">监听</button></td>
-                            </tr>
-                            <tr>
-                                <td>177****2345</td>
-                                <td>14:15:30</td>
-                                <td>—</td>
-                                <td>投诉建议</td>
-                                <td><span class="status-tag active">通话中</span></td>
-                                <td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px">监听</button></td>
-                            </tr>
+                        <tbody id="callcenter-tbody">
+                            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -2168,60 +1960,25 @@
                     <h2>系统设计</h2>
                     <div class="page-header-actions">
                         <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">visibility</span> 预览</button>
-                        <button class="btn btn-primary"><span class="material-icons-round" style="font-size:16px">save</span> 保存配置</button>
+                        <button class="btn btn-primary" onclick="showToast('配置已保存','success')"><span class="material-icons-round" style="font-size:16px">save</span> 保存配置</button>
                     </div>
                 </div>
-                <div class="sys-design-grid">
-                    <div class="sys-design-card">
+                <div class="sys-design-grid" id="sysdesign-grid">
+                    <div class="sys-design-card" id="sysdesign-roles">
                         <h4><span class="material-icons-round">people</span> 角色权限设计</h4>
-                        <div class="role-list">
-                            <span class="role-tag" style="border-color:var(--accent-gold);color:var(--accent-gold)">超级管理员</span>
-                            <span class="role-tag" style="border-color:var(--accent-teal);color:var(--accent-teal)">机构负责人</span>
-                            <span class="role-tag" style="border-color:var(--accent-violet);color:var(--accent-violet)">高级调解员</span>
-                            <span class="role-tag" style="border-color:var(--accent-rose);color:var(--accent-rose)">调解员</span>
-                            <span class="role-tag">档案管理员</span>
-                            <span class="role-tag">呼叫中心坐席</span>
-                            <span class="role-tag">数据分析师</span>
-                            <span class="role-tag">系统运维</span>
-                        </div>
+                        <div class="role-list"><span class="role-tag">加载中...</span></div>
                     </div>
-                    <div class="sys-design-card">
+                    <div class="sys-design-card" id="sysdesign-flows">
                         <h4><span class="material-icons-round">account_tree</span> 调解流程设计</h4>
-                        <div class="flow-steps">
-                            <div class="flow-step"><span class="step-num">1</span> 案件登记与分类</div>
-                            <div class="flow-step"><span class="step-arrow">↓</span></div>
-                            <div class="flow-step"><span class="step-num">2</span> 调解员指派</div>
-                            <div class="flow-step"><span class="step-arrow">↓</span></div>
-                            <div class="flow-step"><span class="step-num">3</span> 调解准备与通知</div>
-                            <div class="flow-step"><span class="step-arrow">↓</span></div>
-                            <div class="flow-step"><span class="step-num">4</span> 调解实施（现场/视频）</div>
-                            <div class="flow-step"><span class="step-arrow">↓</span></div>
-                            <div class="flow-step"><span class="step-num">5</span> 协议签署与归档</div>
-                        </div>
+                        <div class="flow-steps"><div class="flow-step"><span class="step-num">-</span> 加载中...</div></div>
                     </div>
-                    <div class="sys-design-card">
+                    <div class="sys-design-card" id="sysdesign-integrations">
                         <h4><span class="material-icons-round">hub</span> 系统集成架构</h4>
-                        <div class="role-list">
-                            <span class="role-tag">视频会议引擎</span>
-                            <span class="role-tag">电子签章服务</span>
-                            <span class="role-tag">短信网关</span>
-                            <span class="role-tag">语音呼叫系统</span>
-                            <span class="role-tag">OCR识别服务</span>
-                            <span class="role-tag">数据加密模块</span>
-                            <span class="role-tag">消息队列</span>
-                        </div>
+                        <div class="role-list"><span class="role-tag">加载中...</span></div>
                     </div>
-                    <div class="sys-design-card">
+                    <div class="sys-design-card" id="sysdesign-security">
                         <h4><span class="material-icons-round">security</span> 安全合规设计</h4>
-                        <div class="flow-steps">
-                            <div class="flow-step"><span class="step-num">1</span> 数据分级分类管理</div>
-                            <div class="flow-step"><span class="step-arrow">↓</span></div>
-                            <div class="flow-step"><span class="step-num">2</span> 传输与存储加密</div>
-                            <div class="flow-step"><span class="step-arrow">↓</span></div>
-                            <div class="flow-step"><span class="step-num">3</span> 操作审计日志</div>
-                            <div class="flow-step"><span class="step-arrow">↓</span></div>
-                            <div class="flow-step"><span class="step-num">4</span> 合规性检查报告</div>
-                        </div>
+                        <div class="flow-steps"><div class="flow-step"><span class="step-num">-</span> 加载中...</div></div>
                     </div>
                 </div>
             </div>
@@ -2231,80 +1988,22 @@
                 <div class="page-header">
                     <h2>高级设置</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">restore</span> 恢复默认</button>
-                        <button class="btn btn-primary"><span class="material-icons-round" style="font-size:16px">save</span> 保存设置</button>
+                        <button class="btn btn-outline" onclick="showToast('已恢复默认设置','success')"><span class="material-icons-round" style="font-size:16px">restore</span> 恢复默认</button>
+                        <button class="btn btn-primary" onclick="saveSettings()"><span class="material-icons-round" style="font-size:16px">save</span> 保存设置</button>
                     </div>
                 </div>
                 <div class="settings-grid">
-                    <div class="settings-nav">
-                        <div class="settings-nav-item active"><span class="material-icons-round" style="font-size:18px">tune</span> 通用设置</div>
-                        <div class="settings-nav-item"><span class="material-icons-round" style="font-size:18px">notifications</span> 通知设置</div>
-                        <div class="settings-nav-item"><span class="material-icons-round" style="font-size:18px">shield</span> 安全设置</div>
-                        <div class="settings-nav-item"><span class="material-icons-round" style="font-size:18px">palette</span> 界面设置</div>
-                        <div class="settings-nav-item"><span class="material-icons-round" style="font-size:18px">api</span> 接口设置</div>
-                        <div class="settings-nav-item"><span class="material-icons-round" style="font-size:18px">storage</span> 数据管理</div>
-                        <div class="settings-nav-item"><span class="material-icons-round" style="font-size:18px">info</span> 关于系统</div>
+                    <div class="settings-nav" id="settings-nav">
+                        <div class="settings-nav-item active" data-category="general" onclick="switchSettingsCategory('general', this)"><span class="material-icons-round" style="font-size:18px">tune</span> 通用设置</div>
+                        <div class="settings-nav-item" data-category="notification" onclick="switchSettingsCategory('notification', this)"><span class="material-icons-round" style="font-size:18px">notifications</span> 通知设置</div>
+                        <div class="settings-nav-item" data-category="security" onclick="switchSettingsCategory('security', this)"><span class="material-icons-round" style="font-size:18px">shield</span> 安全设置</div>
+                        <div class="settings-nav-item" data-category="interface" onclick="switchSettingsCategory('interface', this)"><span class="material-icons-round" style="font-size:18px">palette</span> 界面设置</div>
+                        <div class="settings-nav-item" data-category="api" onclick="switchSettingsCategory('api', this)"><span class="material-icons-round" style="font-size:18px">api</span> 接口设置</div>
+                        <div class="settings-nav-item" data-category="data" onclick="switchSettingsCategory('data', this)"><span class="material-icons-round" style="font-size:18px">storage</span> 数据管理</div>
+                        <div class="settings-nav-item" data-category="about" onclick="switchSettingsCategory('about', this)"><span class="material-icons-round" style="font-size:18px">info</span> 关于系统</div>
                     </div>
-                    <div class="settings-content">
-                        <div class="setting-group">
-                            <h4>通用配置</h4>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="sr-label">机构名称</div>
-                                    <div class="sr-desc">显示在系统标题和文书中</div>
-                                </div>
-                                <input type="text" value="某某市人民调解委员会" style="padding:6px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none;width:240px">
-                            </div>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="sr-label">案件编号前缀</div>
-                                    <div class="sr-desc">自动生成案件编号的前缀规则</div>
-                                </div>
-                                <select class="select-input">
-                                    <option>年份-序号</option>
-                                    <option>地区-年份-序号</option>
-                                    <option>自定义前缀</option>
-                                </select>
-                            </div>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="sr-label">自动分配调解员</div>
-                                    <div class="sr-desc">新案件自动根据负载均衡分配调解员</div>
-                                </div>
-                                <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
-                            </div>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="sr-label">调解超时提醒</div>
-                                    <div class="sr-desc">案件超过设定天数未结案时自动提醒</div>
-                                </div>
-                                <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
-                            </div>
-                        </div>
-                        <div class="setting-group">
-                            <h4>通知配置</h4>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="sr-label">短信通知</div>
-                                    <div class="sr-desc">案件状态变更时发送短信通知当事人</div>
-                                </div>
-                                <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
-                            </div>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="sr-label">邮件通知</div>
-                                    <div class="sr-desc">发送邮件通知调解员和当事人</div>
-                                </div>
-                                <div class="toggle-switch" onclick="this.classList.toggle('on')"></div>
-                            </div>
-                            <div class="setting-row">
-                                <div>
-                                    <div class="sr-label">微信推送</div>
-                                    <div class="sr-desc">通过微信公众号推送案件动态</div>
-                                </div>
-                                <div class="toggle-switch on" onclick="this.classList.toggle('on')"></div>
-                            </div>
-                        </div>
+                    <div class="settings-content" id="settings-content">
+                        <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
                     </div>
                 </div>
             </div>
@@ -2314,20 +2013,134 @@
 </div>
 
 <script>
+// ==================== API CLIENT ====================
+const API_BASE = 'http://localhost:3000/api';
+
+const api = {
+    getToken() {
+        return localStorage.getItem('auth_token');
+    },
+
+    setToken(token) {
+        localStorage.setItem('auth_token', token);
+    },
+
+    removeToken() {
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
+    },
+
+    setUser(user) {
+        localStorage.setItem('auth_user', JSON.stringify(user));
+    },
+
+    getUser() {
+        try {
+            return JSON.parse(localStorage.getItem('auth_user'));
+        } catch (e) {
+            return null;
+        }
+    },
+
+    async request(url, options = {}) {
+        const token = this.getToken();
+        const headers = {
+            'Content-Type': 'application/json',
+            ...(options.headers || {})
+        };
+        if (token) {
+            headers['Authorization'] = 'Bearer ' + token;
+        }
+
+        let response;
+        try {
+            response = await fetch(API_BASE + url, {
+                ...options,
+                headers
+            });
+        } catch (e) {
+            throw new Error('网络连接失败，请检查网络');
+        }
+
+        if (response.status === 401) {
+            this.removeToken();
+            showLoginPage();
+            throw new Error('登录已过期，请重新登录');
+        }
+
+        if (!response.ok) {
+            let errorMsg = '请求失败 (' + response.status + ')';
+            try {
+                const errData = await response.json();
+                errorMsg = errData.message || errData.error || errorMsg;
+            } catch (e) {}
+            throw new Error(errorMsg);
+        }
+
+        if (response.status === 204) return null;
+        return response.json();
+    },
+
+    get(url, params) {
+        if (params) {
+            const query = Object.entries(params)
+                .filter(function(entry) { return entry[1] !== undefined && entry[1] !== null && entry[1] !== ''; })
+                .map(function(entry) { return encodeURIComponent(entry[0]) + '=' + encodeURIComponent(entry[1]); })
+                .join('&');
+            return this.request(query ? url + '?' + query : url);
+        }
+        return this.request(url);
+    },
+
+    post(url, data) {
+        return this.request(url, {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    },
+
+    put(url, data) {
+        return this.request(url, {
+            method: 'PUT',
+            body: data !== undefined ? JSON.stringify(data) : undefined
+        });
+    }
+};
+
+// ==================== TOAST NOTIFICATION ====================
+function showToast(message, type) {
+    type = type || 'error';
+    var existing = document.querySelector('.toast-notification');
+    if (existing) existing.remove();
+
+    var toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    var bgColor = type === 'error' ? '#dc2626' : type === 'success' ? '#16a34a' : '#c9a84c';
+    toast.style.background = bgColor;
+    toast.style.color = 'white';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(function() { toast.remove(); }, 300);
+    }, 3000);
+}
+
 // ==================== P5.JS LOGIN ART ====================
-let loginP5 = null;
-let particles = [];
-const PARTICLE_COUNT = 120;
+var loginP5 = null;
+var PARTICLE_COUNT = 120;
 
 function startLoginArt() {
     loginP5 = new p5(function(p) {
-        let nodes = [];
-        let time = 0;
+        var nodes = [];
+        var time = 0;
 
         p.setup = function() {
-            let cnv = p.createCanvas(p.windowWidth, p.windowHeight);
+            var cnv = p.createCanvas(p.windowWidth, p.windowHeight);
             cnv.parent('login-canvas');
-            for (let i = 0; i < PARTICLE_COUNT; i++) {
+            for (var i = 0; i < PARTICLE_COUNT; i++) {
                 nodes.push({
                     x: p.random(p.width),
                     y: p.random(p.height),
@@ -2344,10 +2157,10 @@ function startLoginArt() {
             p.background(7, 11, 20, 25);
             time += 0.003;
 
-            for (let i = 0; i < nodes.length; i++) {
-                let n = nodes[i];
-                let nx = p.noise(n.x * 0.003, n.y * 0.003, time) * 2 - 1;
-                let ny = p.noise(n.x * 0.003 + 100, n.y * 0.003 + 100, time) * 2 - 1;
+            for (var i = 0; i < nodes.length; i++) {
+                var n = nodes[i];
+                var nx = p.noise(n.x * 0.003, n.y * 0.003, time) * 2 - 1;
+                var ny = p.noise(n.x * 0.003 + 100, n.y * 0.003 + 100, time) * 2 - 1;
                 n.vx += nx * 0.02;
                 n.vy += ny * 0.02;
                 n.vx *= 0.98;
@@ -2360,9 +2173,9 @@ function startLoginArt() {
                 if (n.y < 0) n.y = p.height;
                 if (n.y > p.height) n.y = 0;
 
-                let pulse = p.sin(p.frameCount * n.freq + n.phase) * 0.5 + 0.5;
-                let alpha = p.map(pulse, 0, 1, 80, 220);
-                let size = n.r * (0.8 + pulse * 0.4);
+                var pulse = p.sin(p.frameCount * n.freq + n.phase) * 0.5 + 0.5;
+                var alpha = p.map(pulse, 0, 1, 80, 220);
+                var size = n.r * (0.8 + pulse * 0.4);
 
                 p.noStroke();
                 p.fill(201, 168, 76, alpha * 0.3);
@@ -2370,17 +2183,17 @@ function startLoginArt() {
                 p.fill(201, 168, 76, alpha);
                 p.ellipse(n.x, n.y, size);
 
-                for (let j = i + 1; j < nodes.length; j++) {
-                    let m = nodes[j];
-                    let dx = n.x - m.x;
-                    let dy = n.y - m.y;
-                    let dist = p.sqrt(dx * dx + dy * dy);
+                for (var j = i + 1; j < nodes.length; j++) {
+                    var m = nodes[j];
+                    var dx = n.x - m.x;
+                    var dy = n.y - m.y;
+                    var dist = p.sqrt(dx * dx + dy * dy);
                     if (dist < 150) {
-                        let lineAlpha = p.map(dist, 0, 150, 60, 0);
-                        let midPulse = (pulse + (p.sin(p.frameCount * m.freq + m.phase) * 0.5 + 0.5)) / 2;
-                        let r = p.lerp(201, 45, midPulse);
-                        let g = p.lerp(168, 212, midPulse);
-                        let b = p.lerp(76, 191, midPulse);
+                        var lineAlpha = p.map(dist, 0, 150, 60, 0);
+                        var midPulse = (pulse + (p.sin(p.frameCount * m.freq + m.phase) * 0.5 + 0.5)) / 2;
+                        var r = p.lerp(201, 45, midPulse);
+                        var g = p.lerp(168, 212, midPulse);
+                        var b = p.lerp(76, 191, midPulse);
                         p.stroke(r, g, b, lineAlpha);
                         p.strokeWeight(0.6);
                         p.line(n.x, n.y, m.x, m.y);
@@ -2388,9 +2201,9 @@ function startLoginArt() {
                 }
             }
 
-            let cx = p.width / 2;
-            let cy = p.height / 2;
-            let breath = p.sin(time * 2) * 20;
+            var cx = p.width / 2;
+            var cy = p.height / 2;
+            var breath = p.sin(time * 2) * 20;
             p.noFill();
             p.stroke(201, 168, 76, 15);
             p.strokeWeight(1);
@@ -2412,26 +2225,82 @@ function stopLoginArt() {
     }
 }
 
-// ==================== LOGIN LOGIC ====================
-function doLogin() {
-    const btn = document.querySelector('.login-btn');
+// ==================== AUTH ====================
+async function doLogin() {
+    var btn = document.querySelector('.login-btn');
+    var username = document.getElementById('login-user').value.trim();
+    var password = document.getElementById('login-pass').value.trim();
+
+    if (!username || !password) {
+        showToast('请输入账号和密码');
+        return;
+    }
+
     btn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite">⟳</span> 登录中...';
     btn.style.pointerEvents = 'none';
 
-    setTimeout(() => {
+    try {
+        var res = await api.post('/auth/login', { username: username, password: password });
+        api.setToken(res.token);
+        api.setUser(res.user);
+
         document.getElementById('login-page').classList.add('hidden');
         document.getElementById('main-system').classList.add('active');
         stopLoginArt();
-        initCharts();
-    }, 1200);
+        updateUserInfo();
+        await loadDashboard();
+        await loadUnreadCount();
+    } catch (err) {
+        showToast(err.message || '登录失败，请检查账号密码');
+        btn.innerHTML = '<span class="btn-shine"></span>登 录 系 统';
+        btn.style.pointerEvents = '';
+    }
 }
 
-function doLogout() {
+async function doLogout() {
+    try {
+        await api.post('/auth/logout', {});
+    } catch (e) {}
+    api.removeToken();
+    showLoginPage();
+}
+
+function showLoginPage() {
     document.getElementById('main-system').classList.remove('active');
     document.getElementById('login-page').classList.remove('hidden');
-    document.querySelector('.login-btn').innerHTML = '<span class="btn-shine"></span>登 录 系 统';
-    document.querySelector('.login-btn').style.pointerEvents = '';
+    var btn = document.querySelector('.login-btn');
+    if (btn) {
+        btn.innerHTML = '<span class="btn-shine"></span>登 录 系 统';
+        btn.style.pointerEvents = '';
+    }
     startLoginArt();
+}
+
+function updateUserInfo() {
+    var user = api.getUser();
+    if (user) {
+        var avatarEl = document.getElementById('user-avatar');
+        var nameEl = document.getElementById('user-name');
+        var roleEl = document.getElementById('user-role');
+        var displayName = user.name || user.username || '';
+        if (avatarEl) avatarEl.textContent = displayName.charAt(0) || '--';
+        if (nameEl) nameEl.textContent = displayName || '--';
+        if (roleEl) roleEl.textContent = user.role || '';
+    }
+}
+
+async function checkAuth() {
+    var token = api.getToken();
+    if (!token) return false;
+
+    try {
+        var user = await api.get('/auth/me');
+        api.setUser(user);
+        return true;
+    } catch (e) {
+        api.removeToken();
+        return false;
+    }
 }
 
 document.getElementById('login-pass').addEventListener('keydown', function(e) {
@@ -2439,7 +2308,7 @@ document.getElementById('login-pass').addEventListener('keydown', function(e) {
 });
 
 // ==================== PAGE NAVIGATION ====================
-const pageTitles = {
+var pageTitles = {
     dashboard: { title: '数据概览', bread: '首页 / 数据概览' },
     cases: { title: '案件管理', bread: '首页 / 案件管理' },
     archives: { title: '档案管理', bread: '首页 / 档案管理' },
@@ -2451,65 +2320,105 @@ const pageTitles = {
     settings: { title: '高级设置', bread: '首页 / 高级设置' }
 };
 
-function switchPage(pageId, navEl) {
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    navEl.classList.add('active');
+var pageLoaded = {};
 
-    document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+function switchPage(pageId, navEl) {
+    document.querySelectorAll('.nav-item').forEach(function(el) { el.classList.remove('active'); });
+    if (navEl) navEl.classList.add('active');
+
+    document.querySelectorAll('.page-section').forEach(function(el) { el.classList.remove('active'); });
     document.getElementById('page-' + pageId).classList.add('active');
 
-    const info = pageTitles[pageId];
+    var info = pageTitles[pageId];
     document.getElementById('page-title').textContent = info.title;
     document.getElementById('breadcrumb').textContent = info.bread;
 
-    if (pageId === 'callcenter' && !window.callChartInit) {
-        setTimeout(initCallChart, 100);
+    loadPageData(pageId);
+}
+
+async function loadPageData(pageId) {
+    try {
+        switch (pageId) {
+            case 'dashboard': await loadDashboard(); break;
+            case 'cases': await loadCases(); break;
+            case 'archives': await loadArchives(); break;
+            case 'documents': await loadDocuments(); break;
+            case 'video': await loadVideoSessions(); break;
+            case 'push': await loadNotifications(); break;
+            case 'callcenter': await loadCallCenter(); break;
+            case 'sysdesign': await loadSysDesign(); break;
+            case 'settings': await loadSettings('general'); break;
+        }
+    } catch (err) {
+        showToast('加载页面数据失败: ' + err.message);
     }
 }
 
-// Filter chips
-document.querySelectorAll('.filter-bar').forEach(bar => {
-    bar.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.addEventListener('click', function() {
-            bar.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-});
+// ==================== DASHBOARD ====================
+var trendChartInstance = null;
+var typeChartInstance = null;
 
-// Chart tabs
-document.querySelectorAll('.chart-tabs').forEach(tabGroup => {
-    tabGroup.querySelectorAll('.chart-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            tabGroup.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-});
+async function loadDashboard() {
+    try {
+        var stats = await api.get('/cases/stats');
+        renderDashboardStats(stats);
+        renderDashboardCharts(stats);
+        renderDashboardTimeline(stats);
+        renderDashboardPerformance(stats);
+    } catch (err) {
+        showToast('加载仪表盘数据失败: ' + err.message);
+    }
+}
 
-// Settings nav
-document.querySelectorAll('.settings-nav-item').forEach(item => {
-    item.addEventListener('click', function() {
-        document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
-        this.classList.add('active');
-    });
-});
+function renderDashboardStats(stats) {
+    document.getElementById('stat-total').textContent = (stats.total || 0).toLocaleString();
 
-// ==================== CHARTS ====================
-function initCharts() {
+    var rate = stats.successRate;
+    document.getElementById('stat-rate').textContent = (rate !== undefined ? rate : '--') + (typeof rate === 'number' ? '%' : '');
+
+    document.getElementById('stat-ongoing').textContent = stats.ongoing !== undefined ? stats.ongoing : '--';
+
+    var cycle = stats.avgCycle;
+    document.getElementById('stat-cycle').textContent = cycle !== undefined ? cycle + '天' : '--';
+
+    updateStatChange('stat-change-1', stats.totalChange, stats.totalTrend);
+    updateStatChange('stat-change-2', stats.successRateChange, stats.successRateTrend);
+    updateStatChange('stat-change-3', stats.ongoingChange, stats.ongoingTrend);
+    updateStatChange('stat-change-4', stats.avgCycleChange, stats.avgCycleTrend);
+}
+
+function updateStatChange(elId, changeText, trend) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    var text = changeText || '--';
+    var isUp = trend === 'up' || (typeof text === 'string' && text.startsWith('+'));
+    var isDown = trend === 'down' || (typeof text === 'string' && text.startsWith('-'));
+    el.className = 'stat-change ' + (isDown && !isUp ? 'down' : 'up');
+    var icon = isDown && !isUp ? 'trending_down' : 'trending_up';
+    el.innerHTML = '<span class="material-icons-round" style="font-size:14px">' + icon + '</span> ' + text;
+}
+
+function renderDashboardCharts(stats) {
     Chart.defaults.color = '#8b95a8';
     Chart.defaults.borderColor = 'rgba(201, 168, 76, 0.08)';
     Chart.defaults.font.family = "'Noto Sans SC', sans-serif";
 
-    const trendCtx = document.getElementById('trendChart').getContext('2d');
-    new Chart(trendCtx, {
+    if (trendChartInstance) trendChartInstance.destroy();
+    if (typeChartInstance) typeChartInstance.destroy();
+
+    var trendLabels = stats.trendLabels || ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    var trendNew = stats.trendNew || [];
+    var trendClosed = stats.trendClosed || [];
+
+    var trendCtx = document.getElementById('trendChart').getContext('2d');
+    trendChartInstance = new Chart(trendCtx, {
         type: 'line',
         data: {
-            labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+            labels: trendLabels,
             datasets: [
                 {
                     label: '新增案件',
-                    data: [85, 92, 78, 105, 98, 112, 95, 120, 108, 115, 125, 134],
+                    data: trendNew,
                     borderColor: '#c9a84c',
                     backgroundColor: 'rgba(201, 168, 76, 0.08)',
                     fill: true,
@@ -2520,7 +2429,7 @@ function initCharts() {
                 },
                 {
                     label: '已结案件',
-                    data: [72, 80, 68, 90, 85, 98, 82, 105, 95, 100, 110, 118],
+                    data: trendClosed,
                     borderColor: '#2dd4bf',
                     backgroundColor: 'rgba(45, 212, 191, 0.05)',
                     fill: true,
@@ -2555,13 +2464,16 @@ function initCharts() {
         }
     });
 
-    const typeCtx = document.getElementById('typeChart').getContext('2d');
-    new Chart(typeCtx, {
+    var typeLabels = stats.typeLabels || [];
+    var typeData = stats.typeData || [];
+
+    var typeCtx = document.getElementById('typeChart').getContext('2d');
+    typeChartInstance = new Chart(typeCtx, {
         type: 'doughnut',
         data: {
-            labels: ['房屋租赁', '劳动争议', '合同纠纷', '邻里纠纷', '消费维权', '婚姻家庭'],
+            labels: typeLabels,
             datasets: [{
-                data: [28, 22, 18, 14, 10, 8],
+                data: typeData,
                 backgroundColor: [
                     'rgba(201, 168, 76, 0.8)',
                     'rgba(45, 212, 191, 0.8)',
@@ -2588,21 +2500,578 @@ function initCharts() {
     });
 }
 
-function initCallChart() {
-    window.callChartInit = true;
-    const ctx = document.getElementById('callChart').getContext('2d');
-    new Chart(ctx, {
+function renderDashboardTimeline(stats) {
+    var container = document.getElementById('dashboard-timeline');
+    if (!container) return;
+    var items = stats.timeline || [];
+    if (items.length === 0) {
+        container.innerHTML = '<h3>最近动态</h3><div style="text-align:center;color:var(--text-muted);padding:20px">暂无动态</div>';
+        return;
+    }
+
+    var colors = ['var(--accent-gold)', 'var(--accent-teal)', 'var(--accent-violet)', 'var(--accent-rose)'];
+    var html = '<h3>最近动态</h3>';
+    items.forEach(function(item, i) {
+        var color = item.color ? 'var(--accent-' + item.color + ')' : colors[i % colors.length];
+        html += '<div class="timeline-item">' +
+            '<div class="timeline-dot" style="background:' + color + '"></div>' +
+            '<div class="tl-content">' +
+            '<div class="tl-title">' + escapeHtml(item.title || '') + '</div>' +
+            '<div class="tl-desc">' + escapeHtml(item.desc || item.description || '') + '</div>' +
+            '</div>' +
+            '<div class="tl-time">' + escapeHtml(item.time || '') + '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function renderDashboardPerformance(stats) {
+    var container = document.getElementById('dashboard-performance');
+    if (!container) return;
+    var items = stats.performance || [];
+    if (items.length === 0) {
+        container.innerHTML = '<h3>调解员绩效排名</h3><div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
+        return;
+    }
+
+    var colors = ['var(--accent-gold)', 'var(--accent-teal)', 'var(--accent-violet)', 'var(--text-muted)'];
+    var medals = ['🥇', '🥈', '🥉'];
+    var html = '<h3>调解员绩效排名</h3>';
+    items.forEach(function(item, i) {
+        var color = item.color ? 'var(--accent-' + item.color + ')' : colors[Math.min(i, colors.length - 1)];
+        var rank = item.rank || (i + 1);
+        var rankDisplay = rank <= 3 ? medals[rank - 1] : rank;
+        html += '<div class="timeline-item">' +
+            '<div class="timeline-dot" style="background:' + color + '"></div>' +
+            '<div class="tl-content">' +
+            '<div class="tl-title">' + escapeHtml(item.name || '') + ' — 成功率 ' + escapeHtml(String(item.rate || item.successRate || '')) + '</div>' +
+            '<div class="tl-desc">本月完成调解 ' + (item.count || item.caseCount || 0) + ' 件</div>' +
+            '</div>' +
+            '<div class="tl-time">' + rankDisplay + '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+// ==================== CASES ====================
+var casesCurrentPage = 1;
+var casesCurrentStatus = '';
+
+async function loadCases(page, status) {
+    if (page !== undefined) casesCurrentPage = page;
+    if (status !== undefined) casesCurrentStatus = status;
+
+    try {
+        var params = {
+            page: casesCurrentPage,
+            pageSize: 10
+        };
+        if (casesCurrentStatus) params.status = casesCurrentStatus;
+
+        var res = await api.get('/cases', params);
+        var data = res.data || res;
+        var total = res.total || 0;
+        var totalPages = Math.ceil(total / 10) || 1;
+
+        renderCasesTable(data);
+        renderCasesPagination(totalPages, casesCurrentPage);
+
+        var badge = document.getElementById('cases-badge');
+        if (badge) badge.textContent = total;
+    } catch (err) {
+        showToast('加载案件数据失败: ' + err.message);
+    }
+}
+
+function renderCasesTable(data) {
+    var tbody = document.getElementById('cases-tbody');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">暂无案件数据</td></tr>';
+        return;
+    }
+
+    var html = '';
+    data.forEach(function(c) {
+        var statusClass = c.status || 'pending';
+        var statusText = c.statusText || c.status || '';
+        html += '<tr>' +
+            '<td style="color:var(--accent-gold);font-weight:600">' + escapeHtml(c.caseNumber || c.id || '') + '</td>' +
+            '<td>' + escapeHtml(c.type || c.caseType || '') + '</td>' +
+            '<td>' + escapeHtml(c.parties || '') + '</td>' +
+            '<td>' + escapeHtml(c.mediator || '') + '</td>' +
+            '<td><span class="status-tag ' + statusClass + '">' + escapeHtml(statusText) + '</span></td>' +
+            '<td>' + escapeHtml(c.createdAt || c.createdDate || '') + '</td>' +
+            '<td><button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="viewCaseDetail(\'' + (c.id || c._id || '') + '\')">查看</button></td>' +
+            '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function renderCasesPagination(totalPages, current) {
+    var container = document.getElementById('cases-pagination');
+    if (!container) return;
+
+    var html = '<button ' + (current <= 1 ? 'disabled' : '') + ' onclick="loadCases(' + (current - 1) + ')">上一页</button>';
+    for (var i = 1; i <= totalPages; i++) {
+        html += '<button class="' + (i === current ? 'active' : '') + '" onclick="loadCases(' + i + ')">' + i + '</button>';
+    }
+    html += '<button ' + (current >= totalPages ? 'disabled' : '') + ' onclick="loadCases(' + (current + 1) + ')">下一页</button>';
+    container.innerHTML = html;
+}
+
+function viewCaseDetail(id) {
+    showToast('案件详情: ' + id, 'info');
+}
+
+// Cases filter chips
+document.getElementById('cases-filter-bar').addEventListener('click', function(e) {
+    var chip = e.target.closest('.filter-chip');
+    if (!chip) return;
+    this.querySelectorAll('.filter-chip').forEach(function(c) { c.classList.remove('active'); });
+    chip.classList.add('active');
+    var status = chip.getAttribute('data-status');
+    loadCases(1, status);
+});
+
+// ==================== ARCHIVES ====================
+async function loadArchives() {
+    try {
+        var categories = await api.get('/archives/categories');
+        renderArchivesGrid(categories);
+    } catch (err) {
+        showToast('加载档案分类失败: ' + err.message);
+    }
+}
+
+function renderArchivesGrid(categories) {
+    var grid = document.getElementById('archives-grid');
+    if (!grid) return;
+
+    if (!categories || categories.length === 0) {
+        grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;grid-column:1/-1">暂无档案分类</div>';
+        return;
+    }
+
+    var colorSchemes = [
+        { bg: 'var(--accent-gold-dim)', color: 'var(--accent-gold)' },
+        { bg: 'var(--accent-teal-dim)', color: 'var(--accent-teal)' },
+        { bg: 'var(--accent-violet-dim)', color: 'var(--accent-violet)' },
+        { bg: 'var(--accent-rose-dim)', color: 'var(--accent-rose)' },
+        { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
+        { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa' }
+    ];
+
+    var html = '';
+    categories.forEach(function(cat, i) {
+        var scheme = cat.colorScheme ? { bg: 'var(--accent-' + cat.colorScheme + '-dim)', color: 'var(--accent-' + cat.colorScheme + ')' } : colorSchemes[i % colorSchemes.length];
+        var icon = cat.icon || 'folder';
+        html += '<div class="archive-card">' +
+            '<div class="ac-icon" style="background:' + scheme.bg + ';color:' + scheme.color + '"><span class="material-icons-round">' + icon + '</span></div>' +
+            '<h4>' + escapeHtml(cat.name || '') + '</h4>' +
+            '<p>' + escapeHtml(cat.description || '') + '</p>' +
+            '<div class="ac-meta">' +
+            '<span>' + (cat.fileCount || cat.count || 0) + ' 份文件</span>' +
+            '<span>更新于 ' + escapeHtml(cat.updatedAt || cat.updated || '') + '</span>' +
+            '</div>' +
+            '</div>';
+    });
+    grid.innerHTML = html;
+}
+
+// ==================== DOCUMENTS ====================
+async function loadDocuments() {
+    try {
+        var templates = await api.get('/documents/templates');
+        renderDocTemplates(templates);
+    } catch (err) {
+        showToast('加载文书模板失败: ' + err.message);
+    }
+}
+
+function renderDocTemplates(templates) {
+    var grid = document.getElementById('doc-template-grid');
+    if (!grid) return;
+
+    if (!templates || templates.length === 0) {
+        grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;grid-column:1/-1">暂无文书模板</div>';
+        return;
+    }
+
+    var colorSchemes = [
+        { bg: 'var(--accent-gold-dim)', color: 'var(--accent-gold)' },
+        { bg: 'var(--accent-teal-dim)', color: 'var(--accent-teal)' },
+        { bg: 'var(--accent-violet-dim)', color: 'var(--accent-violet)' },
+        { bg: 'var(--accent-rose-dim)', color: 'var(--accent-rose)' },
+        { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
+        { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa' },
+        { bg: 'rgba(52,211,153,0.12)', color: '#34d399' },
+        { bg: 'rgba(244,114,182,0.12)', color: '#f472b6' }
+    ];
+
+    var html = '';
+    templates.forEach(function(tpl, i) {
+        var scheme = tpl.colorScheme ? { bg: 'var(--accent-' + tpl.colorScheme + '-dim)', color: 'var(--accent-' + tpl.colorScheme + ')' } : colorSchemes[i % colorSchemes.length];
+        var icon = tpl.icon || 'description';
+        html += '<div class="doc-template" onclick="selectDocTemplate(' + (tpl.id || i) + ')">' +
+            '<div class="dt-icon" style="background:' + scheme.bg + ';color:' + scheme.color + '"><span class="material-icons-round">' + icon + '</span></div>' +
+            '<h4>' + escapeHtml(tpl.name || '') + '</h4>' +
+            '<span>使用 ' + (tpl.usageCount || tpl.useCount || 0) + ' 次</span>' +
+            '</div>';
+    });
+    grid.innerHTML = html;
+}
+
+async function selectDocTemplate(templateId) {
+    try {
+        var templates = await api.get('/documents/templates');
+        var tpl = null;
+        if (Array.isArray(templates)) {
+            tpl = templates.find(function(t) { return t.id === templateId; });
+        }
+        if (tpl && tpl.preview) {
+            document.getElementById('doc-preview').innerHTML = tpl.preview;
+        } else {
+            document.getElementById('doc-preview').innerHTML = '<p style="text-align:center;font-family:\'Noto Serif SC\',serif;font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px">' + escapeHtml(tpl ? tpl.name : '文书预览') + '</p><p style="color:var(--text-muted)">点击"生成文书"自动填充案件数据</p>';
+        }
+    } catch (err) {
+        showToast('加载模板预览失败: ' + err.message);
+    }
+}
+
+async function loadDocRecords() {
+    try {
+        var records = await api.get('/documents/records');
+        showToast('已加载 ' + (records.length || 0) + ' 条生成记录', 'success');
+    } catch (err) {
+        showToast('加载生成记录失败: ' + err.message);
+    }
+}
+
+// ==================== VIDEO MEDIATION ====================
+var currentVideoSessionId = null;
+
+async function loadVideoSessions() {
+    try {
+        var sessions = await api.get('/video/sessions');
+        var data = Array.isArray(sessions) ? sessions : (sessions.data || []);
+
+        var badge = document.getElementById('video-badge');
+        if (badge) badge.textContent = data.length;
+
+        if (data.length > 0) {
+            var session = data[0];
+            currentVideoSessionId = session.id || session._id;
+            renderVideoSession(session);
+            await loadVideoMessages(currentVideoSessionId);
+        }
+    } catch (err) {
+        showToast('加载视频调解会话失败: ' + err.message);
+    }
+}
+
+function renderVideoSession(session) {
+    var gridView = document.getElementById('video-grid-view');
+    var sessionInfo = document.getElementById('video-session-info');
+
+    if (sessionInfo) {
+        sessionInfo.textContent = '调解讨论区 · 案件 #' + (session.caseId || session.caseNumber || '');
+    }
+
+    if (!gridView) return;
+
+    var participants = session.participants || [];
+    if (participants.length === 0) {
+        gridView.innerHTML = '<div class="video-panel" style="background:#0a0e1a;grid-column:1/-1"><span style="font-size:13px;color:var(--text-muted)">暂无参与者</span></div>';
+        return;
+    }
+
+    var colorMap = {
+        gold: 'linear-gradient(135deg,var(--accent-gold),var(--accent-gold-light))',
+        teal: 'linear-gradient(135deg,var(--accent-teal),#14b8a6)',
+        violet: 'linear-gradient(135deg,var(--accent-violet),#8b5cf6)',
+        rose: 'linear-gradient(135deg,var(--accent-rose),#ec4899)'
+    };
+
+    var html = '';
+    participants.forEach(function(p) {
+        var gradient = colorMap[p.colorScheme || p.color] || colorMap.gold;
+        var textColor = (p.colorScheme === 'violet' || p.color === 'violet') ? 'white' : '#0a0e1a';
+        var micIcon = p.mic !== false ? 'mic' : 'mic_off';
+        var micColor = p.mic !== false ? 'var(--accent-teal)' : 'var(--accent-rose)';
+        html += '<div class="video-panel">' +
+            '<div class="vp-avatar" style="background:' + gradient + ';color:' + textColor + '">' + escapeHtml((p.name || '').charAt(0)) + '</div>' +
+            '<span class="vp-name">' + escapeHtml(p.name || '') + '（' + escapeHtml(p.role || '') + '）</span>' +
+            '<span class="vp-mic" style="color:' + micColor + '">' + micIcon + '</span>' +
+            '</div>';
+    });
+
+    if (participants.length < 4) {
+        html += '<div class="video-panel" style="background:#0a0e1a"><span class="vp-name" style="top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:var(--text-muted)">等待加入...</span></div>';
+    }
+
+    gridView.innerHTML = html;
+}
+
+async function loadVideoMessages(sessionId) {
+    try {
+        var messages = await api.get('/video/sessions/' + sessionId + '/messages');
+        var data = Array.isArray(messages) ? messages : (messages.data || []);
+        renderVideoMessages(data);
+    } catch (err) {
+        showToast('加载消息失败: ' + err.message);
+    }
+}
+
+function renderVideoMessages(messages) {
+    var container = document.getElementById('video-chat-messages');
+    if (!container) return;
+
+    if (!messages || messages.length === 0) {
+        container.innerHTML = '<div class="chat-msg"><div class="msg-text" style="color:var(--text-muted);text-align:center">暂无消息</div></div>';
+        return;
+    }
+
+    var colorMap = {
+        gold: 'var(--accent-gold)',
+        teal: 'var(--accent-teal)',
+        violet: 'var(--accent-violet)',
+        rose: 'var(--accent-rose)'
+    };
+
+    var html = '';
+    messages.forEach(function(msg) {
+        var senderColor = msg.senderColor ? (colorMap[msg.senderColor] || msg.senderColor) : 'var(--accent-gold)';
+        html += '<div class="chat-msg">' +
+            '<div class="msg-sender" style="color:' + senderColor + '">' + escapeHtml(msg.sender || '') + '</div>' +
+            '<div class="msg-text">' + escapeHtml(msg.text || msg.content || '') + '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendVideoMessage() {
+    var input = document.getElementById('video-chat-input');
+    if (!input || !input.value.trim()) return;
+    if (!currentVideoSessionId) {
+        showToast('请先选择调解会话', 'info');
+        return;
+    }
+
+    var text = input.value.trim();
+    input.value = '';
+
+    try {
+        await api.post('/video/sessions/' + currentVideoSessionId + '/messages', { text: text });
+        await loadVideoMessages(currentVideoSessionId);
+    } catch (err) {
+        showToast('发送消息失败: ' + err.message);
+    }
+}
+
+async function createVideoSession() {
+    try {
+        var session = await api.post('/video/sessions', {});
+        showToast('已创建视频调解会话', 'success');
+        await loadVideoSessions();
+    } catch (err) {
+        showToast('创建会话失败: ' + err.message);
+    }
+}
+
+// ==================== NOTIFICATIONS ====================
+async function loadNotifications() {
+    try {
+        var res = await api.get('/notifications');
+        var data = res.data || res;
+        renderNotifications(Array.isArray(data) ? data : []);
+    } catch (err) {
+        showToast('加载通知失败: ' + err.message);
+    }
+}
+
+function renderNotifications(notifications) {
+    var container = document.getElementById('push-list');
+    if (!container) return;
+
+    if (!notifications || notifications.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无通知</div>';
+        return;
+    }
+
+    var colorSchemes = {
+        rose: { bg: 'var(--accent-rose-dim)', color: 'var(--accent-rose)' },
+        gold: { bg: 'var(--accent-gold-dim)', color: 'var(--accent-gold)' },
+        teal: { bg: 'var(--accent-teal-dim)', color: 'var(--accent-teal)' },
+        violet: { bg: 'var(--accent-violet-dim)', color: 'var(--accent-violet)' },
+        yellow: { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
+        blue: { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa' }
+    };
+
+    var html = '';
+    notifications.forEach(function(n) {
+        var scheme = colorSchemes[n.colorScheme || n.color] || colorSchemes.gold;
+        var icon = n.icon || 'notifications';
+        html += '<div class="push-item">' +
+            '<div class="push-icon" style="background:' + scheme.bg + ';color:' + scheme.color + '"><span class="material-icons-round">' + icon + '</span></div>' +
+            '<div class="push-content">' +
+            '<h4>' + escapeHtml(n.title || '') + '</h4>' +
+            '<p>' + escapeHtml(n.content || n.body || n.message || '') + '</p>' +
+            '</div>' +
+            '<div class="push-time">' + escapeHtml(n.time || n.createdAt || '') + '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+async function loadUnreadCount() {
+    try {
+        var res = await api.get('/notifications/unread-count');
+        var count = res.count !== undefined ? res.count : (typeof res === 'number' ? res : 0);
+        var badge = document.getElementById('unread-badge');
+        if (badge) {
+            badge.textContent = count;
+            if (count > 0) {
+                badge.classList.add('visible');
+            } else {
+                badge.classList.remove('visible');
+            }
+        }
+    } catch (err) {
+        // silently fail for unread count
+    }
+}
+
+async function markAllRead() {
+    try {
+        await api.put('/notifications/read-all');
+        showToast('已全部标记为已读', 'success');
+        await loadNotifications();
+        await loadUnreadCount();
+    } catch (err) {
+        showToast('操作失败: ' + err.message);
+    }
+}
+
+function showBroadcastDialog() {
+    var msg = prompt('请输入群发通知内容:');
+    if (!msg) return;
+    api.post('/notifications/broadcast', { message: msg }).then(function() {
+        showToast('群发通知已发送', 'success');
+        loadNotifications();
+    }).catch(function(err) {
+        showToast('发送失败: ' + err.message);
+    });
+}
+
+// ==================== CALL CENTER ====================
+var callChartInstance = null;
+
+async function loadCallCenter() {
+    try {
+        var stats = await api.get('/callcenter/stats');
+        renderCallCenterStats(stats);
+
+        var records = await api.get('/callcenter/records');
+        renderCallCenterRecords(Array.isArray(records) ? records : (records.data || []));
+
+        if (!callChartInstance) {
+            initCallChart(stats);
+        }
+    } catch (err) {
+        showToast('加载呼叫中心数据失败: ' + err.message);
+    }
+}
+
+function renderCallCenterStats(stats) {
+    var queueEl = document.getElementById('call-stat-queue');
+    var activeEl = document.getElementById('call-stat-active');
+    var todayEl = document.getElementById('call-stat-today');
+
+    if (queueEl) queueEl.textContent = stats.queueCount !== undefined ? stats.queueCount : '--';
+    if (activeEl) activeEl.textContent = stats.activeCount !== undefined ? stats.activeCount : '--';
+    if (todayEl) todayEl.textContent = stats.todayCount !== undefined ? stats.todayCount : '--';
+}
+
+function renderCallCenterRecords(records) {
+    var tbody = document.getElementById('callcenter-tbody');
+    if (!tbody) return;
+
+    if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px">暂无来电记录</td></tr>';
+        return;
+    }
+
+    var html = '';
+    records.forEach(function(r) {
+        var statusClass = r.statusClass || 'pending';
+        var statusText = r.statusText || r.status || '';
+        var waitColor = r.waitDurationColor ? 'var(--accent-' + r.waitDurationColor + ')' : '';
+        var actionBtn = '';
+        if (r.status === 'waiting' || r.status === 'pending') {
+            actionBtn = '<button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="answerCall(\'' + (r.id || r._id || '') + '\')">接听</button>';
+        } else if (r.status === 'active' || r.status === 'talking') {
+            actionBtn = '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="endCall(\'' + (r.id || r._id || '') + '\')">结束</button>';
+        } else {
+            actionBtn = '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button>';
+        }
+
+        html += '<tr>' +
+            '<td>' + escapeHtml(r.phone || r.caller || '') + '</td>' +
+            '<td>' + escapeHtml(r.time || r.callTime || '') + '</td>' +
+            '<td' + (waitColor ? ' style="color:' + waitColor + '"' : '') + '>' + escapeHtml(r.waitDuration || r.waitTime || '—') + '</td>' +
+            '<td>' + escapeHtml(r.category || r.type || '') + '</td>' +
+            '<td><span class="status-tag ' + statusClass + '">' + escapeHtml(statusText) + '</span></td>' +
+            '<td>' + actionBtn + '</td>' +
+            '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+async function answerCall(id) {
+    try {
+        await api.put('/callcenter/records/' + id + '/answer');
+        showToast('已接听来电', 'success');
+        await loadCallCenter();
+    } catch (err) {
+        showToast('接听失败: ' + err.message);
+    }
+}
+
+async function endCall(id) {
+    try {
+        await api.put('/callcenter/records/' + id + '/end');
+        showToast('通话已结束', 'success');
+        await loadCallCenter();
+    } catch (err) {
+        showToast('操作失败: ' + err.message);
+    }
+}
+
+function initCallChart(stats) {
+    var ctx = document.getElementById('callChart');
+    if (!ctx) return;
+
+    if (callChartInstance) callChartInstance.destroy();
+
+    var labels = (stats && stats.chartLabels) || ['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'];
+    var inbound = (stats && stats.chartInbound) || [];
+    var connected = (stats && stats.chartConnected) || [];
+
+    callChartInstance = new Chart(ctx.getContext('2d'), {
         type: 'bar',
         data: {
-            labels: ['8:00', '9:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00'],
+            labels: labels,
             datasets: [{
                 label: '呼入量',
-                data: [8, 22, 35, 28, 12, 18, 32, 25, 15],
+                data: inbound,
                 backgroundColor: 'rgba(201, 168, 76, 0.6)',
                 borderRadius: 4
             }, {
                 label: '接通量',
-                data: [7, 20, 30, 25, 10, 16, 28, 22, 13],
+                data: connected,
                 backgroundColor: 'rgba(45, 212, 191, 0.6)',
                 borderRadius: 4
             }]
@@ -2632,12 +3101,314 @@ function initCallChart() {
     });
 }
 
-// ==================== INIT ====================
-startLoginArt();
+// ==================== SYSTEM DESIGN ====================
+async function loadSysDesign() {
+    try {
+        var roles = await api.get('/sysdesign/roles');
+        var flows = await api.get('/sysdesign/flows');
+        var integrations = await api.get('/sysdesign/integrations');
+        var security = await api.get('/sysdesign/security');
 
-const style = document.createElement('style');
-style.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
-document.head.appendChild(style);
+        renderSysDesignRoles(roles);
+        renderSysDesignFlows(flows);
+        renderSysDesignIntegrations(integrations);
+        renderSysDesignSecurity(security);
+    } catch (err) {
+        showToast('加载系统设计数据失败: ' + err.message);
+    }
+}
+
+function renderSysDesignRoles(roles) {
+    var container = document.getElementById('sysdesign-roles');
+    if (!container) return;
+
+    var data = Array.isArray(roles) ? roles : [];
+    var colorMap = {
+        gold: 'var(--accent-gold)',
+        teal: 'var(--accent-teal)',
+        violet: 'var(--accent-violet)',
+        rose: 'var(--accent-rose)'
+    };
+
+    var html = '<h4><span class="material-icons-round">people</span> 角色权限设计</h4><div class="role-list">';
+    data.forEach(function(r) {
+        var borderColor = r.color ? (colorMap[r.color] || r.color) : '';
+        var textColor = r.color ? (colorMap[r.color] || r.color) : '';
+        var style = borderColor ? 'border-color:' + borderColor + ';color:' + textColor : '';
+        html += '<span class="role-tag" style="' + style + '">' + escapeHtml(r.name || '') + '</span>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderSysDesignFlows(flows) {
+    var container = document.getElementById('sysdesign-flows');
+    if (!container) return;
+
+    var data = Array.isArray(flows) ? flows : [];
+    var html = '<h4><span class="material-icons-round">account_tree</span> 调解流程设计</h4><div class="flow-steps">';
+    data.forEach(function(f, i) {
+        if (i > 0) html += '<div class="flow-step"><span class="step-arrow">↓</span></div>';
+        var step = f.step || (i + 1);
+        var name = f.name || f.title || '';
+        html += '<div class="flow-step"><span class="step-num">' + step + '</span> ' + escapeHtml(name) + '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderSysDesignIntegrations(integrations) {
+    var container = document.getElementById('sysdesign-integrations');
+    if (!container) return;
+
+    var data = Array.isArray(integrations) ? integrations : [];
+    var html = '<h4><span class="material-icons-round">hub</span> 系统集成架构</h4><div class="role-list">';
+    data.forEach(function(item) {
+        html += '<span class="role-tag">' + escapeHtml(item.name || '') + '</span>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderSysDesignSecurity(security) {
+    var container = document.getElementById('sysdesign-security');
+    if (!container) return;
+
+    var data = Array.isArray(security) ? security : [];
+    var html = '<h4><span class="material-icons-round">security</span> 安全合规设计</h4><div class="flow-steps">';
+    data.forEach(function(s, i) {
+        if (i > 0) html += '<div class="flow-step"><span class="step-arrow">↓</span></div>';
+        var step = s.step || (i + 1);
+        var name = s.name || s.title || '';
+        html += '<div class="flow-step"><span class="step-num">' + step + '</span> ' + escapeHtml(name) + '</div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ==================== SETTINGS ====================
+var currentSettingsCategory = 'general';
+var currentSettingsData = {};
+
+async function loadSettings(category) {
+    if (category) currentSettingsCategory = category;
+
+    try {
+        var res = await api.get('/settings', { category: currentSettingsCategory });
+        var settings = res.settings || res;
+        currentSettingsData = settings;
+        renderSettings(settings, currentSettingsCategory);
+    } catch (err) {
+        showToast('加载设置失败: ' + err.message);
+    }
+}
+
+function switchSettingsCategory(category, el) {
+    document.querySelectorAll('.settings-nav-item').forEach(function(i) { i.classList.remove('active'); });
+    if (el) el.classList.add('active');
+    loadSettings(category);
+}
+
+function renderSettings(settings, category) {
+    var container = document.getElementById('settings-content');
+    if (!container) return;
+
+    if (category === 'about') {
+        renderSettingsAbout(settings);
+        return;
+    }
+
+    var html = '';
+    var groupTitle = {
+        general: '通用配置',
+        notification: '通知配置',
+        security: '安全配置',
+        interface: '界面配置',
+        api: '接口配置',
+        data: '数据管理'
+    };
+
+    html += '<div class="setting-group"><h4>' + (groupTitle[category] || '配置') + '</h4>';
+
+    if (settings && typeof settings === 'object') {
+        Object.keys(settings).forEach(function(key) {
+            var val = settings[key];
+            var label = key.replace(/([A-Z])/g, ' $1').replace(/^./, function(s) { return s.toUpperCase(); });
+            var labelMap = {
+                orgName: '机构名称',
+                casePrefix: '案件编号前缀',
+                autoAssign: '自动分配调解员',
+                timeoutReminder: '调解超时提醒',
+                sms: '短信通知',
+                email: '邮件通知',
+                wechat: '微信推送',
+                twoFactor: '双因素认证',
+                sessionTimeout: '会话超时',
+                passwordPolicy: '密码策略',
+                theme: '主题设置',
+                language: '语言设置',
+                fontSize: '字体大小',
+                webhookUrl: 'Webhook 地址',
+                apiRateLimit: 'API 速率限制',
+                backupFrequency: '备份频率',
+                dataRetention: '数据保留期限',
+                logLevel: '日志级别'
+            };
+            var descMap = {
+                orgName: '显示在系统标题和文书中',
+                casePrefix: '自动生成案件编号的前缀规则',
+                autoAssign: '新案件自动根据负载均衡分配调解员',
+                timeoutReminder: '案件超过设定天数未结案时自动提醒',
+                sms: '案件状态变更时发送短信通知当事人',
+                email: '发送邮件通知调解员和当事人',
+                wechat: '通过微信公众号推送案件动态',
+                twoFactor: '登录时需要二次验证',
+                sessionTimeout: '无操作自动登出时间',
+                passwordPolicy: '密码复杂度要求',
+                theme: '选择系统主题风格',
+                language: '选择系统显示语言',
+                fontSize: '调整界面字体大小',
+                webhookUrl: '接收事件回调的地址',
+                apiRateLimit: '每分钟最大请求数',
+                backupFrequency: '自动备份执行频率',
+                dataRetention: '历史数据保留天数',
+                logLevel: '系统日志记录级别'
+            };
+
+            var displayLabel = labelMap[key] || label;
+            var displayDesc = descMap[key] || '';
+
+            if (typeof val === 'boolean') {
+                html += '<div class="setting-row">' +
+                    '<div><div class="sr-label">' + displayLabel + '</div>' +
+                    (displayDesc ? '<div class="sr-desc">' + displayDesc + '</div>' : '') +
+                    '</div>' +
+                    '<div class="toggle-switch ' + (val ? 'on' : '') + '" data-key="' + key + '" onclick="toggleSetting(this)"></div>' +
+                    '</div>';
+            } else if (key.toLowerCase().indexOf('prefix') !== -1 || key.toLowerCase().indexOf('policy') !== -1 || key.toLowerCase().indexOf('frequency') !== -1 || key.toLowerCase().indexOf('level') !== -1) {
+                html += '<div class="setting-row">' +
+                    '<div><div class="sr-label">' + displayLabel + '</div>' +
+                    (displayDesc ? '<div class="sr-desc">' + displayDesc + '</div>' : '') +
+                    '</div>' +
+                    '<select class="select-input" data-key="' + key + '">' +
+                    '<option>' + escapeHtml(String(val)) + '</option>' +
+                    '</select>' +
+                    '</div>';
+            } else {
+                html += '<div class="setting-row">' +
+                    '<div><div class="sr-label">' + displayLabel + '</div>' +
+                    (displayDesc ? '<div class="sr-desc">' + displayDesc + '</div>' : '') +
+                    '</div>' +
+                    '<input type="text" data-key="' + key + '" value="' + escapeHtml(String(val)) + '" style="padding:6px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none;width:240px">' +
+                    '</div>';
+            }
+        });
+    } else {
+        html += '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无配置项</div>';
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderSettingsAbout(data) {
+    var container = document.getElementById('settings-content');
+    if (!container) return;
+
+    var info = data || {};
+    var html = '<div class="setting-group"><h4>关于系统</h4>';
+    var fields = [
+        { label: '系统名称', key: 'name', default: '和调 · 调解机构管理平台' },
+        { label: '版本号', key: 'version', default: '--' },
+        { label: '构建日期', key: 'buildDate', default: '--' },
+        { label: '技术架构', key: 'techStack', default: '--' },
+        { label: '许可证', key: 'license', default: '--' },
+        { label: '联系方式', key: 'contact', default: '--' }
+    ];
+
+    fields.forEach(function(f) {
+        var val = info[f.key] || f.default;
+        html += '<div class="setting-row">' +
+            '<div><div class="sr-label">' + f.label + '</div></div>' +
+            '<span style="font-size:13px;color:var(--text-secondary)">' + escapeHtml(String(val)) + '</span>' +
+            '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function toggleSetting(el) {
+    el.classList.toggle('on');
+    var key = el.getAttribute('data-key');
+    var isOn = el.classList.contains('on');
+    currentSettingsData[key] = isOn;
+}
+
+async function saveSettings() {
+    try {
+        var settings = {};
+        var inputs = document.querySelectorAll('#settings-content [data-key]');
+        inputs.forEach(function(input) {
+            var key = input.getAttribute('data-key');
+            if (input.tagName === 'SELECT' || input.tagName === 'INPUT') {
+                settings[key] = input.value;
+            } else if (input.classList.contains('toggle-switch')) {
+                settings[key] = input.classList.contains('on');
+            }
+        });
+
+        var payload = {};
+        payload[currentSettingsCategory] = Object.keys(settings).length > 0 ? settings : currentSettingsData;
+
+        await api.put('/settings', { settings: payload });
+        showToast('设置已保存', 'success');
+    } catch (err) {
+        showToast('保存设置失败: ' + err.message);
+    }
+}
+
+// ==================== UTILITY ====================
+function escapeHtml(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ==================== CHART TABS ====================
+document.querySelectorAll('.chart-tabs').forEach(function(tabGroup) {
+    tabGroup.querySelectorAll('.chart-tab').forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabGroup.querySelectorAll('.chart-tab').forEach(function(t) { t.classList.remove('active'); });
+            this.classList.add('active');
+        });
+    });
+});
+
+// ==================== INIT ====================
+async function initApp() {
+    startLoginArt();
+
+    var token = api.getToken();
+    if (token) {
+        var isValid = await checkAuth();
+        if (isValid) {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-system').classList.add('active');
+            stopLoginArt();
+            updateUserInfo();
+            await loadDashboard();
+            await loadUnreadCount();
+        }
+    }
+}
+
+var spinStyle = document.createElement('style');
+spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+document.head.appendChild(spinStyle);
+
+initApp();
 </script>
 
 </body>

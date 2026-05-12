@@ -1,0 +1,300 @@
+const bcrypt = require('bcryptjs');
+const { getDb, initDatabase } = require('./db');
+
+function seed() {
+  const db = initDatabase();
+
+  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+  if (userCount > 0) {
+    console.log('Database already seeded, skipping...');
+    return db;
+  }
+
+  console.log('Seeding database...');
+
+  const insertRole = db.prepare(
+    'INSERT INTO roles (name, display_name, description) VALUES (?, ?, ?)'
+  );
+  const roles = [
+    ['super_admin', '超级管理员', '系统最高权限，可管理所有模块和配置'],
+    ['org_admin', '机构负责人', '管理本机构所有业务和人员'],
+    ['senior_mediator', '高级调解员', '处理复杂案件，指导初级调解员'],
+    ['mediator', '调解员', '负责案件调解工作'],
+    ['archivist', '档案管理员', '负责档案整理和归档'],
+    ['call_agent', '呼叫中心坐席', '负责接听和处理来电'],
+    ['analyst', '数据分析师', '负责数据统计和分析报告'],
+    ['operator', '系统运维', '负责系统维护和技术支持']
+  ];
+  const roleInsert = db.transaction((rows) => {
+    for (const r of rows) insertRole.run(...r);
+  });
+  roleInsert(roles);
+
+  const insertUser = db.prepare(
+    'INSERT INTO users (username, password_hash, real_name, phone, email, role_id, avatar_color, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  );
+  const passwordHash = bcrypt.hashSync('admin123', 10);
+  const users = [
+    ['admin', passwordHash, '系统管理员', '13800000001', 'admin@mediation.gov.cn', 1, '#c9a84c', 'active'],
+    ['liminghua', passwordHash, '李明华', '13800000010', 'limh@mediation.gov.cn', 3, '#c9a84c', 'active'],
+    ['zhaoxuemei', passwordHash, '赵雪梅', '13800000011', 'zhaoxm@mediation.gov.cn', 3, '#2dd4bf', 'active'],
+    ['chenjianguo', passwordHash, '陈建国', '13800000012', 'chenjg@mediation.gov.cn', 4, '#a78bfa', 'active'],
+    ['zhouliping', passwordHash, '周丽萍', '13800000013', 'zhoulp@mediation.gov.cn', 4, '#f472b6', 'active'],
+    ['wangdangan', passwordHash, '王档案', '13800000020', 'wangda@mediation.gov.cn', 5, '#fbbf24', 'active'],
+    ['zuozuo01', passwordHash, '张坐席', '13800000030', 'zuozuo@mediation.gov.cn', 6, '#60a5fa', 'active']
+  ];
+  const userInsert = db.transaction((rows) => {
+    for (const u of rows) insertUser.run(...u);
+  });
+  userInsert(users);
+
+  const insertCaseType = db.prepare(
+    'INSERT INTO case_types (name, icon, color, sort_order) VALUES (?, ?, ?, ?)'
+  );
+  const caseTypes = [
+    ['房屋租赁纠纷', 'home', '#c9a84c', 1],
+    ['劳动争议', 'work', '#2dd4bf', 2],
+    ['合同纠纷', 'handshake', '#a78bfa', 3],
+    ['邻里纠纷', 'diversity_3', '#f472b6', 4],
+    ['消费维权', 'shopping_cart', '#fbbf24', 5],
+    ['婚姻家庭', 'favorite', '#60a5fa', 6],
+    ['交通事故', 'directions_car', '#34d399', 7],
+    ['债务纠纷', 'account_balance', '#fb923c', 8]
+  ];
+  const ctInsert = db.transaction((rows) => {
+    for (const ct of rows) insertCaseType.run(...ct);
+  });
+  ctInsert(caseTypes);
+
+  const insertArchiveCat = db.prepare(
+    'INSERT INTO archive_categories (name, icon, color, description, sort_order) VALUES (?, ?, ?, ?, ?)'
+  );
+  const archiveCats = [
+    ['房屋租赁纠纷档案', 'home', '#c9a84c', '包含租赁合同、房屋状况报告、双方陈述记录等核心材料', 1],
+    ['劳动争议档案', 'work', '#2dd4bf', '劳动合同、工资流水、社保记录、工伤鉴定等关键证据', 2],
+    ['合同纠纷档案', 'handshake', '#a78bfa', '合同原件、补充协议、往来函件、履约记录等材料', 3],
+    ['邻里纠纷档案', 'diversity_3', '#f472b6', '物业记录、现场照片、调解笔录、社区证明等', 4],
+    ['消费维权档案', 'shopping_cart', '#fbbf24', '购物凭证、商品检测报告、投诉记录、商家回复等', 5],
+    ['婚姻家庭档案', 'favorite', '#60a5fa', '结婚证明、财产清单、子女抚养协议、调解记录等', 6]
+  ];
+  const acInsert = db.transaction((rows) => {
+    for (const ac of rows) insertArchiveCat.run(...ac);
+  });
+  acInsert(archiveCats);
+
+  const insertCase = db.prepare(
+    `INSERT INTO cases (case_number, title, type_id, description, status, priority, mediator_id, created_by, assigned_at, accepted_at, closed_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const cases = [
+    ['2024-1092', '张某某与李某房屋租赁押金退还纠纷', 1, '甲方张某某要求乙方李某退还房屋租赁押金15000元，乙方以房屋需清洁为由拒绝全额退还', 'mediating', 'urgent', 2, 1, '2024-12-08 09:00:00', null, null],
+    ['2024-1091', '王某与某科技公司劳动争议', 2, '王某主张公司违法解除劳动合同，要求支付经济补偿金', 'mediating', 'high', 3, 1, '2024-12-07 10:00:00', '2024-12-07 14:00:00', null],
+    ['2024-1090', '某贸易公司与某物流公司合同纠纷', 3, '贸易公司主张物流公司未按合同约定时间送达货物，造成经济损失', 'mediating', 'normal', 4, 1, '2024-12-06 11:00:00', '2024-12-06 15:00:00', null],
+    ['2024-1089', '刘某与周某邻里噪音纠纷', 4, '刘某反映楼上住户周某长期产生噪音影响其正常生活', 'closed', 'normal', 2, 1, '2024-12-05 09:00:00', '2024-12-05 10:00:00', '2024-12-08 16:00:00'],
+    ['2024-1088', '孙某与某电商平台消费维权', 5, '孙某购买商品与描述不符，要求退货退款并赔偿', 'pending', 'normal', 5, 1, null, null, null],
+    ['2024-1087', '吴某与郑某婚姻财产分割', 6, '双方协议离婚，就共同财产分割存在争议', 'pending', 'normal', 3, 1, null, null, null],
+    ['2024-1086', '黄某与某保险公司交通事故理赔', 7, '黄某交通事故后保险公司理赔金额存在争议', 'closed', 'normal', 4, 1, '2024-12-02 09:00:00', '2024-12-02 11:00:00', '2024-12-05 14:00:00'],
+    ['2024-1085', '赵某与钱某民间借贷纠纷', 8, '赵某主张钱某未按期归还借款5万元', 'closed', 'high', 2, 1, '2024-12-01 09:00:00', '2024-12-01 10:00:00', '2024-12-04 16:00:00'],
+    ['2024-1084', '陈某与某装修公司装修质量纠纷', 3, '陈某主张装修公司施工质量不合格，要求返工并赔偿', 'mediating', 'high', 3, 1, '2024-11-30 10:00:00', '2024-11-30 14:00:00', null],
+    ['2024-1083', '林某与何某物业管理纠纷', 4, '林某对物业收费标准和服务质量提出异议', 'accepted', 'normal', 5, 1, '2024-11-29 09:00:00', null, null]
+  ];
+  const caseInsert = db.transaction((rows) => {
+    for (const c of rows) insertCase.run(...c);
+  });
+  caseInsert(cases);
+
+  const insertParty = db.prepare(
+    `INSERT INTO case_parties (case_id, party_type, name, id_number, phone, description) VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  const parties = [
+    [1, 'plaintiff', '张某某', '310***********1234', '139****5678', '甲方，房屋承租方'],
+    [1, 'defendant', '李某', '310***********5678', '158****3456', '乙方，房屋出租方'],
+    [2, 'plaintiff', '王某', '310***********9012', '137****7890', '劳动者，原某科技公司员工'],
+    [2, 'defendant', '某科技有限公司', '91310000********', '021-5555****', '用人单位'],
+    [3, 'plaintiff', '某贸易有限公司', '91310000********', '021-6666****', '委托方'],
+    [3, 'defendant', '某物流有限公司', '91310000********', '021-7777****', '承运方'],
+    [4, 'plaintiff', '刘某', '310***********3456', '136****2345', '楼下住户'],
+    [4, 'defendant', '周某', '310***********7890', '135****6789', '楼上住户'],
+    [5, 'plaintiff', '孙某', '310***********2345', '133****4567', '消费者'],
+    [5, 'defendant', '某电子商务平台', '91310000********', '400-****-****', '电商平台']
+  ];
+  const partyInsert = db.transaction((rows) => {
+    for (const p of rows) insertParty.run(...p);
+  });
+  partyInsert(parties);
+
+  const insertDocTemplate = db.prepare(
+    `INSERT INTO document_templates (name, code, description, content_template, icon, color, usage_count) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+  const docTemplates = [
+    ['调解协议书', 'mediation_agreement', '调解成功后双方签署的协议', '调协字〔{{year}}〕第 {{caseNumber}} 号\n\n甲方：{{partyA}}\n乙方：{{partyB}}\n纠纷事由：{{caseTitle}}\n\n经本调解委员会主持调解，双方当事人自愿达成如下协议：\n\n一、{{agreement1}}\n二、{{agreement2}}\n\n本协议自双方签字之日起生效。\n\n甲方（签字）：__________  日期：__________\n乙方（签字）：__________  日期：__________\n调解员（签字）：__________  日期：__________', 'assignment', '#c9a84c', 128],
+    ['调解笔录', 'mediation_record', '调解过程的详细记录', '调解时间：{{date}}\n调解地点：{{location}}\n调解员：{{mediator}}\n\n当事人：\n甲方：{{partyA}}\n乙方：{{partyB}}\n\n调解过程记录：\n{{recordContent}}\n\n以上笔录已向当事人宣读，当事人确认无误。\n\n甲方（签字）：__________\n乙方（签字）：__________\n调解员（签字）：__________\n记录员（签字）：__________', 'receipt_long', '#2dd4bf', 96],
+    ['受理通知书', 'acceptance_notice', '案件受理后通知当事人的文书', '{{orgName}}\n受理通知书\n\n{{partyName}}：\n\n你/你单位与{{oppositeParty}}关于{{caseTitle}}一案的调解申请，经审查符合受理条件，本委员会决定予以受理。\n\n调解员：{{mediator}}\n联系电话：{{phone}}\n\n请于接到本通知后{{days}}日内到本委员会参加调解。\n\n{{orgName}}\n{{date}}', 'task_alt', '#a78bfa', 84],
+    ['终止调解书', 'termination_notice', '调解未达成协议时终止调解的文书', '{{orgName}}\n终止调解通知书\n\n{{partyName}}：\n\n你/你单位与{{oppositeParty}}关于{{caseTitle}}一案，经本委员会调解，双方未能达成协议。根据《中华人民共和国人民调解法》相关规定，本委员会决定终止调解。\n\n当事人可依法通过仲裁、诉讼等途径解决纠纷。\n\n{{orgName}}\n{{date}}', 'cancel', '#f472b6', 32],
+    ['调解延期申请', 'postponement_request', '申请延长调解期限的文书', '调解延期申请书\n\n案件编号：{{caseNumber}}\n申请人：{{applicant}}\n\n申请延期原因：\n{{reason}}\n\n申请延期至：{{newDate}}\n\n申请人（签字）：__________\n日期：__________', 'schedule', '#fbbf24', 45],
+    ['司法确认申请书', 'judicial_confirmation', '向法院申请司法确认的文书', '司法确认申请书\n\n申请人：{{partyA}}\n被申请人：{{partyB}}\n\n申请事项：\n请求对申请人于{{agreementDate}}达成的调解协议进行司法确认。\n\n事实与理由：\n{{reason}}\n\n此致\n{{courtName}}', 'verified_user', '#60a5fa', 67],
+    ['调解员回避申请', 'recusal_request', '申请调解员回避的文书', '调解员回避申请书\n\n案件编号：{{caseNumber}}\n申请人：{{applicant}}\n被申请回避调解员：{{mediator}}\n\n回避原因：\n{{reason}}\n\n申请人（签字）：__________\n日期：__________', 'group_add', '#34d399', 12],
+    ['调解邀请函', 'mediation_invitation', '邀请当事人参加调解的函件', '调解邀请函\n\n{{partyName}}：\n\n本委员会受理了{{oppositeParty}}与你/你单位关于{{caseTitle}}一案的调解申请。现邀请你/你单位参加调解。\n\n调解时间：{{date}}\n调解地点：{{location}}\n调解员：{{mediator}}\n\n如你/你单位同意参加调解，请于{{deadline}}前回复确认。\n\n{{orgName}}\n{{date}}', 'mail', '#fb923c', 53]
+  ];
+  const dtInsert = db.transaction((rows) => {
+    for (const d of rows) insertDocTemplate.run(...d);
+  });
+  dtInsert(docTemplates);
+
+  const insertNotification = db.prepare(
+    `INSERT INTO notifications (user_id, type, title, content, link, is_read) VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  const notifications = [
+    [2, 'urgent', '紧急案件提醒', '案件 #2024-1092 需在48小时内响应，请尽快安排调解', '/cases/1', 0],
+    [2, 'case', '调解结果通知', '案件 #2024-1089 调解成功，协议书已自动生成', '/cases/4', 0],
+    [2, 'video', '视频调解提醒', '案件 #2024-1091 视频调解将于14:00开始，请提前5分钟加入', '/video', 0],
+    [3, 'document', '文书审核通知', '调解协议书 #2024-1085 已提交审核，请及时查阅', '/documents', 0],
+    [1, 'system', '系统更新通知', '平台已升级至 v3.2.0，新增智能文书推荐功能', '/settings', 1],
+    [2, 'training', '培训通知', '本周五14:00开展在线调解技能培训，请准时参加', null, 1]
+  ];
+  const nInsert = db.transaction((rows) => {
+    for (const n of rows) insertNotification.run(...n);
+  });
+  nInsert(notifications);
+
+  const insertCall = db.prepare(
+    `INSERT INTO call_records (caller_number, callee_id, call_type, category, status, wait_duration, talk_duration, note, started_at, answered_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const calls = [
+    ['138****5678', null, 'inbound', 'consultation', 'waiting', 192, null, null, '2024-12-09 14:23:15', null, null],
+    ['159****3456', null, 'inbound', 'appointment', 'waiting', 319, null, null, '2024-12-09 14:21:08', null, null],
+    ['186****7890', 7, 'inbound', 'query', 'connected', 45, null, '查询案件 #2024-1090 进度', '2024-12-09 14:18:42', '2024-12-09 14:19:27', null],
+    ['177****2345', 7, 'inbound', 'complaint', 'connected', 30, null, '投诉调解员态度问题', '2024-12-09 14:15:30', '2024-12-09 14:16:00', null],
+    ['135****8901', 7, 'inbound', 'consultation', 'completed', 15, 320, '咨询房屋租赁纠纷调解流程', '2024-12-09 14:10:00', '2024-12-09 14:10:15', '2024-12-09 14:15:35'],
+    ['188****4567', 7, 'inbound', 'appointment', 'completed', 8, 180, '预约下周调解', '2024-12-09 14:05:00', '2024-12-09 14:05:08', '2024-12-09 14:08:08'],
+    ['139****1234', 7, 'inbound', 'query', 'completed', 22, 95, '查询调解协议书模板', '2024-12-09 13:55:00', '2024-12-09 13:55:22', '2024-12-09 13:56:57'],
+    ['156****7890', null, 'inbound', 'consultation', 'abandoned', 120, null, null, '2024-12-09 13:50:00', null, '2024-12-09 13:52:00']
+  ];
+  const callInsert = db.transaction((rows) => {
+    for (const c of rows) insertCall.run(...c);
+  });
+  callInsert(calls);
+
+  const insertSetting = db.prepare(
+    `INSERT INTO settings (category, key, value, value_type, description) VALUES (?, ?, ?, ?, ?)`
+  );
+  const settings = [
+    ['general', 'org_name', '某某市人民调解委员会', 'string', '机构名称'],
+    ['general', 'case_prefix', 'yearly', 'string', '案件编号前缀规则'],
+    ['general', 'auto_assign', 'true', 'boolean', '自动分配调解员'],
+    ['general', 'timeout_reminder', 'true', 'boolean', '调解超时提醒'],
+    ['general', 'timeout_days', '30', 'number', '超时天数阈值'],
+    ['notification', 'sms_enabled', 'true', 'boolean', '短信通知'],
+    ['notification', 'email_enabled', 'false', 'boolean', '邮件通知'],
+    ['notification', 'wechat_enabled', 'true', 'boolean', '微信推送'],
+    ['notification', 'sms_template', '【和调平台】您有新的案件通知：{{content}}', 'string', '短信模板'],
+    ['security', 'password_min_length', '8', 'number', '密码最小长度'],
+    ['security', 'login_max_attempts', '5', 'number', '最大登录尝试次数'],
+    ['security', 'session_timeout', '120', 'number', '会话超时时间(分钟)'],
+    ['security', 'two_factor_auth', 'false', 'boolean', '双因素认证'],
+    ['security', 'ip_whitelist', '', 'string', 'IP白名单(逗号分隔)'],
+    ['interface', 'theme', 'dark', 'string', '界面主题'],
+    ['interface', 'language', 'zh-CN', 'string', '界面语言'],
+    ['interface', 'page_size', '20', 'number', '默认分页大小'],
+    ['api', 'rate_limit', '100', 'number', 'API限流(次/分钟)'],
+    ['api', 'log_retention_days', '90', 'number', '日志保留天数'],
+    ['data', 'backup_enabled', 'true', 'boolean', '自动备份'],
+    ['data', 'backup_interval', '24', 'number', '备份间隔(小时)'],
+    ['data', 'backup_retention', '30', 'number', '备份保留天数']
+  ];
+  const sInsert = db.transaction((rows) => {
+    for (const s of rows) insertSetting.run(...s);
+  });
+  sInsert(settings);
+
+  const insertStats = db.prepare(
+    `INSERT INTO dashboard_stats (stat_date, total_cases, new_cases, closed_cases, success_rate, avg_duration, total_calls, answered_calls) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const stats = [];
+  for (let i = 30; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const newC = Math.floor(Math.random() * 15) + 5;
+    const closedC = Math.floor(newC * (0.7 + Math.random() * 0.25));
+    stats.push([
+      dateStr,
+      1200 + (30 - i) * 8 + Math.floor(Math.random() * 20),
+      newC,
+      closedC,
+      85 + Math.random() * 8,
+      5 + Math.random() * 3,
+      Math.floor(Math.random() * 40) + 20,
+      Math.floor(Math.random() * 35) + 18
+    ]);
+  }
+  const statInsert = db.transaction((rows) => {
+    for (const s of rows) insertStats.run(...s);
+  });
+  statInsert(stats);
+
+  const insertArchive = db.prepare(
+    `INSERT INTO archives (category_id, case_id, title, description, status, created_by) VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  const archives = [
+    [1, 1, '张某某与李某房屋租赁纠纷档案', '包含租赁合同、房屋状况报告、双方陈述记录等核心材料', 'active', 6],
+    [2, 2, '王某与某科技公司劳动争议档案', '劳动合同、工资流水、社保记录、工伤鉴定等关键证据', 'active', 6],
+    [3, 3, '某贸易公司与某物流公司合同纠纷档案', '合同原件、补充协议、往来函件、履约记录等材料', 'active', 6],
+    [4, 4, '刘某与周某邻里噪音纠纷档案', '物业记录、现场照片、调解笔录、社区证明等', 'archived', 6],
+    [5, 5, '孙某与某电商平台消费维权档案', '购物凭证、商品检测报告、投诉记录、商家回复等', 'active', 6],
+    [6, 6, '吴某与郑某婚姻财产分割档案', '结婚证明、财产清单、子女抚养协议、调解记录等', 'active', 6]
+  ];
+  const arInsert = db.transaction((rows) => {
+    for (const a of rows) insertArchive.run(...a);
+  });
+  arInsert(archives);
+
+  const insertFile = db.prepare(
+    `INSERT INTO archive_files (archive_id, file_name, file_path, file_size, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  const files = [];
+  const fileNames = ['租赁合同.pdf', '房屋状况报告.pdf', '甲方陈述记录.docx', '乙方陈述记录.docx', '押金收据.jpg', '调解笔录.pdf', '调解协议书.pdf', '身份证复印件.pdf', '现场照片.jpg', '物业证明.pdf'];
+  for (let aId = 1; aId <= 6; aId++) {
+    const count = 2 + Math.floor(Math.random() * 4);
+    for (let f = 0; f < count; f++) {
+      const fn = fileNames[Math.floor(Math.random() * fileNames.length)];
+      files.push([aId, fn, `/uploads/archives/${aId}/${fn}`, Math.floor(Math.random() * 5000000) + 100000, fn.split('.').pop(), 6]);
+    }
+  }
+  const fInsert = db.transaction((rows) => {
+    for (const f of rows) insertFile.run(...f);
+  });
+  fInsert(files);
+
+  const insertVideoSession = db.prepare(
+    `INSERT INTO video_sessions (case_id, room_id, title, status, scheduled_at, started_at, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+  const videoSessions = [
+    [1, 'room-1092-001', '张某某与李某房屋租赁押金退还纠纷调解', 'in_progress', '2024-12-09 14:00:00', '2024-12-09 14:00:05', 2],
+    [2, 'room-1091-001', '王某与某科技公司劳动争议调解', 'scheduled', '2024-12-09 15:00:00', null, 3],
+    [3, 'room-1090-001', '某贸易公司与某物流公司合同纠纷调解', 'scheduled', '2024-12-10 10:00:00', null, 4]
+  ];
+  const vsInsert = db.transaction((rows) => {
+    for (const v of rows) insertVideoSession.run(...v);
+  });
+  vsInsert(videoSessions);
+
+  const insertChatMsg = db.prepare(
+    `INSERT INTO chat_messages (session_id, sender_type, sender_id, sender_name, content, message_type) VALUES (?, ?, ?, ?, ?, ?)`
+  );
+  const chatMsgs = [
+    [1, 'mediator', 2, '李明华', '双方好，今天我们针对房屋租赁押金退还问题进行调解，请双方各自陈述诉求。', 'text'],
+    [1, 'party', null, '张某某', '我要求全额退还押金15000元，房屋退租时没有任何损坏。', 'text'],
+    [1, 'party', null, '李某', '我认为需要扣除部分清洁费用，约2000元。', 'text'],
+    [1, 'mediator', 2, '李明华', '建议双方各让一步，扣除500元清洁费，退还14500元，是否可以接受？', 'text']
+  ];
+  const cmInsert = db.transaction((rows) => {
+    for (const m of rows) insertChatMsg.run(...m);
+  });
+  cmInsert(chatMsgs);
+
+  console.log('Database seeded successfully!');
+  return db;
+}
+
+module.exports = { seed };
