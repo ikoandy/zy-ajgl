@@ -2878,7 +2878,11 @@ const api = {
         }
 
         if (response.status === 204) return null;
-        return response.json();
+        var result = await response.json();
+        if (result && result.success && result.data !== undefined) {
+            return result.data;
+        }
+        return result;
     },
 
     get(url, params) {
@@ -3170,8 +3174,7 @@ var typeChartInstance = null;
 
 async function loadDashboard() {
     try {
-        var res = await api.get('/cases/stats');
-        var stats = res.data || res;
+        var stats = await api.get('/cases/stats');
         renderDashboardStats(stats);
         renderDashboardCharts(stats);
         renderDashboardTimeline(stats);
@@ -3386,9 +3389,9 @@ async function loadCases(page, status) {
         if (casesCurrentStatus) params.status = casesCurrentStatus;
 
         var res = await api.get('/cases', params);
-        var data = res.data || res;
-        var total = res.total || 0;
-        var totalPages = Math.ceil(total / 10) || 1;
+        var data = res.data || [];
+        var total = res.pagination ? res.pagination.total : 0;
+        var totalPages = res.pagination ? res.pagination.totalPages : 1;
 
         renderCasesTable(data);
         renderCasesPagination(totalPages, casesCurrentPage);
@@ -3702,8 +3705,7 @@ async function createVideoSession() {
 async function loadNotifications() {
     try {
         var res = await api.get('/notifications');
-        var data = res.data || res;
-        renderNotifications(Array.isArray(data) ? data : []);
+        renderNotifications(Array.isArray(res) ? res : (Array.isArray(res.data) ? res.data : []));
     } catch (err) {
         showToast('加载通知失败: ' + err.message);
     }
@@ -4193,11 +4195,13 @@ async function loadSchedules() {
     var month = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
     try {
         var res = await api.get('/schedules/calendar', { month: month });
-        var data = res.data || res;
-        var schedules = Array.isArray(data) ? data : (data.schedules || []);
-        var calendarMap = data.calendar || {};
+        var calendarMap = res;
+        var allSchedules = [];
+        Object.keys(calendarMap).forEach(function(key) {
+            if (Array.isArray(calendarMap[key])) allSchedules = allSchedules.concat(calendarMap[key]);
+        });
         renderScheduleCalendar(calendarMap, now);
-        renderScheduleList(schedules);
+        renderScheduleList(allSchedules);
     } catch (err) {
         showToast('加载日程数据失败: ' + err.message);
     }
@@ -4350,7 +4354,7 @@ async function loadFeedbacks() {
         var stats = results[1];
 
         renderFeedbackStats(stats);
-        renderFeedbackList(Array.isArray(listData) ? listData : (listData.items || []));
+        renderFeedbackList(Array.isArray(listData) ? listData : []);
         renderFeedbackCharts(stats);
         renderFeedbackMediatorRanking(stats);
     } catch (err) {
@@ -4531,9 +4535,9 @@ async function loadUsers(page) {
 
     try {
         var res = await api.get('/users', { page: usersCurrentPage, pageSize: 20 });
-        var data = res.data || res;
-        var total = res.total || 0;
-        var totalPages = Math.ceil(total / 20) || 1;
+        var data = res.data || [];
+        var total = res.pagination ? res.pagination.total : 0;
+        var totalPages = res.pagination ? res.pagination.totalPages : 1;
 
         renderUsersTable(Array.isArray(data) ? data : []);
         renderUsersPagination(totalPages, usersCurrentPage);
@@ -4836,9 +4840,9 @@ async function loadAuditLogs(page) {
         if (dateTo && dateTo.value) params.dateTo = dateTo.value;
 
         var res = await api.get('/sysdesign/audit-logs', params);
-        var data = res.data || res;
-        var total = res.total || 0;
-        var totalPages = Math.ceil(total / 20) || 1;
+        var data = res.data || [];
+        var total = res.pagination ? res.pagination.total : 0;
+        var totalPages = res.pagination ? res.pagination.totalPages : 1;
 
         renderAuditLogList(Array.isArray(data) ? data : []);
         renderAuditPagination(totalPages, auditCurrentPage);
