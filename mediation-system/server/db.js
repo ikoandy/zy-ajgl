@@ -195,6 +195,7 @@ function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       archive_id INTEGER NOT NULL,
       file_name TEXT NOT NULL,
+      file_label TEXT,
       file_path TEXT NOT NULL,
       file_size INTEGER,
       file_type TEXT,

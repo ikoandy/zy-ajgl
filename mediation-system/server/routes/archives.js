@@ -346,23 +346,30 @@ router.post('/:id/files', archiveUpload.array('files', 20), (req, res) => {
     return res.status(400).json(formatError('未上传文件'));
   }
 
+  var labels = [];
+  if (req.body.labels) {
+    try { labels = JSON.parse(req.body.labels); } catch (e) { labels = []; }
+  }
+
   var inserted = [];
   var insertStmt = db.prepare(
-    'INSERT INTO archive_files (archive_id, file_name, file_path, file_size, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)'
+    'INSERT INTO archive_files (archive_id, file_name, file_label, file_path, file_size, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?)'
   );
 
   for (var i = 0; i < req.files.length; i++) {
     var f = req.files[i];
     var ext = path.extname(f.originalname).toLowerCase().replace('.', '');
+    var label = (labels[i] && labels[i].trim()) ? labels[i].trim() : f.originalname;
     var result = insertStmt.run(
       req.params.id,
       f.originalname,
+      label,
       f.path,
       f.size,
       ext,
       req.user.id
     );
-    inserted.push({ id: result.lastInsertRowid, file_name: f.originalname, file_size: f.size, file_type: ext });
+    inserted.push({ id: result.lastInsertRowid, file_name: f.originalname, file_label: label, file_size: f.size, file_type: ext });
   }
 
   db.prepare('UPDATE archives SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(req.params.id);

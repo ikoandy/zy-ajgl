@@ -5376,8 +5376,13 @@ async function viewArchiveDetail(id) {
             a.files.forEach(function(f) {
                 var fileIconMap = { pdf: 'picture_as_pdf', doc: 'description', docx: 'description', xls: 'table_chart', xlsx: 'table_chart', jpg: 'image', jpeg: 'image', png: 'image', mp3: 'audiotrack', mp4: 'videocam', zip: 'folder_zip' };
                 var fIcon = fileIconMap[(f.file_type || '').toLowerCase()] || 'insert_drive_file';
+                var displayName = (f.file_label && f.file_label.trim()) ? f.file_label : f.file_name;
+                var showOriginalName = (f.file_label && f.file_label.trim() && f.file_label !== f.file_name);
                 html += '<tr>' +
-                    '<td style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">' + fIcon + '</span>' + escapeHtml(f.file_name || '') + '</td>' +
+                    '<td style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">' + fIcon + '</span><div>' +
+                    '<div style="font-size:12px;color:var(--text-primary)">' + escapeHtml(displayName) + '</div>' +
+                    (showOriginalName ? '<div style="font-size:10px;color:var(--text-muted)">原文件: ' + escapeHtml(f.file_name) + '</div>' : '') +
+                    '</div></td>' +
                     '<td>' + escapeHtml((f.file_type || '--').toUpperCase()) + '</td>' +
                     '<td>' + formatFileSize(f.file_size) + '</td>' +
                     '<td>' + escapeHtml(f.uploaded_by_name || '--') + '</td>' +
@@ -5573,7 +5578,8 @@ function handleArchiveFileSelect(input) {
 
 function addArchivePendingFiles(fileList) {
     for (var i = 0; i < fileList.length; i++) {
-        archivePendingFiles.push(fileList[i]);
+        var nameWithoutExt = fileList[i].name.replace(/\.[^/.]+$/, '');
+        archivePendingFiles.push({ file: fileList[i], label: nameWithoutExt });
     }
     renderArchiveFileList();
 }
@@ -5581,6 +5587,10 @@ function addArchivePendingFiles(fileList) {
 function removeArchivePendingFile(index) {
     archivePendingFiles.splice(index, 1);
     renderArchiveFileList();
+}
+
+function updateArchiveFileLabel(index, value) {
+    archivePendingFiles[index].label = value;
 }
 
 function renderArchiveFileList() {
@@ -5593,17 +5603,24 @@ function renderArchiveFileList() {
     }
     uploadBtn.disabled = false;
     var html = '';
-    archivePendingFiles.forEach(function(f, i) {
+    archivePendingFiles.forEach(function(item, i) {
+        var f = item.file;
         var iconMap = { pdf: 'picture_as_pdf', doc: 'description', docx: 'description', xls: 'table_chart', xlsx: 'table_chart', jpg: 'image', jpeg: 'image', png: 'image', mp3: 'audiotrack', mp4: 'videocam', zip: 'folder_zip', rar: 'folder_zip' };
         var ext = f.name.split('.').pop().toLowerCase();
         var icon = iconMap[ext] || 'insert_drive_file';
-        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:6px">' +
+        html += '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:8px">' +
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
             '<span class="material-icons-round" style="font-size:20px;color:var(--accent-gold)">' + icon + '</span>' +
             '<div style="flex:1;min-width:0">' +
             '<div style="font-size:12px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(f.name) + '</div>' +
             '<div style="font-size:11px;color:var(--text-muted)">' + formatFileSize(f.size) + ' · ' + ext.toUpperCase() + '</div>' +
             '</div>' +
             '<button onclick="removeArchivePendingFile(' + i + ')" style="width:24px;height:24px;border-radius:50%;border:none;background:var(--accent-rose-dim);color:var(--accent-rose);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px">×</button>' +
+            '</div>' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span class="material-icons-round" style="font-size:14px;color:var(--text-muted)">label</span>' +
+            '<input type="text" value="' + escapeHtml(item.label) + '" placeholder="文件标注，如：身份证复印件" oninput="updateArchiveFileLabel(' + i + ', this.value)" style="flex:1;padding:6px 10px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px">' +
+            '</div>' +
             '</div>';
     });
     listEl.innerHTML = html;
@@ -5619,8 +5636,10 @@ async function submitArchiveFile() {
 
     try {
         var formData = new FormData();
-        archivePendingFiles.forEach(function(f) {
-            formData.append('files', f);
+        var labels = archivePendingFiles.map(function(item) { return item.label; });
+        formData.append('labels', JSON.stringify(labels));
+        archivePendingFiles.forEach(function(item) {
+            formData.append('files', item.file);
         });
 
         var token = localStorage.getItem('token');
