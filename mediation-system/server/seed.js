@@ -234,15 +234,19 @@ function seed() {
   statInsert(stats);
 
   const insertArchive = db.prepare(
-    `INSERT INTO archives (category_id, case_id, title, description, status, created_by) VALUES (?, ?, ?, ?, ?, ?)`
+    `INSERT INTO archives (archive_number, category_id, case_id, title, description, status, confidentiality_level, retention_period, archive_date, tags, storage_location, total_pages, responsible_person, review_status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   const archives = [
-    [1, 1, '张某某与李某房屋租赁纠纷档案', '包含租赁合同、房屋状况报告、双方陈述记录等核心材料', 'active', 6],
-    [2, 2, '王某与某科技公司劳动争议档案', '劳动合同、工资流水、社保记录、工伤鉴定等关键证据', 'active', 6],
-    [3, 3, '某贸易公司与某物流公司合同纠纷档案', '合同原件、补充协议、往来函件、履约记录等材料', 'active', 6],
-    [4, 4, '刘某与周某邻里噪音纠纷档案', '物业记录、现场照片、调解笔录、社区证明等', 'archived', 6],
-    [5, 5, '孙某与某电商平台消费维权档案', '购物凭证、商品检测报告、投诉记录、商家回复等', 'active', 6],
-    [6, 6, '吴某与郑某婚姻财产分割档案', '结婚证明、财产清单、子女抚养协议、调解记录等', 'active', 6]
+    ['DA20240001', 1, 1, '张某某与李某房屋租赁纠纷档案', '包含租赁合同、房屋状况报告、双方陈述记录等核心材料', 'active', 'internal', 'long-term', '2024-12-08', '房屋租赁,押金纠纷', 'A区3号柜', 45, '王档案', 'approved', 6],
+    ['DA20240002', 2, 2, '王某与某科技公司劳动争议档案', '劳动合同、工资流水、社保记录、工伤鉴定等关键证据', 'active', 'internal', 'long-term', '2024-12-07', '劳动争议,经济补偿', 'B区1号柜', 38, '王档案', 'approved', 6],
+    ['DA20240003', 3, 3, '某贸易公司与某物流公司合同纠纷档案', '合同原件、补充协议、往来函件、履约记录等材料', 'active', 'confidential', 'permanent', '2024-12-06', '合同纠纷,物流', 'C区2号柜', 62, '王档案', 'approved', 6],
+    ['DA20240004', 4, 4, '刘某与周某邻里噪音纠纷档案', '物业记录、现场照片、调解笔录、社区证明等', 'archived', 'public', 'short-term', '2024-12-05', '邻里纠纷,噪音', 'D区1号柜', 28, '王档案', 'approved', 6],
+    ['DA20240005', 5, 5, '孙某与某电商平台消费维权档案', '购物凭证、商品检测报告、投诉记录、商家回复等', 'active', 'public', 'long-term', '2024-12-04', '消费维权,电商', 'A区2号柜', 33, '王档案', 'pending', 6],
+    ['DA20240006', 6, 6, '吴某与郑某婚姻财产分割档案', '结婚证明、财产清单、子女抚养协议、调解记录等', 'active', 'confidential', 'permanent', '2024-12-03', '婚姻家庭,财产分割', 'B区3号柜', 51, '王档案', 'pending', 6],
+    ['DA20240007', 1, 7, '黄某与某保险公司交通事故理赔档案', '事故认定书、医疗费用清单、保险合同、理赔记录等', 'archived', 'internal', 'long-term', '2024-12-02', '交通事故,保险理赔', 'C区1号柜', 40, '王档案', 'approved', 6],
+    ['DA20240008', 3, 8, '赵某与钱某民间借贷纠纷档案', '借条原件、转账记录、催收函件、调解协议等', 'active', 'confidential', 'permanent', '2024-12-01', '民间借贷,债务纠纷', 'D区2号柜', 35, '王档案', 'approved', 6],
+    ['DA20240009', 3, 9, '陈某与某装修公司装修质量纠纷档案', '装修合同、施工照片、质量检测报告、维修方案等', 'active', 'internal', 'long-term', '2024-11-30', '装修纠纷,质量', 'A区1号柜', 47, '王档案', 'pending', 6],
+    ['DA20240010', 4, 10, '林某与何某物业管理纠纷档案', '物业合同、收费清单、服务记录、投诉回执等', 'active', 'public', 'short-term', '2024-11-29', '物业纠纷,收费', 'B区2号柜', 22, '王档案', 'rejected', 6]
   ];
   const arInsert = db.transaction((rows) => {
     for (const a of rows) insertArchive.run(...a);

@@ -916,6 +916,68 @@
         .status-tag.other { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
 
         /* ==================== ARCHIVE MANAGEMENT ==================== */
+        .archive-sidebar {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+        }
+        .archive-sidebar .cat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 2px;
+        }
+        .archive-sidebar .cat-item:hover {
+            background: var(--bg-tertiary);
+        }
+        .archive-sidebar .cat-item.active {
+            background: var(--accent-gold-dim);
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+        .archive-sidebar .cat-item .cat-count {
+            margin-left: auto;
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 1px 6px;
+            border-radius: 10px;
+        }
+        .archive-sidebar .cat-item.active .cat-count {
+            background: rgba(201, 168, 76, 0.2);
+            color: var(--accent-gold);
+        }
+        .archive-sidebar .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 12px;
+        }
+        .archive-sidebar .stat-row .stat-label { color: var(--text-muted); }
+        .archive-sidebar .stat-row .stat-value { color: var(--text-primary); font-weight: 600; }
+
+        .status-tag.active { background: rgba(45, 212, 191, 0.15); color: #2dd4bf; }
+        .status-tag.archived { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+        .status-tag.destroyed { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+        .status-tag.transferred { background: rgba(167, 139, 250, 0.15); color: #a78bfa; }
+        .status-tag.public { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+        .status-tag.internal { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+        .status-tag.confidential { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+        .status-tag.secret { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+        .status-tag.permanent { background: rgba(201, 168, 76, 0.15); color: #c9a84c; }
+        .status-tag.long-term { background: rgba(45, 212, 191, 0.15); color: #2dd4bf; }
+        .status-tag.short-term { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
+        .status-tag.approved { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+        .status-tag.pending { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+        .status-tag.rejected { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
         .archive-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -2312,16 +2374,82 @@
                 <div class="page-header">
                     <h2>档案管理</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">filter_list</span> 筛选</button>
-                        <button class="btn btn-primary" onclick="showToast('请通过档案表单上传','info')"><span class="material-icons-round" style="font-size:16px">upload_file</span> 上传档案</button>
+                        <button class="btn btn-outline" onclick="exportArchives()"><span class="material-icons-round" style="font-size:16px">download</span> 导出</button>
+                        <button class="btn btn-outline" onclick="showArchiveCategoryModal()"><span class="material-icons-round" style="font-size:16px">category</span> 分类管理</button>
+                        <button class="btn btn-primary" onclick="showArchiveModal()"><span class="material-icons-round" style="font-size:16px">add</span> 新建档案</button>
                     </div>
                 </div>
-                <div class="archive-grid" id="archives-grid">
-                    <div class="archive-card">
-                        <div class="ac-icon" style="background:var(--bg-tertiary);color:var(--text-muted)"><span class="material-icons-round">hourglass_empty</span></div>
-                        <h4>加载中...</h4>
-                        <p>正在获取档案分类数据</p>
-                        <div class="ac-meta"><span>--</span><span>--</span></div>
+                <div style="display:grid;grid-template-columns:220px 1fr;gap:16px">
+                    <div class="archive-sidebar" id="archive-sidebar">
+                        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:12px;display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px">folder_open</span> 档案分类</div>
+                        <div id="archive-category-list">
+                            <div style="color:var(--text-muted);font-size:12px;padding:8px 0">加载中...</div>
+                        </div>
+                        <div style="border-top:1px solid var(--border-subtle);margin-top:12px;padding-top:12px">
+                            <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px">analytics</span> 统计概览</div>
+                            <div id="archive-stats-summary" style="font-size:12px;color:var(--text-muted)">加载中...</div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+                            <div class="topbar-search" style="flex:1;min-width:200px;max-width:360px">
+                                <span class="material-icons-round" style="font-size:18px;color:var(--text-muted)">search</span>
+                                <input type="text" id="archives-search-input" placeholder="搜索档案编号、标题、标签..." onkeydown="if(event.key==='Enter')searchArchives()">
+                            </div>
+                            <div class="filter-bar" id="archives-filter-bar" style="margin-bottom:0;gap:6px">
+                                <button class="filter-chip active" data-status="" onclick="filterArchives('')">全部</button>
+                                <button class="filter-chip" data-status="active" onclick="filterArchives('active')">在档</button>
+                                <button class="filter-chip" data-status="archived" onclick="filterArchives('archived')">已归档</button>
+                                <button class="filter-chip" data-status="destroyed" onclick="filterArchives('destroyed')">已销毁</button>
+                                <button class="filter-chip" data-status="transferred" onclick="filterArchives('transferred')">已移交</button>
+                            </div>
+                            <select id="archives-confidentiality-filter" style="padding:6px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px" onchange="loadArchives()">
+                                <option value="">全部密级</option>
+                                <option value="public">公开</option>
+                                <option value="internal">内部</option>
+                                <option value="confidential">机密</option>
+                                <option value="secret">绝密</option>
+                            </select>
+                            <select id="archives-retention-filter" style="padding:6px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px" onchange="loadArchives()">
+                                <option value="">全部保管期</option>
+                                <option value="permanent">永久</option>
+                                <option value="long-term">长期</option>
+                                <option value="short-term">短期</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);cursor:pointer">
+                                <input type="checkbox" id="archives-select-all" onchange="toggleAllArchives(this.checked)"> 全选
+                            </label>
+                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;display:none" id="archives-batch-archive-btn" onclick="batchArchiveArchives()"><span class="material-icons-round" style="font-size:14px">archive</span> 批量归档</button>
+                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;display:none" id="archives-batch-transfer-btn" onclick="showBatchTransferModal()"><span class="material-icons-round" style="font-size:14px">drive_file_move</span> 批量转移</button>
+                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;display:none;color:var(--accent-rose);border-color:var(--accent-rose-dim)" id="archives-batch-delete-btn" onclick="batchDeleteArchives()"><span class="material-icons-round" style="font-size:14px">delete</span> 批量删除</button>
+                            <span id="archives-selected-count" style="font-size:11px;color:var(--text-muted);display:none">已选 0 项</span>
+                        </div>
+                        <div class="data-table">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="width:40px"></th>
+                                        <th>档案编号</th>
+                                        <th>档案标题</th>
+                                        <th>分类</th>
+                                        <th>关联案件</th>
+                                        <th>密级</th>
+                                        <th>保管期限</th>
+                                        <th>审核状态</th>
+                                        <th>档案状态</th>
+                                        <th>文件数</th>
+                                        <th>归档日期</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="archives-tbody">
+                                    <tr><td colspan="12" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="pagination" id="archives-pagination"></div>
                     </div>
                 </div>
             </div>
@@ -2940,6 +3068,161 @@
     <div class="modal-content" style="width:800px;max-height:90vh">
         <h3 id="case-detail-title">案件详情 <button class="modal-close" onclick="closeModal('modal-case-detail')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
         <div id="case-detail-content" style="font-size:13px"></div>
+    </div>
+</div>
+
+<!-- Modal: Archive Create/Edit -->
+<div class="modal-overlay" id="modal-archive" style="display:none" onclick="if(event.target===this)closeModal('modal-archive')">
+    <div class="modal-content" style="width:720px;max-height:90vh;overflow-y:auto">
+        <h3 id="modal-archive-title">新建档案 <button class="modal-close" onclick="closeModal('modal-archive')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <input type="hidden" id="archive-edit-id">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="modal-field">
+                <label>档案标题 <span style="color:var(--accent-rose)">*</span></label>
+                <input type="text" id="archive-title" placeholder="请输入档案标题">
+            </div>
+            <div class="modal-field">
+                <label>档案分类 <span style="color:var(--accent-rose)">*</span></label>
+                <select id="archive-category">
+                    <option value="">请选择分类</option>
+                </select>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="modal-field">
+                <label>关联案件</label>
+                <select id="archive-case">
+                    <option value="">请选择关联案件（可选）</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>责任人</label>
+                <input type="text" id="archive-responsible" placeholder="档案责任人">
+            </div>
+        </div>
+        <div class="modal-field">
+            <label>档案描述</label>
+            <textarea id="archive-description" placeholder="请输入档案描述" rows="3"></textarea>
+        </div>
+        <div style="border-top:1px solid var(--border-subtle);padding-top:16px;margin-top:8px">
+            <div style="font-size:12px;font-weight:700;color:var(--accent-gold);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px">settings</span> 档案属性</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                <div class="modal-field">
+                    <label>档案状态</label>
+                    <select id="archive-status">
+                        <option value="active">在档</option>
+                        <option value="archived">已归档</option>
+                        <option value="destroyed">已销毁</option>
+                        <option value="transferred">已移交</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>密级</label>
+                    <select id="archive-confidentiality">
+                        <option value="public">公开</option>
+                        <option value="internal" selected>内部</option>
+                        <option value="confidential">机密</option>
+                        <option value="secret">绝密</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>保管期限</label>
+                    <select id="archive-retention">
+                        <option value="permanent">永久</option>
+                        <option value="long-term" selected>长期（16-50年）</option>
+                        <option value="short-term">短期（15年以下）</option>
+                    </select>
+                </div>
+                <div class="modal-field">
+                    <label>归档日期</label>
+                    <input type="date" id="archive-date">
+                </div>
+                <div class="modal-field">
+                    <label>存放位置</label>
+                    <input type="text" id="archive-location" placeholder="如 A区3号柜">
+                </div>
+                <div class="modal-field">
+                    <label>总页数</label>
+                    <input type="number" id="archive-pages" placeholder="0" min="0">
+                </div>
+            </div>
+            <div class="modal-field">
+                <label>标签</label>
+                <input type="text" id="archive-tags" placeholder="多个标签用逗号分隔，如：房屋租赁,押金纠纷">
+            </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:20px">
+            <button class="btn btn-outline" onclick="closeModal('modal-archive')">取消</button>
+            <button class="btn btn-primary" id="archive-submit-btn" onclick="submitArchive()">创建档案</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Archive Detail -->
+<div class="modal-overlay" id="modal-archive-detail" style="display:none" onclick="if(event.target===this)closeModal('modal-archive-detail')">
+    <div class="modal-content" style="width:800px;max-height:90vh;overflow-y:auto">
+        <h3 id="archive-detail-title">档案详情 <button class="modal-close" onclick="closeModal('modal-archive-detail')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div id="archive-detail-content" style="font-size:13px"></div>
+    </div>
+</div>
+
+<!-- Modal: Archive Category Management -->
+<div class="modal-overlay" id="modal-archive-category" style="display:none" onclick="if(event.target===this)closeModal('modal-archive-category')">
+    <div class="modal-content" style="width:600px;max-height:90vh;overflow-y:auto">
+        <h3>分类管理 <button class="modal-close" onclick="closeModal('modal-archive-category')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+            <input type="text" id="new-category-name" placeholder="分类名称" style="flex:1;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px">
+            <input type="text" id="new-category-icon" placeholder="图标名" style="width:100px;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px" value="folder">
+            <button class="btn btn-primary" style="padding:8px 16px;font-size:12px;white-space:nowrap" onclick="addArchiveCategory()">添加</button>
+        </div>
+        <div id="archive-category-manage-list"></div>
+    </div>
+</div>
+
+<!-- Modal: Batch Transfer -->
+<div class="modal-overlay" id="modal-batch-transfer" style="display:none" onclick="if(event.target===this)closeModal('modal-batch-transfer')">
+    <div class="modal-content" style="width:400px">
+        <h3>批量转移分类 <button class="modal-close" onclick="closeModal('modal-batch-transfer')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div class="modal-field">
+            <label>目标分类</label>
+            <select id="batch-transfer-category">
+                <option value="">请选择目标分类</option>
+            </select>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+            <button class="btn btn-outline" onclick="closeModal('modal-batch-transfer')">取消</button>
+            <button class="btn btn-primary" onclick="executeBatchTransfer()">确认转移</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Archive File Upload -->
+<div class="modal-overlay" id="modal-archive-file" style="display:none" onclick="if(event.target===this)closeModal('modal-archive-file')">
+    <div class="modal-content" style="width:500px">
+        <h3>上传档案文件 <button class="modal-close" onclick="closeModal('modal-archive-file')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <input type="hidden" id="archive-file-archive-id">
+        <div class="modal-field">
+            <label>文件名称 <span style="color:var(--accent-rose)">*</span></label>
+            <input type="text" id="archive-file-name" placeholder="请输入文件名称">
+        </div>
+        <div class="modal-field">
+            <label>文件路径 <span style="color:var(--accent-rose)">*</span></label>
+            <input type="text" id="archive-file-path" placeholder="如 /uploads/archives/xxx.pdf">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="modal-field">
+                <label>文件大小（字节）</label>
+                <input type="number" id="archive-file-size" placeholder="0">
+            </div>
+            <div class="modal-field">
+                <label>文件类型</label>
+                <input type="text" id="archive-file-type" placeholder="如 pdf, docx, jpg">
+            </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+            <button class="btn btn-outline" onclick="closeModal('modal-archive-file')">取消</button>
+            <button class="btn btn-primary" onclick="submitArchiveFile()">上传</button>
+        </div>
     </div>
 </div>
 
@@ -4724,48 +5007,637 @@ async function executeImport() {
 }
 
 // ==================== ARCHIVES ====================
-async function loadArchives() {
+var archivesCurrentPage = 1;
+var archivesCurrentStatus = '';
+var archivesCurrentCategory = '';
+var archivesSearchKeyword = '';
+var archiveCategoryCache = null;
+var archiveCaseCache = null;
+var archiveSelectedIds = [];
+
+var ARCHIVE_STATUS_LABELS = { active: '在档', archived: '已归档', destroyed: '已销毁', transferred: '已移交' };
+var ARCHIVE_CONFIDENTIALITY_LABELS = { public: '公开', internal: '内部', confidential: '机密', secret: '绝密' };
+var ARCHIVE_RETENTION_LABELS = { permanent: '永久', 'long-term': '长期', 'short-term': '短期' };
+var ARCHIVE_REVIEW_LABELS = { pending: '待审核', approved: '已通过', rejected: '已驳回' };
+
+async function loadArchives(page) {
+    if (page !== undefined) archivesCurrentPage = page;
+
     try {
-        var categories = await api.get('/archives/categories');
-        renderArchivesGrid(categories);
+        var params = { page: archivesCurrentPage, pageSize: 10 };
+        if (archivesCurrentStatus) params.status = archivesCurrentStatus;
+        if (archivesCurrentCategory) params.category_id = archivesCurrentCategory;
+        if (archivesSearchKeyword) params.search = archivesSearchKeyword;
+        var confFilter = document.getElementById('archives-confidentiality-filter');
+        if (confFilter && confFilter.value) params.confidentiality_level = confFilter.value;
+        var retFilter = document.getElementById('archives-retention-filter');
+        if (retFilter && retFilter.value) params.retention_period = retFilter.value;
+
+        var [res, categories, stats] = await Promise.all([
+            api.get('/archives', params),
+            api.get('/archives/categories'),
+            api.get('/archives/stats')
+        ]);
+
+        archiveCategoryCache = categories;
+        renderArchiveSidebar(categories, stats);
+        renderArchivesTable(res.data || []);
+        renderArchivesPagination(res.pagination ? res.pagination.totalPages : 1, archivesCurrentPage);
+
+        var badge = document.getElementById('archives-badge');
+        if (badge) badge.textContent = res.pagination ? res.pagination.total : 0;
     } catch (err) {
-        showToast('加载档案分类失败: ' + err.message);
+        showToast('加载档案数据失败: ' + err.message);
     }
 }
 
-function renderArchivesGrid(categories) {
-    var grid = document.getElementById('archives-grid');
-    if (!grid) return;
+function renderArchiveSidebar(categories, stats) {
+    var catList = document.getElementById('archive-category-list');
+    if (catList) {
+        var html = '<div class="cat-item' + (!archivesCurrentCategory ? ' active' : '') + '" onclick="filterArchiveCategory(\'\')">' +
+            '<span class="material-icons-round" style="font-size:16px">folder_open</span> 全部分类' +
+            '<span class="cat-count">' + (stats ? stats.total : 0) + '</span></div>';
+        categories.forEach(function(cat) {
+            var isActive = archivesCurrentCategory == cat.id;
+            html += '<div class="cat-item' + (isActive ? ' active' : '') + '" onclick="filterArchiveCategory(\'' + cat.id + '\')">' +
+                '<span class="material-icons-round" style="font-size:16px;color:' + (cat.color || 'var(--text-muted)') + '">' + escapeHtml(cat.icon || 'folder') + '</span> ' +
+                escapeHtml(cat.name || '') +
+                '<span class="cat-count">' + (cat.archive_count || 0) + '</span></div>';
+        });
+        catList.innerHTML = html;
+    }
 
-    if (!categories || categories.length === 0) {
-        grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;grid-column:1/-1">暂无档案分类</div>';
+    var statsEl = document.getElementById('archive-stats-summary');
+    if (statsEl && stats) {
+        statsEl.innerHTML =
+            '<div class="stat-row"><span class="stat-label">在档</span><span class="stat-value">' + stats.active + '</span></div>' +
+            '<div class="stat-row"><span class="stat-label">已归档</span><span class="stat-value">' + stats.archived + '</span></div>' +
+            '<div class="stat-row"><span class="stat-label">已销毁</span><span class="stat-value">' + stats.destroyed + '</span></div>' +
+            '<div class="stat-row"><span class="stat-label">已移交</span><span class="stat-value">' + stats.transferred + '</span></div>' +
+            '<div class="stat-row"><span class="stat-label">待审核</span><span class="stat-value" style="color:var(--accent-gold)">' + stats.pendingReview + '</span></div>' +
+            '<div class="stat-row"><span class="stat-label">总文件</span><span class="stat-value">' + stats.totalFiles + '</span></div>' +
+            '<div class="stat-row"><span class="stat-label">总大小</span><span class="stat-value">' + formatFileSize(stats.totalSize) + '</span></div>';
+    }
+}
+
+function formatFileSize(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    var units = ['B', 'KB', 'MB', 'GB'];
+    var i = 0;
+    var size = bytes;
+    while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+    return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+}
+
+function renderArchivesTable(data) {
+    var tbody = document.getElementById('archives-tbody');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="12" style="text-align:center;color:var(--text-muted);padding:40px">暂无档案数据</td></tr>';
         return;
     }
 
-    var colorSchemes = [
-        { bg: 'var(--accent-gold-dim)', color: 'var(--accent-gold)' },
-        { bg: 'var(--accent-teal-dim)', color: 'var(--accent-teal)' },
-        { bg: 'var(--accent-violet-dim)', color: 'var(--accent-violet)' },
-        { bg: 'var(--accent-rose-dim)', color: 'var(--accent-rose)' },
-        { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
-        { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa' }
-    ];
-
     var html = '';
-    categories.forEach(function(cat, i) {
-        var scheme = cat.colorScheme ? { bg: 'var(--accent-' + cat.colorScheme + '-dim)', color: 'var(--accent-' + cat.colorScheme + ')' } : colorSchemes[i % colorSchemes.length];
-        var icon = cat.icon || 'folder';
-        html += '<div class="archive-card">' +
-            '<div class="ac-icon" style="background:' + scheme.bg + ';color:' + scheme.color + '"><span class="material-icons-round">' + icon + '</span></div>' +
-            '<h4>' + escapeHtml(cat.name || '') + '</h4>' +
-            '<p>' + escapeHtml(cat.description || '') + '</p>' +
-            '<div class="ac-meta">' +
-            '<span>' + (cat.fileCount || cat.count || 0) + ' 份文件</span>' +
-            '<span>更新于 ' + escapeHtml(cat.updatedAt || cat.updated || '') + '</span>' +
-            '</div>' +
+    data.forEach(function(a) {
+        var statusText = ARCHIVE_STATUS_LABELS[a.status] || a.status;
+        var confText = ARCHIVE_CONFIDENTIALITY_LABELS[a.confidentiality_level] || a.confidentiality_level;
+        var retText = ARCHIVE_RETENTION_LABELS[a.retention_period] || a.retention_period;
+        var reviewText = ARCHIVE_REVIEW_LABELS[a.review_status] || a.review_status;
+        var checked = archiveSelectedIds.indexOf(a.id) >= 0 ? ' checked' : '';
+        var archiveDate = (a.archive_date || a.created_at || '').substring(0, 10);
+
+        html += '<tr>' +
+            '<td><input type="checkbox" class="archive-checkbox" data-id="' + a.id + '"' + checked + ' onchange="updateArchiveSelection()"></td>' +
+            '<td style="color:var(--accent-gold);font-weight:600;white-space:nowrap">' + escapeHtml(a.archive_number || '') + '</td>' +
+            '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(a.title || '') + '">' + escapeHtml(a.title || '') + '</td>' +
+            '<td><span style="display:inline-flex;align-items:center;gap:4px"><span class="material-icons-round" style="font-size:14px;color:' + (a.category_color || 'var(--text-muted)') + '">' + escapeHtml(a.category_icon || 'folder') + '</span>' + escapeHtml(a.category_name || '') + '</span></td>' +
+            '<td style="white-space:nowrap">' + (a.case_number ? '<span style="color:var(--accent-teal);cursor:pointer" onclick="viewCaseDetail(' + a.case_id + ')">' + escapeHtml(a.case_number) + '</span>' : '--') + '</td>' +
+            '<td><span class="status-tag ' + (a.confidentiality_level || 'internal') + '">' + escapeHtml(confText) + '</span></td>' +
+            '<td><span class="status-tag ' + (a.retention_period || 'long-term') + '">' + escapeHtml(retText) + '</span></td>' +
+            '<td><span class="status-tag ' + (a.review_status || 'pending') + '">' + escapeHtml(reviewText) + '</span></td>' +
+            '<td><span class="status-tag ' + (a.status || 'active') + '">' + escapeHtml(statusText) + '</span></td>' +
+            '<td>' + (a.file_count || 0) + '</td>' +
+            '<td style="white-space:nowrap">' + escapeHtml(archiveDate) + '</td>' +
+            '<td style="white-space:nowrap">' +
+                '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="viewArchiveDetail(' + a.id + ')">详情</button>' +
+                '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="showArchiveModal(' + a.id + ')">编辑</button>' +
+                '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteArchive(' + a.id + ')">删除</button>' +
+            '</td>' +
+            '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function renderArchivesPagination(totalPages, current) {
+    var container = document.getElementById('archives-pagination');
+    if (!container) return;
+    var html = '<button ' + (current <= 1 ? 'disabled' : '') + ' onclick="loadArchives(' + (current - 1) + ')">上一页</button>';
+    for (var i = 1; i <= totalPages; i++) {
+        html += '<button class="' + (i === current ? 'active' : '') + '" onclick="loadArchives(' + i + ')">' + i + '</button>';
+    }
+    html += '<button ' + (current >= totalPages ? 'disabled' : '') + ' onclick="loadArchives(' + (current + 1) + ')">下一页</button>';
+    container.innerHTML = html;
+}
+
+function searchArchives() {
+    archivesSearchKeyword = document.getElementById('archives-search-input').value.trim();
+    archivesCurrentPage = 1;
+    loadArchives();
+}
+
+function filterArchives(status) {
+    archivesCurrentStatus = status;
+    archivesCurrentPage = 1;
+    document.querySelectorAll('#archives-filter-bar .filter-chip').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-status') === status);
+    });
+    loadArchives();
+}
+
+function filterArchiveCategory(catId) {
+    archivesCurrentCategory = catId;
+    archivesCurrentPage = 1;
+    loadArchives();
+}
+
+function toggleAllArchives(checked) {
+    archiveSelectedIds = [];
+    document.querySelectorAll('.archive-checkbox').forEach(function(cb) {
+        cb.checked = checked;
+        if (checked) archiveSelectedIds.push(parseInt(cb.getAttribute('data-id')));
+    });
+    updateArchiveSelection();
+}
+
+function updateArchiveSelection() {
+    archiveSelectedIds = [];
+    document.querySelectorAll('.archive-checkbox:checked').forEach(function(cb) {
+        archiveSelectedIds.push(parseInt(cb.getAttribute('data-id')));
+    });
+    var hasSelection = archiveSelectedIds.length > 0;
+    document.getElementById('archives-batch-archive-btn').style.display = hasSelection ? '' : 'none';
+    document.getElementById('archives-batch-transfer-btn').style.display = hasSelection ? '' : 'none';
+    document.getElementById('archives-batch-delete-btn').style.display = hasSelection ? '' : 'none';
+    var countEl = document.getElementById('archives-selected-count');
+    countEl.style.display = hasSelection ? '' : 'none';
+    countEl.textContent = '已选 ' + archiveSelectedIds.length + ' 项';
+}
+
+async function showArchiveModal(archiveId) {
+    try {
+        var categories = archiveCategoryCache || await api.get('/archives/categories');
+        archiveCategoryCache = categories;
+
+        if (!archiveCaseCache) {
+            var casesRes = await api.get('/cases', { pageSize: 100 });
+            archiveCaseCache = (casesRes.data || []);
+        }
+
+        var catSelect = document.getElementById('archive-category');
+        catSelect.innerHTML = '<option value="">请选择分类</option>';
+        categories.forEach(function(cat) {
+            catSelect.innerHTML += '<option value="' + cat.id + '">' + escapeHtml(cat.name) + '</option>';
+        });
+
+        var caseSelect = document.getElementById('archive-case');
+        caseSelect.innerHTML = '<option value="">请选择关联案件（可选）</option>';
+        archiveCaseCache.forEach(function(c) {
+            caseSelect.innerHTML += '<option value="' + c.id + '">' + escapeHtml(c.case_number + ' - ' + c.title) + '</option>';
+        });
+
+        var editIdInput = document.getElementById('archive-edit-id');
+        var titleEl = document.getElementById('modal-archive-title');
+        var submitBtn = document.getElementById('archive-submit-btn');
+
+        if (archiveId) {
+            editIdInput.value = archiveId;
+            titleEl.firstChild.textContent = '编辑档案 ';
+            submitBtn.textContent = '保存修改';
+            var a = await api.get('/archives/' + archiveId);
+            document.getElementById('archive-title').value = a.title || '';
+            document.getElementById('archive-category').value = a.category_id || '';
+            document.getElementById('archive-case').value = a.case_id || '';
+            document.getElementById('archive-responsible').value = a.responsible_person || '';
+            document.getElementById('archive-description').value = a.description || '';
+            document.getElementById('archive-status').value = a.status || 'active';
+            document.getElementById('archive-confidentiality').value = a.confidentiality_level || 'internal';
+            document.getElementById('archive-retention').value = a.retention_period || 'long-term';
+            document.getElementById('archive-date').value = a.archive_date || '';
+            document.getElementById('archive-location').value = a.storage_location || '';
+            document.getElementById('archive-pages').value = a.total_pages || 0;
+            document.getElementById('archive-tags').value = a.tags || '';
+        } else {
+            editIdInput.value = '';
+            titleEl.firstChild.textContent = '新建档案 ';
+            submitBtn.textContent = '创建档案';
+            document.getElementById('archive-title').value = '';
+            document.getElementById('archive-category').value = '';
+            document.getElementById('archive-case').value = '';
+            document.getElementById('archive-responsible').value = '';
+            document.getElementById('archive-description').value = '';
+            document.getElementById('archive-status').value = 'active';
+            document.getElementById('archive-confidentiality').value = 'internal';
+            document.getElementById('archive-retention').value = 'long-term';
+            document.getElementById('archive-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('archive-location').value = '';
+            document.getElementById('archive-pages').value = '';
+            document.getElementById('archive-tags').value = '';
+        }
+
+        document.getElementById('modal-archive').style.display = 'flex';
+    } catch (err) {
+        showToast('加载档案信息失败: ' + err.message);
+    }
+}
+
+async function submitArchive() {
+    var editId = document.getElementById('archive-edit-id').value;
+    var title = document.getElementById('archive-title').value.trim();
+    var categoryId = document.getElementById('archive-category').value;
+    var caseId = document.getElementById('archive-case').value;
+    var responsible = document.getElementById('archive-responsible').value.trim();
+    var description = document.getElementById('archive-description').value.trim();
+    var status = document.getElementById('archive-status').value;
+    var confidentiality = document.getElementById('archive-confidentiality').value;
+    var retention = document.getElementById('archive-retention').value;
+    var archiveDate = document.getElementById('archive-date').value;
+    var location = document.getElementById('archive-location').value.trim();
+    var pages = document.getElementById('archive-pages').value;
+    var tags = document.getElementById('archive-tags').value.trim();
+
+    if (!title) { showToast('请输入档案标题'); return; }
+    if (!categoryId) { showToast('请选择档案分类'); return; }
+
+    var data = {
+        title: title,
+        category_id: parseInt(categoryId),
+        case_id: caseId ? parseInt(caseId) : null,
+        responsible_person: responsible,
+        description: description,
+        status: status,
+        confidentiality_level: confidentiality,
+        retention_period: retention,
+        archive_date: archiveDate || null,
+        storage_location: location,
+        total_pages: parseInt(pages) || 0,
+        tags: tags
+    };
+
+    try {
+        if (editId) {
+            await api.put('/archives/' + editId, data);
+            showToast('档案更新成功', 'success');
+        } else {
+            await api.post('/archives', data);
+            showToast('档案创建成功', 'success');
+        }
+        closeModal('modal-archive');
+        await loadArchives();
+    } catch (err) {
+        showToast('操作失败: ' + err.message);
+    }
+}
+
+async function deleteArchive(id) {
+    if (!confirm('确定要删除此档案吗？关联的文件也将被删除，此操作不可恢复。')) return;
+    try {
+        await api.delete('/archives/' + id);
+        showToast('档案已删除', 'success');
+        await loadArchives();
+    } catch (err) {
+        showToast('删除失败: ' + err.message);
+    }
+}
+
+async function viewArchiveDetail(id) {
+    try {
+        var a = await api.get('/archives/' + id);
+        var titleEl = document.getElementById('archive-detail-title');
+        titleEl.firstChild.textContent = '档案详情 #' + (a.archive_number || id) + ' ';
+
+        var html = '';
+
+        html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px">';
+        html += '<span class="status-tag ' + a.status + '" style="font-size:13px">' + (ARCHIVE_STATUS_LABELS[a.status] || a.status) + '</span>';
+        html += '<span class="status-tag ' + a.confidentiality_level + '" style="font-size:13px">' + (ARCHIVE_CONFIDENTIALITY_LABELS[a.confidentiality_level] || '') + '</span>';
+        html += '<span class="status-tag ' + a.retention_period + '" style="font-size:13px">' + (ARCHIVE_RETENTION_LABELS[a.retention_period] || '') + '</span>';
+        html += '<span class="status-tag ' + a.review_status + '" style="font-size:13px">' + (ARCHIVE_REVIEW_LABELS[a.review_status] || '') + '</span>';
+        if (a.review_status === 'pending') {
+            html += '<button class="btn btn-primary" style="padding:4px 10px;font-size:11px;margin-left:auto" onclick="reviewArchive(' + id + ', \'approved\')">通过审核</button>';
+            html += '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="reviewArchive(' + id + ', \'rejected\')">驳回</button>';
+        }
+        html += '</div>';
+
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">';
+        html += buildInfoCard('档案编号', escapeHtml(a.archive_number || '--'));
+        html += buildInfoCard('档案标题', escapeHtml(a.title || '--'));
+        html += buildInfoCard('档案分类', '<span style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:' + (a.category_color || 'var(--text-muted)') + '">' + escapeHtml(a.category_icon || 'folder') + '</span>' + escapeHtml(a.category_name || '--') + '</span>');
+        html += buildInfoCard('关联案件', a.case_number ? '<span style="color:var(--accent-teal);cursor:pointer" onclick="closeModal(\'modal-archive-detail\');viewCaseDetail(' + a.case_id + ')">' + escapeHtml(a.case_number) + '</span>' : '--');
+        html += buildInfoCard('责任人', escapeHtml(a.responsible_person || '--'));
+        html += buildInfoCard('存放位置', escapeHtml(a.storage_location || '--'));
+        html += buildInfoCard('归档日期', escapeHtml(a.archive_date || '--'));
+        html += buildInfoCard('总页数', a.total_pages ? (a.total_pages + ' 页') : '--');
+        html += buildInfoCard('创建人', escapeHtml(a.created_by_name || '--'));
+        html += buildInfoCard('创建时间', escapeHtml((a.created_at || '').replace('T', ' ').substring(0, 19)));
+        html += '</div>';
+
+        if (a.reviewed_by_name) {
+            html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:12px;margin-bottom:20px">';
+            html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">审核信息</div>';
+            html += '<div style="font-size:12px;color:var(--text-secondary)">审核人：' + escapeHtml(a.reviewed_by_name) + ' · 审核时间：' + escapeHtml((a.reviewed_at || '').replace('T', ' ').substring(0, 19)) + '</div>';
+            html += '</div>';
+        }
+
+        if (a.description) {
+            html += '<div style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:16px;margin-bottom:20px">';
+            html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">档案描述</div>';
+            html += '<div style="color:var(--text-secondary);line-height:1.7;white-space:pre-wrap">' + escapeHtml(a.description) + '</div>';
+            html += '</div>';
+        }
+
+        if (a.tags) {
+            html += '<div style="margin-bottom:20px">';
+            html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">标签</div>';
+            var tagArr = a.tags.split(',');
+            tagArr.forEach(function(tag) {
+                html += '<span style="display:inline-block;padding:3px 10px;background:var(--accent-gold-dim);color:var(--accent-gold);border-radius:12px;font-size:11px;margin-right:6px;margin-bottom:4px">' + escapeHtml(tag.trim()) + '</span>';
+            });
+            html += '</div>';
+        }
+
+        if (a.caseParties && a.caseParties.length > 0) {
+            html += '<div style="margin-bottom:20px">';
+            html += '<div style="font-size:12px;font-weight:700;color:var(--accent-teal);margin-bottom:8px;display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px">people</span> 关联案件当事人</div>';
+            html += '<div class="data-table"><table><thead><tr><th>类型</th><th>姓名</th><th>身份证号</th><th>电话</th></tr></thead><tbody>';
+            a.caseParties.forEach(function(p) {
+                html += '<tr><td><span class="status-tag ' + p.party_type + '">' + (PARTY_TYPE_LABELS[p.party_type] || p.party_type) + '</span></td><td>' + escapeHtml(p.name || '') + '</td><td>' + escapeHtml(p.id_number || '--') + '</td><td>' + escapeHtml(p.phone || '--') + '</td></tr>';
+            });
+            html += '</tbody></table></div></div>';
+        }
+
+        html += '<div style="margin-bottom:20px">';
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">';
+        html += '<div style="font-size:12px;font-weight:700;color:var(--accent-gold);display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px">attach_file</span> 档案文件 (' + (a.files ? a.files.length : 0) + ')</div>';
+        html += '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="showArchiveFileUpload(' + id + ')"><span class="material-icons-round" style="font-size:14px">upload</span> 上传文件</button>';
+        html += '</div>';
+
+        if (a.files && a.files.length > 0) {
+            html += '<div class="data-table"><table><thead><tr><th>文件名</th><th>类型</th><th>大小</th><th>上传人</th><th>上传时间</th><th>操作</th></tr></thead><tbody>';
+            a.files.forEach(function(f) {
+                html += '<tr>' +
+                    '<td style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">description</span>' + escapeHtml(f.file_name || '') + '</td>' +
+                    '<td>' + escapeHtml(f.file_type || '--') + '</td>' +
+                    '<td>' + formatFileSize(f.file_size) + '</td>' +
+                    '<td>' + escapeHtml(f.uploaded_by_name || '--') + '</td>' +
+                    '<td style="white-space:nowrap">' + escapeHtml((f.created_at || '').substring(0, 10)) + '</td>' +
+                    '<td><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteArchiveFile(' + id + ',' + f.id + ')">删除</button></td>' +
+                    '</tr>';
+            });
+            html += '</tbody></table></div>';
+        } else {
+            html += '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px">暂无文件</div>';
+        }
+        html += '</div>';
+
+        html += '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">';
+        html += '<button class="btn btn-outline" onclick="closeModal(\'modal-archive-detail\')">关闭</button>';
+        html += '<button class="btn btn-primary" onclick="closeModal(\'modal-archive-detail\');showArchiveModal(' + id + ')">编辑档案</button>';
+        html += '</div>';
+
+        document.getElementById('archive-detail-content').innerHTML = html;
+        document.getElementById('modal-archive-detail').style.display = 'flex';
+    } catch (err) {
+        showToast('加载档案详情失败: ' + err.message);
+    }
+}
+
+async function reviewArchive(id, reviewStatus) {
+    try {
+        await api.post('/archives/' + id + '/review', { review_status: reviewStatus });
+        showToast(reviewStatus === 'approved' ? '审核通过' : '已驳回', 'success');
+        viewArchiveDetail(id);
+        loadArchives();
+    } catch (err) {
+        showToast('审核操作失败: ' + err.message);
+    }
+}
+
+async function showArchiveCategoryModal() {
+    try {
+        var categories = archiveCategoryCache || await api.get('/archives/categories');
+        archiveCategoryCache = categories;
+        renderArchiveCategoryManageList(categories);
+        document.getElementById('modal-archive-category').style.display = 'flex';
+    } catch (err) {
+        showToast('加载分类失败: ' + err.message);
+    }
+}
+
+function renderArchiveCategoryManageList(categories) {
+    var list = document.getElementById('archive-category-manage-list');
+    if (!list) return;
+    if (!categories || categories.length === 0) {
+        list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px">暂无分类</div>';
+        return;
+    }
+    var html = '';
+    categories.forEach(function(cat) {
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-subtle)">' +
+            '<span class="material-icons-round" style="font-size:20px;color:' + (cat.color || 'var(--text-muted)') + '">' + escapeHtml(cat.icon || 'folder') + '</span>' +
+            '<div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(cat.name) + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted)">' + (cat.archive_count || 0) + ' 个档案 · ' + (cat.file_count || 0) + ' 个文件</div></div>' +
+            '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="editArchiveCategoryName(' + cat.id + ',\'' + escapeHtml(cat.name) + '\')"><span class="material-icons-round" style="font-size:14px">edit</span></button>' +
+            '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteArchiveCategory(' + cat.id + ')"><span class="material-icons-round" style="font-size:14px">delete</span></button>' +
             '</div>';
     });
-    grid.innerHTML = html;
+    list.innerHTML = html;
+}
+
+async function addArchiveCategory() {
+    var name = document.getElementById('new-category-name').value.trim();
+    var icon = document.getElementById('new-category-icon').value.trim() || 'folder';
+    if (!name) { showToast('请输入分类名称'); return; }
+    try {
+        await api.post('/archives/categories', { name: name, icon: icon });
+        showToast('分类创建成功', 'success');
+        document.getElementById('new-category-name').value = '';
+        archiveCategoryCache = await api.get('/archives/categories');
+        renderArchiveCategoryManageList(archiveCategoryCache);
+    } catch (err) {
+        showToast('创建分类失败: ' + err.message);
+    }
+}
+
+async function editArchiveCategoryName(id, currentName) {
+    var newName = prompt('请输入新的分类名称：', currentName);
+    if (!newName || newName.trim() === '') return;
+    try {
+        await api.put('/archives/categories/' + id, { name: newName.trim() });
+        showToast('分类更新成功', 'success');
+        archiveCategoryCache = await api.get('/archives/categories');
+        renderArchiveCategoryManageList(archiveCategoryCache);
+    } catch (err) {
+        showToast('更新分类失败: ' + err.message);
+    }
+}
+
+async function deleteArchiveCategory(id) {
+    if (!confirm('确定要删除此分类吗？')) return;
+    try {
+        await api.delete('/archives/categories/' + id);
+        showToast('分类删除成功', 'success');
+        archiveCategoryCache = await api.get('/archives/categories');
+        renderArchiveCategoryManageList(archiveCategoryCache);
+    } catch (err) {
+        showToast('删除分类失败: ' + err.message);
+    }
+}
+
+async function batchArchiveArchives() {
+    if (archiveSelectedIds.length === 0) return;
+    if (!confirm('确定要将选中的 ' + archiveSelectedIds.length + ' 个档案归档吗？')) return;
+    try {
+        var res = await api.post('/archives/batch/archive', { ids: archiveSelectedIds });
+        showToast(res.archived + ' 个档案已归档', 'success');
+        archiveSelectedIds = [];
+        document.getElementById('archives-select-all').checked = false;
+        await loadArchives();
+    } catch (err) {
+        showToast('批量归档失败: ' + err.message);
+    }
+}
+
+async function batchDeleteArchives() {
+    if (archiveSelectedIds.length === 0) return;
+    if (!confirm('确定要删除选中的 ' + archiveSelectedIds.length + ' 个档案吗？此操作不可恢复。')) return;
+    try {
+        var res = await api.post('/archives/batch/delete', { ids: archiveSelectedIds });
+        showToast(res.deleted + ' 个档案已删除', 'success');
+        archiveSelectedIds = [];
+        document.getElementById('archives-select-all').checked = false;
+        await loadArchives();
+    } catch (err) {
+        showToast('批量删除失败: ' + err.message);
+    }
+}
+
+function showBatchTransferModal() {
+    if (archiveSelectedIds.length === 0) return;
+    var catSelect = document.getElementById('batch-transfer-category');
+    catSelect.innerHTML = '<option value="">请选择目标分类</option>';
+    if (archiveCategoryCache) {
+        archiveCategoryCache.forEach(function(cat) {
+            catSelect.innerHTML += '<option value="' + cat.id + '">' + escapeHtml(cat.name) + '</option>';
+        });
+    }
+    document.getElementById('modal-batch-transfer').style.display = 'flex';
+}
+
+async function executeBatchTransfer() {
+    var categoryId = document.getElementById('batch-transfer-category').value;
+    if (!categoryId) { showToast('请选择目标分类'); return; }
+    try {
+        var res = await api.post('/archives/batch/transfer', { ids: archiveSelectedIds, category_id: parseInt(categoryId) });
+        showToast(res.transferred + ' 个档案已转移', 'success');
+        closeModal('modal-batch-transfer');
+        archiveSelectedIds = [];
+        document.getElementById('archives-select-all').checked = false;
+        await loadArchives();
+    } catch (err) {
+        showToast('批量转移失败: ' + err.message);
+    }
+}
+
+function showArchiveFileUpload(archiveId) {
+    document.getElementById('archive-file-archive-id').value = archiveId;
+    document.getElementById('archive-file-name').value = '';
+    document.getElementById('archive-file-path').value = '';
+    document.getElementById('archive-file-size').value = '';
+    document.getElementById('archive-file-type').value = '';
+    document.getElementById('modal-archive-file').style.display = 'flex';
+}
+
+async function submitArchiveFile() {
+    var archiveId = document.getElementById('archive-file-archive-id').value;
+    var fileName = document.getElementById('archive-file-name').value.trim();
+    var filePath = document.getElementById('archive-file-path').value.trim();
+    var fileSize = document.getElementById('archive-file-size').value;
+    var fileType = document.getElementById('archive-file-type').value.trim();
+
+    if (!fileName || !filePath) { showToast('请填写文件名和路径'); return; }
+
+    try {
+        await api.post('/archives/' + archiveId + '/files', {
+            file_name: fileName,
+            file_path: filePath,
+            file_size: parseInt(fileSize) || 0,
+            file_type: fileType || fileName.split('.').pop()
+        });
+        showToast('文件上传成功', 'success');
+        closeModal('modal-archive-file');
+        viewArchiveDetail(parseInt(archiveId));
+    } catch (err) {
+        showToast('文件上传失败: ' + err.message);
+    }
+}
+
+async function deleteArchiveFile(archiveId, fileId) {
+    if (!confirm('确定要删除此文件吗？')) return;
+    try {
+        await api.delete('/archives/' + archiveId + '/files/' + fileId);
+        showToast('文件已删除', 'success');
+        viewArchiveDetail(archiveId);
+    } catch (err) {
+        showToast('删除文件失败: ' + err.message);
+    }
+}
+
+async function exportArchives() {
+    try {
+        var params = {};
+        if (archivesCurrentStatus) params.status = archivesCurrentStatus;
+        if (archivesCurrentCategory) params.category_id = archivesCurrentCategory;
+        var confFilter = document.getElementById('archives-confidentiality-filter');
+        if (confFilter && confFilter.value) params.confidentiality_level = confFilter.value;
+        var retFilter = document.getElementById('archives-retention-filter');
+        if (retFilter && retFilter.value) params.retention_period = retFilter.value;
+
+        var data = await api.get('/archives/export/all', params);
+        if (!data || data.length === 0) { showToast('没有可导出的数据'); return; }
+
+        var csvContent = '\uFEFF';
+        var headers = ['档案编号', '标题', '分类', '状态', '密级', '保管期限', '归档日期', '存放位置', '总页数', '责任人', '审核状态', '关联案件', '创建人', '创建时间'];
+        csvContent += headers.join(',') + '\n';
+        data.forEach(function(row) {
+            var line = [
+                '"' + (row.archive_number || '') + '"',
+                '"' + (row.title || '') + '"',
+                '"' + (row.category_name || '') + '"',
+                ARCHIVE_STATUS_LABELS[row.status] || row.status || '',
+                ARCHIVE_CONFIDENTIALITY_LABELS[row.confidentiality_level] || '',
+                ARCHIVE_RETENTION_LABELS[row.retention_period] || '',
+                row.archive_date || '',
+                '"' + (row.storage_location || '') + '"',
+                row.total_pages || 0,
+                '"' + (row.responsible_person || '') + '"',
+                ARCHIVE_REVIEW_LABELS[row.review_status] || '',
+                row.case_number || '',
+                '"' + (row.created_by_name || '') + '"',
+                (row.created_at || '').replace('T', ' ').substring(0, 19)
+            ];
+            csvContent += line.join(',') + '\n';
+        });
+
+        var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = '档案导出_' + new Date().toISOString().split('T')[0] + '.csv';
+        link.click();
+        showToast('导出成功', 'success');
+    } catch (err) {
+        showToast('导出失败: ' + err.message);
+    }
 }
 
 // ==================== DOCUMENTS ====================

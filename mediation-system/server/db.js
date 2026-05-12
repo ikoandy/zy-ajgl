@@ -166,17 +166,29 @@ function initDatabase() {
 
     CREATE TABLE IF NOT EXISTS archives (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      archive_number TEXT NOT NULL UNIQUE,
       category_id INTEGER NOT NULL,
       case_id INTEGER,
       title TEXT NOT NULL,
       description TEXT,
-      status TEXT DEFAULT 'active' CHECK(status IN ('active', 'archived', 'destroyed')),
+      status TEXT DEFAULT 'active' CHECK(status IN ('active', 'archived', 'destroyed', 'transferred')),
+      confidentiality_level TEXT DEFAULT 'internal' CHECK(confidentiality_level IN ('public', 'internal', 'confidential', 'secret')),
+      retention_period TEXT DEFAULT 'long-term' CHECK(retention_period IN ('permanent', 'long-term', 'short-term')),
+      archive_date DATE,
+      tags TEXT,
+      storage_location TEXT,
+      total_pages INTEGER DEFAULT 0,
+      responsible_person TEXT,
+      review_status TEXT DEFAULT 'pending' CHECK(review_status IN ('pending', 'approved', 'rejected')),
+      reviewed_by INTEGER,
+      reviewed_at DATETIME,
       created_by INTEGER,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (category_id) REFERENCES archive_categories(id),
       FOREIGN KEY (case_id) REFERENCES cases(id),
-      FOREIGN KEY (created_by) REFERENCES users(id)
+      FOREIGN KEY (created_by) REFERENCES users(id),
+      FOREIGN KEY (reviewed_by) REFERENCES users(id)
     );
 
     CREATE TABLE IF NOT EXISTS archive_files (
