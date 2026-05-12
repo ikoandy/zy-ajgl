@@ -3198,30 +3198,19 @@
 
 <!-- Modal: Archive File Upload -->
 <div class="modal-overlay" id="modal-archive-file" style="display:none" onclick="if(event.target===this)closeModal('modal-archive-file')">
-    <div class="modal-content" style="width:500px">
+    <div class="modal-content" style="width:520px">
         <h3>上传档案文件 <button class="modal-close" onclick="closeModal('modal-archive-file')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
         <input type="hidden" id="archive-file-archive-id">
-        <div class="modal-field">
-            <label>文件名称 <span style="color:var(--accent-rose)">*</span></label>
-            <input type="text" id="archive-file-name" placeholder="请输入文件名称">
+        <div style="border:2px dashed var(--border-medium);border-radius:var(--radius-lg);padding:32px 20px;text-align:center;margin-bottom:16px;transition:var(--transition);cursor:pointer" id="archive-drop-zone" onclick="document.getElementById('archive-file-input').click()">
+            <span class="material-icons-round" style="font-size:40px;color:var(--accent-gold);display:block;margin-bottom:12px">cloud_upload</span>
+            <div style="font-size:14px;color:var(--text-secondary);margin-bottom:6px">点击选择文件或拖拽文件到此处</div>
+            <div style="font-size:11px;color:var(--text-muted)">支持 PDF、Word、Excel、图片、音视频、压缩包等格式，单文件最大 100MB</div>
+            <input type="file" id="archive-file-input" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp,.mp3,.mp4,.wav,.avi,.zip,.rar,.7z,.txt,.csv,.md,.html,.xml,.json" style="display:none" onchange="handleArchiveFileSelect(this)">
         </div>
-        <div class="modal-field">
-            <label>文件路径 <span style="color:var(--accent-rose)">*</span></label>
-            <input type="text" id="archive-file-path" placeholder="如 /uploads/archives/xxx.pdf">
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-            <div class="modal-field">
-                <label>文件大小（字节）</label>
-                <input type="number" id="archive-file-size" placeholder="0">
-            </div>
-            <div class="modal-field">
-                <label>文件类型</label>
-                <input type="text" id="archive-file-type" placeholder="如 pdf, docx, jpg">
-            </div>
-        </div>
+        <div id="archive-file-list" style="max-height:200px;overflow-y:auto"></div>
         <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
             <button class="btn btn-outline" onclick="closeModal('modal-archive-file')">取消</button>
-            <button class="btn btn-primary" onclick="submitArchiveFile()">上传</button>
+            <button class="btn btn-primary" id="archive-file-upload-btn" onclick="submitArchiveFile()" disabled>上传文件</button>
         </div>
     </div>
 </div>
@@ -5385,13 +5374,18 @@ async function viewArchiveDetail(id) {
         if (a.files && a.files.length > 0) {
             html += '<div class="data-table"><table><thead><tr><th>文件名</th><th>类型</th><th>大小</th><th>上传人</th><th>上传时间</th><th>操作</th></tr></thead><tbody>';
             a.files.forEach(function(f) {
+                var fileIconMap = { pdf: 'picture_as_pdf', doc: 'description', docx: 'description', xls: 'table_chart', xlsx: 'table_chart', jpg: 'image', jpeg: 'image', png: 'image', mp3: 'audiotrack', mp4: 'videocam', zip: 'folder_zip' };
+                var fIcon = fileIconMap[(f.file_type || '').toLowerCase()] || 'insert_drive_file';
                 html += '<tr>' +
-                    '<td style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">description</span>' + escapeHtml(f.file_name || '') + '</td>' +
-                    '<td>' + escapeHtml(f.file_type || '--') + '</td>' +
+                    '<td style="display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">' + fIcon + '</span>' + escapeHtml(f.file_name || '') + '</td>' +
+                    '<td>' + escapeHtml((f.file_type || '--').toUpperCase()) + '</td>' +
                     '<td>' + formatFileSize(f.file_size) + '</td>' +
                     '<td>' + escapeHtml(f.uploaded_by_name || '--') + '</td>' +
                     '<td style="white-space:nowrap">' + escapeHtml((f.created_at || '').substring(0, 10)) + '</td>' +
-                    '<td><button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteArchiveFile(' + id + ',' + f.id + ')">删除</button></td>' +
+                    '<td style="white-space:nowrap">' +
+                        '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;margin-right:4px" onclick="downloadArchiveFile(' + id + ',' + f.id + ')"><span class="material-icons-round" style="font-size:12px">download</span> 下载</button>' +
+                        '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteArchiveFile(' + id + ',' + f.id + ')"><span class="material-icons-round" style="font-size:12px">delete</span></button>' +
+                    '</td>' +
                     '</tr>';
             });
             html += '</tbody></table></div>';
@@ -5549,36 +5543,103 @@ async function executeBatchTransfer() {
     }
 }
 
+var archivePendingFiles = [];
+
 function showArchiveFileUpload(archiveId) {
     document.getElementById('archive-file-archive-id').value = archiveId;
-    document.getElementById('archive-file-name').value = '';
-    document.getElementById('archive-file-path').value = '';
-    document.getElementById('archive-file-size').value = '';
-    document.getElementById('archive-file-type').value = '';
+    archivePendingFiles = [];
+    document.getElementById('archive-file-input').value = '';
+    document.getElementById('archive-file-list').innerHTML = '';
+    document.getElementById('archive-file-upload-btn').disabled = true;
     document.getElementById('modal-archive-file').style.display = 'flex';
+
+    var dropZone = document.getElementById('archive-drop-zone');
+    dropZone.ondragover = function(e) { e.preventDefault(); e.stopPropagation(); dropZone.style.borderColor = 'var(--accent-gold)'; dropZone.style.background = 'var(--accent-gold-dim)'; };
+    dropZone.ondragleave = function(e) { e.preventDefault(); e.stopPropagation(); dropZone.style.borderColor = 'var(--border-medium)'; dropZone.style.background = ''; };
+    dropZone.ondrop = function(e) {
+        e.preventDefault(); e.stopPropagation();
+        dropZone.style.borderColor = 'var(--border-medium)'; dropZone.style.background = '';
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            addArchivePendingFiles(e.dataTransfer.files);
+        }
+    };
+}
+
+function handleArchiveFileSelect(input) {
+    if (input.files && input.files.length > 0) {
+        addArchivePendingFiles(input.files);
+    }
+}
+
+function addArchivePendingFiles(fileList) {
+    for (var i = 0; i < fileList.length; i++) {
+        archivePendingFiles.push(fileList[i]);
+    }
+    renderArchiveFileList();
+}
+
+function removeArchivePendingFile(index) {
+    archivePendingFiles.splice(index, 1);
+    renderArchiveFileList();
+}
+
+function renderArchiveFileList() {
+    var listEl = document.getElementById('archive-file-list');
+    var uploadBtn = document.getElementById('archive-file-upload-btn');
+    if (archivePendingFiles.length === 0) {
+        listEl.innerHTML = '';
+        uploadBtn.disabled = true;
+        return;
+    }
+    uploadBtn.disabled = false;
+    var html = '';
+    archivePendingFiles.forEach(function(f, i) {
+        var iconMap = { pdf: 'picture_as_pdf', doc: 'description', docx: 'description', xls: 'table_chart', xlsx: 'table_chart', jpg: 'image', jpeg: 'image', png: 'image', mp3: 'audiotrack', mp4: 'videocam', zip: 'folder_zip', rar: 'folder_zip' };
+        var ext = f.name.split('.').pop().toLowerCase();
+        var icon = iconMap[ext] || 'insert_drive_file';
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:6px">' +
+            '<span class="material-icons-round" style="font-size:20px;color:var(--accent-gold)">' + icon + '</span>' +
+            '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:12px;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escapeHtml(f.name) + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted)">' + formatFileSize(f.size) + ' · ' + ext.toUpperCase() + '</div>' +
+            '</div>' +
+            '<button onclick="removeArchivePendingFile(' + i + ')" style="width:24px;height:24px;border-radius:50%;border:none;background:var(--accent-rose-dim);color:var(--accent-rose);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px">×</button>' +
+            '</div>';
+    });
+    listEl.innerHTML = html;
 }
 
 async function submitArchiveFile() {
-    var archiveId = document.getElementById('archive-file-archive-id').value;
-    var fileName = document.getElementById('archive-file-name').value.trim();
-    var filePath = document.getElementById('archive-file-path').value.trim();
-    var fileSize = document.getElementById('archive-file-size').value;
-    var fileType = document.getElementById('archive-file-type').value.trim();
+    if (archivePendingFiles.length === 0) { showToast('请选择要上传的文件'); return; }
 
-    if (!fileName || !filePath) { showToast('请填写文件名和路径'); return; }
+    var archiveId = document.getElementById('archive-file-archive-id').value;
+    var uploadBtn = document.getElementById('archive-file-upload-btn');
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = '上传中...';
 
     try {
-        await api.post('/archives/' + archiveId + '/files', {
-            file_name: fileName,
-            file_path: filePath,
-            file_size: parseInt(fileSize) || 0,
-            file_type: fileType || fileName.split('.').pop()
+        var formData = new FormData();
+        archivePendingFiles.forEach(function(f) {
+            formData.append('files', f);
         });
-        showToast('文件上传成功', 'success');
+
+        var token = localStorage.getItem('token');
+        var resp = await fetch('/api/archives/' + archiveId + '/files', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: formData
+        });
+
+        var result = await resp.json();
+        if (!resp.ok) throw new Error(result.error || result.message || '上传失败');
+
+        showToast((result.data && result.data.count ? result.data.count : archivePendingFiles.length) + '个文件上传成功', 'success');
         closeModal('modal-archive-file');
         viewArchiveDetail(parseInt(archiveId));
     } catch (err) {
         showToast('文件上传失败: ' + err.message);
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = '上传文件';
     }
 }
 
@@ -5591,6 +5652,34 @@ async function deleteArchiveFile(archiveId, fileId) {
     } catch (err) {
         showToast('删除文件失败: ' + err.message);
     }
+}
+
+function downloadArchiveFile(archiveId, fileId) {
+    var token = localStorage.getItem('token');
+    fetch('/api/archives/' + archiveId + '/files/' + fileId + '/download', {
+        method: 'GET',
+        headers: { 'Authorization': 'Bearer ' + token }
+    }).then(function(resp) {
+        if (!resp.ok) throw new Error('下载失败');
+        var filename = 'download';
+        var disposition = resp.headers.get('Content-Disposition');
+        if (disposition && disposition.indexOf('filename=') !== -1) {
+            var matches = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+            if (matches && matches[1]) filename = matches[1].replace(/['"]/g, '');
+        }
+        return resp.blob().then(function(blob) { return { blob: blob, filename: filename }; });
+    }).then(function(result) {
+        var url = URL.createObjectURL(result.blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = result.filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }).catch(function(err) {
+        showToast('文件下载失败: ' + err.message);
+    });
 }
 
 async function exportArchives() {

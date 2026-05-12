@@ -1,10 +1,42 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
 const { getDb } = require('../db');
 const { authMiddleware } = require('../middleware/auth');
 const { paginate, formatResponse, formatError, logAudit } = require('../utils/helpers');
 
 const router = express.Router();
 router.use(authMiddleware);
+
+const ARCHIVE_UPLOAD_DIR = path.join(__dirname, '..', 'data', 'uploads', 'archives');
+if (!fs.existsSync(ARCHIVE_UPLOAD_DIR)) {
+  fs.mkdirSync(ARCHIVE_UPLOAD_DIR, { recursive: true });
+}
+
+const archiveStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const subDir = path.join(ARCHIVE_UPLOAD_DIR, String(req.params.id || 'general'));
+    if (!fs.existsSync(subDir)) fs.mkdirSync(subDir, { recursive: true });
+    cb(null, subDir);
+  },
+  filename: (req, file, cb) => {
+    var ext = path.extname(file.originalname);
+    cb(null, `${uuidv4()}${ext}`);
+  }
+});
+
+var archiveUpload = multer({
+  storage: archiveStorage,
+  limits: { fileSize: 100 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    var allowed = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.mp3', '.mp4', '.wav', '.avi', '.zip', '.rar', '.7z', '.txt', '.csv', '.md', '.html', '.xml', '.json'];
+    var ext = path.extname(file.originalname).toLowerCase();
+    if (allowed.includes(ext)) cb(null, true);
+    else cb(new Error('不支持的文件类型: ' + ext));
+  }
+});
 
 router.get('/categories', (req, res) => {
   const db = getDb();
@@ -303,25 +335,39 @@ router.post('/:id/review', (req, res) => {
   res.json(formatResponse(null, review_status === 'approved' ? '档案审核通过' : '档案审核驳回'));
 });
 
-router.post('/:id/files', (req, res) => {
-  const { file_name, file_path, file_size, file_type } = req.body;
-  if (!file_name || !file_path) {
-    return res.status(400).json(formatError('文件名和路径不能为空'));
-  }
-
-  const db = getDb();
-  const archive = db.prepare('SELECT * FROM archives WHERE id = ?').get(req.params.id);
+router.post('/:id/files', archiveUpload.array('files', 20), (req, res) => {
+  var db = getDb();
+  var archive = db.prepare('SELECT * FROM archives WHERE id = ?').get(req.params.id);
   if (!archive) {
     return res.status(404).json(formatError('档案不存在'));
   }
 
-  const result = db.prepare(
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json(formatError('未上传文件'));
+  }
+
+  var inserted = [];
+  var insertStmt = db.prepare(
     'INSERT INTO archive_files (archive_id, file_name, file_path, file_size, file_type, uploaded_by) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(req.params.id, file_name, file_path, file_size, file_type, req.user.id);
+  );
+
+  for (var i = 0; i < req.files.length; i++) {
+    var f = req.files[i];
+    var ext = path.extname(f.originalname).toLowerCase().replace('.', '');
+    var result = insertStmt.run(
+      req.params.id,
+      f.originalname,
+      f.path,
+      f.size,
+      ext,
+      req.user.id
+    );
+    inserted.push({ id: result.lastInsertRowid, file_name: f.originalname, file_size: f.size, file_type: ext });
+  }
 
   db.prepare('UPDATE archives SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(req.params.id);
-  logAudit(db, req.user.id, 'UPLOAD_FILE', 'archive', req.params.id, `上传文件: ${file_name}`, req);
-  res.status(201).json(formatResponse({ id: result.lastInsertRowid }, '文件上传成功'));
+  logAudit(db, req.user.id, 'UPLOAD_FILE', 'archive', req.params.id, `上传${inserted.length}个文件到档案: ${archive.title}`, req);
+  res.status(201).json(formatResponse({ files: inserted, count: inserted.length }, `${inserted.length}个文件上传成功`));
 });
 
 router.delete('/:archiveId/files/:fileId', (req, res) => {
@@ -331,9 +377,27 @@ router.delete('/:archiveId/files/:fileId', (req, res) => {
     return res.status(404).json(formatError('文件不存在'));
   }
 
+  if (file.file_path && fs.existsSync(file.file_path)) {
+    try { fs.unlinkSync(file.file_path); } catch (e) {}
+  }
+
   db.prepare('DELETE FROM archive_files WHERE id = ?').run(req.params.fileId);
   logAudit(db, req.user.id, 'DELETE_FILE', 'archive', req.params.archiveId, `删除文件: ${file.file_name}`, req);
   res.json(formatResponse(null, '文件删除成功'));
+});
+
+router.get('/:archiveId/files/:fileId/download', (req, res) => {
+  var db = getDb();
+  var file = db.prepare('SELECT * FROM archive_files WHERE id = ? AND archive_id = ?').get(req.params.fileId, req.params.archiveId);
+  if (!file) {
+    return res.status(404).json(formatError('文件不存在'));
+  }
+
+  if (!file.file_path || !fs.existsSync(file.file_path)) {
+    return res.status(404).json(formatError('文件在服务器上不存在'));
+  }
+
+  res.download(file.file_path, file.file_name);
 });
 
 router.get('/export/all', (req, res) => {
