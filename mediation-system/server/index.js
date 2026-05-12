@@ -13,6 +13,12 @@ const pushRoutes = require('./routes/push');
 const callcenterRoutes = require('./routes/callcenter');
 const sysdesignRoutes = require('./routes/sysdesign');
 const settingsRoutes = require('./routes/settings');
+const userRoutes = require('./routes/users');
+const workflowRoutes = require('./routes/workflow');
+const scheduleRoutes = require('./routes/schedules');
+const feedbackRoutes = require('./routes/feedbacks');
+const reportRoutes = require('./routes/reports');
+const fileRoutes = require('./routes/files');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +38,12 @@ app.use('/api/notifications', pushRoutes);
 app.use('/api/callcenter', callcenterRoutes);
 app.use('/api/sysdesign', sysdesignRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/workflow', workflowRoutes);
+app.use('/api/schedules', scheduleRoutes);
+app.use('/api/feedbacks', feedbackRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/files', fileRoutes);
 
 app.get('/{*path}', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'index.html'));

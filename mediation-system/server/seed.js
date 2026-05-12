@@ -293,6 +293,58 @@ function seed() {
   });
   cmInsert(chatMsgs);
 
+  const insertTimeline = db.prepare(
+    `INSERT INTO case_timelines (case_id, action, from_status, to_status, operator_id, operator_name, comment) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+  const timelines = [
+    [1, '状态变更: 待受理 → 调解中', 'pending', 'mediating', 2, '李明华', '案件已受理并开始调解'],
+    [2, '状态变更: 待受理 → 已受理', 'pending', 'accepted', 3, '赵雪梅', '已受理案件'],
+    [2, '状态变更: 已受理 → 调解中', 'accepted', 'mediating', 3, '赵雪梅', '开始调解'],
+    [3, '状态变更: 待受理 → 调解中', 'pending', 'mediating', 4, '陈建国', null],
+    [4, '状态变更: 待受理 → 已受理', 'pending', 'accepted', 2, '李明华', null],
+    [4, '状态变更: 已受理 → 调解中', 'accepted', 'mediating', 2, '李明华', null],
+    [4, '状态变更: 调解中 → 已达成协议', 'mediating', 'agreed', 2, '李明华', '双方达成和解'],
+    [4, '状态变更: 已达成协议 → 已结案', 'agreed', 'closed', 2, '李明华', null],
+    [6, '状态变更: 待受理 → 已终止', 'pending', 'terminated', 5, '周丽萍', '双方同意终止调解'],
+    [7, '状态变更: 待受理 → 已终止', 'pending', 'terminated', 4, '陈建国', null]
+  ];
+  const tlInsert = db.transaction((rows) => {
+    for (const t of rows) insertTimeline.run(...t);
+  });
+  tlInsert(timelines);
+
+  const insertSchedule = db.prepare(
+    `INSERT INTO schedules (title, case_id, mediator_id, schedule_type, status, start_time, end_time, location, description, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const now = new Date();
+  const schedules = [
+    ['张某某与李某房屋租赁押金退还纠纷调解', 1, 2, 'mediation', 'in_progress', new Date(now.getTime() + 0 * 60000).toISOString(), new Date(now.getTime() + 120 * 60000).toISOString(), '调解室A', '视频调解', 2],
+    ['王某与某科技公司劳动争议调解', 2, 3, 'mediation', 'scheduled', new Date(now.getTime() + 120 * 60000).toISOString(), new Date(now.getTime() + 240 * 60000).toISOString(), '调解室B', null, 3],
+    ['某贸易公司与某物流公司合同纠纷调解', 3, 4, 'mediation', 'scheduled', new Date(now.getTime() + 1440 * 60000).toISOString(), new Date(now.getTime() + 1560 * 60000).toISOString(), '调解室A', null, 4],
+    ['调解技能培训', null, 2, 'training', 'scheduled', new Date(now.getTime() + 2880 * 60000).toISOString(), new Date(now.getTime() + 2940 * 60000).toISOString(), '会议室', '在线调解技能培训', 1],
+    ['孙某消费维权咨询', 5, 5, 'consultation', 'scheduled', new Date(now.getTime() + 4320 * 60000).toISOString(), new Date(now.getTime() + 4380 * 60000).toISOString(), '接待室', null, 5],
+    ['刘某与周某邻里纠纷调解', null, 2, 'mediation', 'completed', new Date(now.getTime() - 4320 * 60000).toISOString(), new Date(now.getTime() - 4200 * 60000).toISOString(), '调解室C', '已成功调解', 2]
+  ];
+  const scInsert = db.transaction((rows) => {
+    for (const s of rows) insertSchedule.run(...s);
+  });
+  scInsert(schedules);
+
+  const insertFeedback = db.prepare(
+    `INSERT INTO feedbacks (case_id, party_id, rating, attitude_score, efficiency_score, fairness_score, comment, is_anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const feedbacks = [
+    [4, 7, 5, 5, 4, 5, '调解员非常专业耐心，帮助我们达成了满意的协议', 0],
+    [4, 8, 4, 4, 5, 4, '调解效率很高，态度友好', 0],
+    [8, 1, 5, 5, 5, 5, '非常满意的调解服务', 1],
+    [8, 2, 3, 4, 3, 3, '调解过程有些长，但结果可以接受', 1],
+    [5, 9, 4, 5, 4, 4, '调解员态度很好，但对方不太配合', 0]
+  ];
+  const fbInsert = db.transaction((rows) => {
+    for (const f of rows) insertFeedback.run(...f);
+  });
+  fbInsert(feedbacks);
+
   console.log('Database seeded successfully!');
   return db;
 }

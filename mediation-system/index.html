@@ -1507,7 +1507,477 @@
             100% { background-position: -200% 0; }
         }
 
-        /* Responsive */
+        /* ==================== CALENDAR / SCHEDULES ==================== */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 1px;
+            background: var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .calendar-header-cell {
+            background: var(--bg-tertiary);
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+        }
+
+        .calendar-day {
+            background: var(--bg-card);
+            min-height: 100px;
+            padding: 8px;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .calendar-day:hover {
+            background: var(--accent-gold-dim);
+        }
+
+        .calendar-day.other-month {
+            opacity: 0.35;
+        }
+
+        .calendar-day.today {
+            background: var(--accent-gold-dim);
+        }
+
+        .calendar-day .day-number {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .calendar-day.today .day-number {
+            color: var(--accent-gold);
+        }
+
+        .schedule-tag {
+            display: block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 500;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .schedule-tag:hover {
+            filter: brightness(1.2);
+        }
+
+        .schedule-tag.mediation {
+            background: var(--accent-gold-dim);
+            color: var(--accent-gold);
+        }
+
+        .schedule-tag.meeting {
+            background: var(--accent-teal-dim);
+            color: var(--accent-teal);
+        }
+
+        .schedule-tag.hearing {
+            background: var(--accent-violet-dim);
+            color: var(--accent-violet);
+        }
+
+        .schedule-tag.followup {
+            background: var(--accent-rose-dim);
+            color: var(--accent-rose);
+        }
+
+        .schedule-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: var(--transition);
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .schedule-card:hover {
+            border-color: var(--border-medium);
+            transform: translateX(4px);
+        }
+
+        .schedule-card .sc-time {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            min-width: 80px;
+            text-align: center;
+        }
+
+        .schedule-card .sc-content { flex: 1; }
+        .schedule-card .sc-content h4 { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+        .schedule-card .sc-content p { font-size: 12px; color: var(--text-muted); }
+
+        .schedule-card .sc-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ==================== STAR RATING ==================== */
+        .star-rating {
+            display: inline-flex;
+            gap: 2px;
+        }
+
+        .star-rating .star {
+            font-size: 16px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .star-rating .star.filled {
+            color: var(--accent-gold);
+        }
+
+        .star-rating .star:hover {
+            transform: scale(1.2);
+        }
+
+        .star-rating-display {
+            display: inline-flex;
+            gap: 2px;
+        }
+
+        .star-rating-display .star {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .star-rating-display .star.filled {
+            color: var(--accent-gold);
+        }
+
+        /* ==================== MODAL ==================== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: modalFadeIn 0.2s ease;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-medium);
+            border-radius: var(--radius-xl);
+            padding: 28px 32px;
+            width: 520px;
+            max-width: 90vw;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5), var(--shadow-gold);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .modal-content h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-content h3 .modal-close {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .modal-content h3 .modal-close:hover {
+            background: var(--accent-rose-dim);
+            color: var(--accent-rose);
+        }
+
+        .modal-field {
+            margin-bottom: 16px;
+        }
+
+        .modal-field label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .modal-field input,
+        .modal-field select,
+        .modal-field textarea {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .modal-field input:focus,
+        .modal-field select:focus,
+        .modal-field textarea:focus {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 0 3px var(--accent-gold-dim);
+        }
+
+        .modal-field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .modal-field select {
+            cursor: pointer;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        /* ==================== FEEDBACK ==================== */
+        .feedback-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .feedback-stat-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .feedback-stat-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--border-medium);
+        }
+
+        .feedback-stat-card .fsc-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .feedback-stat-card .fsc-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .feedback-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .feedback-item:hover {
+            border-color: var(--border-medium);
+        }
+
+        .feedback-item .fi-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .feedback-item .fi-case {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-gold);
+        }
+
+        .feedback-item .fi-party {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .feedback-item .fi-comment {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .feedback-item .fi-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* ==================== REPORTS ==================== */
+        .report-stats {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .report-stat {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            text-align: center;
+        }
+
+        .report-stat .rs-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .report-stat .rs-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* ==================== AUDIT LOG ==================== */
+        .audit-filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .audit-filter-bar select,
+        .audit-filter-bar input {
+            padding: 8px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 12px;
+            font-family: inherit;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        .audit-filter-bar select:focus,
+        .audit-filter-bar input:focus {
+            border-color: var(--accent-gold);
+        }
+
+        .audit-log-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            margin-bottom: 6px;
+            transition: var(--transition);
+        }
+
+        .audit-log-item:hover {
+            border-color: var(--border-medium);
+        }
+
+        .audit-log-item .al-time {
+            font-size: 11px;
+            color: var(--text-muted);
+            min-width: 140px;
+            white-space: nowrap;
+        }
+
+        .audit-log-item .al-user {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            min-width: 80px;
+        }
+
+        .audit-log-item .al-action {
+            font-size: 12px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .al-action.create { background: var(--accent-teal-dim); color: var(--accent-teal); }
+        .al-action.update { background: var(--accent-gold-dim); color: var(--accent-gold); }
+        .al-action.delete { background: var(--accent-rose-dim); color: var(--accent-rose); }
+        .al-action.login { background: var(--accent-violet-dim); color: var(--accent-violet); }
+        .al-action.export { background: rgba(251,191,36,0.12); color: #fbbf24; }
+
+        .audit-log-item .al-resource {
+            font-size: 12px;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .audit-log-item .al-detail {
+            font-size: 12px;
+            color: var(--text-muted);
+            flex: 1;
+        }
+
+        /* ==================== RESPONSIVE ==================== */
         @media (max-width: 1200px) {
             .stat-grid { grid-template-columns: repeat(2, 1fr); }
             .chart-grid { grid-template-columns: 1fr; }
@@ -1518,6 +1988,8 @@
             .call-dashboard { grid-template-columns: repeat(2, 1fr); }
             .settings-grid { grid-template-columns: 1fr; }
             .sys-design-grid { grid-template-columns: 1fr; }
+            .feedback-stats { grid-template-columns: 1fr; }
+            .report-stats { grid-template-columns: repeat(3, 1fr); }
         }
     </style>
 </head>
@@ -1589,6 +2061,10 @@
                     <span class="material-icons-round">description</span>
                     文书生成
                 </div>
+                <div class="nav-item" data-page="schedules" onclick="switchPage('schedules', this)">
+                    <span class="material-icons-round">calendar_today</span>
+                    日程管理
+                </div>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">沟通协作</div>
@@ -1605,6 +2081,10 @@
                     <span class="material-icons-round">support_agent</span>
                     呼叫中心
                 </div>
+                <div class="nav-item" data-page="feedbacks" onclick="switchPage('feedbacks', this)">
+                    <span class="material-icons-round">star</span>
+                    调解评价
+                </div>
             </div>
             <div class="nav-section">
                 <div class="nav-section-title">系统管理</div>
@@ -1615,6 +2095,18 @@
                 <div class="nav-item" data-page="settings" onclick="switchPage('settings', this)">
                     <span class="material-icons-round">tune</span>
                     高级设置
+                </div>
+                <div class="nav-item" data-page="users" onclick="switchPage('users', this)">
+                    <span class="material-icons-round">people</span>
+                    用户管理
+                </div>
+                <div class="nav-item" data-page="reports" onclick="switchPage('reports', this)">
+                    <span class="material-icons-round">bar_chart</span>
+                    数据报表
+                </div>
+                <div class="nav-item" data-page="audit" onclick="switchPage('audit', this)">
+                    <span class="material-icons-round">fact_check</span>
+                    审计日志
                 </div>
             </div>
         </div>
@@ -2008,6 +2500,314 @@
                 </div>
             </div>
 
+            <!-- ===== SCHEDULE MANAGEMENT ===== -->
+            <div class="page-section" id="page-schedules">
+                <div class="page-header">
+                    <h2>日程管理</h2>
+                    <div class="page-header-actions">
+                        <button class="btn btn-outline" onclick="loadSchedules()"><span class="material-icons-round" style="font-size:16px">refresh</span> 刷新</button>
+                        <button class="btn btn-primary" onclick="showScheduleModal()"><span class="material-icons-round" style="font-size:16px">add</span> 新建日程</button>
+                    </div>
+                </div>
+                <div id="schedule-calendar-container"></div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3>日程列表</h3>
+                    </div>
+                    <div id="schedule-list">
+                        <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== FEEDBACK MANAGEMENT ===== -->
+            <div class="page-section" id="page-feedbacks">
+                <div class="page-header">
+                    <h2>调解评价</h2>
+                    <div class="page-header-actions">
+                        <button class="btn btn-primary" onclick="showFeedbackModal()"><span class="material-icons-round" style="font-size:16px">rate_review</span> 提交评价</button>
+                    </div>
+                </div>
+                <div class="feedback-stats" id="feedback-stats">
+                    <div class="feedback-stat-card">
+                        <div class="fsc-value" style="color:var(--accent-gold)">--</div>
+                        <div class="fsc-label">平均评分</div>
+                    </div>
+                    <div class="feedback-stat-card">
+                        <div class="fsc-value" style="color:var(--accent-teal)">--</div>
+                        <div class="fsc-label">评价数量</div>
+                    </div>
+                    <div class="feedback-stat-card">
+                        <div class="fsc-value" style="color:var(--accent-violet)">--</div>
+                        <div class="fsc-label">推荐率</div>
+                    </div>
+                </div>
+                <div class="chart-grid">
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <h3>评分分布</h3>
+                        </div>
+                        <div class="chart-wrapper" style="height:200px">
+                            <canvas id="feedbackDistChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <h3>调解员评分排名</h3>
+                        </div>
+                        <div id="feedback-mediator-ranking" style="max-height:200px;overflow-y:auto">
+                            <div style="text-align:center;color:var(--text-muted);padding:20px">加载中...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3>评价列表</h3>
+                    </div>
+                    <div id="feedback-list">
+                        <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== USER MANAGEMENT ===== -->
+            <div class="page-section" id="page-users">
+                <div class="page-header">
+                    <h2>用户管理</h2>
+                    <div class="page-header-actions">
+                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">download</span> 导出</button>
+                        <button class="btn btn-primary" onclick="showUserModal()"><span class="material-icons-round" style="font-size:16px">person_add</span> 新建用户</button>
+                    </div>
+                </div>
+                <div class="data-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>用户名</th>
+                                <th>姓名</th>
+                                <th>角色</th>
+                                <th>手机</th>
+                                <th>状态</th>
+                                <th>最后登录</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-tbody">
+                            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="users-pagination"></div>
+            </div>
+
+            <!-- ===== DATA REPORTS ===== -->
+            <div class="page-section" id="page-reports">
+                <div class="page-header">
+                    <h2>数据报表</h2>
+                    <div class="page-header-actions">
+                        <button class="btn btn-outline" onclick="exportReportsCSV()"><span class="material-icons-round" style="font-size:16px">download</span> 导出CSV</button>
+                        <button class="btn btn-primary" onclick="loadReports()"><span class="material-icons-round" style="font-size:16px">refresh</span> 刷新数据</button>
+                    </div>
+                </div>
+                <div class="report-stats" id="report-stats">
+                    <div class="report-stat">
+                        <div class="rs-value" style="color:var(--accent-gold)">--</div>
+                        <div class="rs-label">总案件</div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="rs-value" style="color:var(--accent-teal)">--</div>
+                        <div class="rs-label">待受理</div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="rs-value" style="color:var(--accent-violet)">--</div>
+                        <div class="rs-label">调解中</div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="rs-value" style="color:var(--accent-gold-light)">--</div>
+                        <div class="rs-label">已结案</div>
+                    </div>
+                    <div class="report-stat">
+                        <div class="rs-value" style="color:var(--accent-rose)">--</div>
+                        <div class="rs-label">已终止</div>
+                    </div>
+                </div>
+                <div class="sys-design-grid" id="reports-detail">
+                    <div class="chart-card">
+                        <div class="chart-card-header"><h3>案件类型分布</h3></div>
+                        <div id="report-type-table" style="color:var(--text-muted);font-size:13px">加载中...</div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header"><h3>月度趋势</h3></div>
+                        <div id="report-monthly-table" style="color:var(--text-muted);font-size:13px">加载中...</div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header"><h3>调解员绩效</h3></div>
+                        <div id="report-mediator-table" style="color:var(--text-muted);font-size:13px">加载中...</div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header"><h3>满意度统计</h3></div>
+                        <div id="report-satisfaction-table" style="color:var(--text-muted);font-size:13px">加载中...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== AUDIT LOG ===== -->
+            <div class="page-section" id="page-audit">
+                <div class="page-header">
+                    <h2>审计日志</h2>
+                    <div class="page-header-actions">
+                        <button class="btn btn-outline" onclick="loadAuditLogs()"><span class="material-icons-round" style="font-size:16px">refresh</span> 刷新</button>
+                    </div>
+                </div>
+                <div class="audit-filter-bar">
+                    <select id="audit-action-filter">
+                        <option value="">全部操作</option>
+                        <option value="create">创建</option>
+                        <option value="update">更新</option>
+                        <option value="delete">删除</option>
+                        <option value="login">登录</option>
+                        <option value="export">导出</option>
+                    </select>
+                    <select id="audit-resource-filter">
+                        <option value="">全部资源</option>
+                        <option value="case">案件</option>
+                        <option value="archive">档案</option>
+                        <option value="document">文书</option>
+                        <option value="user">用户</option>
+                        <option value="setting">设置</option>
+                    </select>
+                    <input type="date" id="audit-date-from" placeholder="开始日期">
+                    <input type="date" id="audit-date-to" placeholder="结束日期">
+                    <button class="btn btn-outline" style="padding:8px 14px" onclick="loadAuditLogs()"><span class="material-icons-round" style="font-size:16px">search</span> 筛选</button>
+                </div>
+                <div id="audit-log-list">
+                    <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
+                </div>
+                <div class="pagination" id="audit-pagination"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Schedule -->
+<div class="modal-overlay" id="modal-schedule" style="display:none" onclick="if(event.target===this)closeModal('modal-schedule')">
+    <div class="modal-content">
+        <h3>新建日程 <button class="modal-close" onclick="closeModal('modal-schedule')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div class="modal-field">
+            <label>标题</label>
+            <input type="text" id="schedule-title" placeholder="请输入日程标题">
+        </div>
+        <div class="modal-field">
+            <label>关联案件</label>
+            <input type="text" id="schedule-case" placeholder="输入案件编号">
+        </div>
+        <div class="modal-field">
+            <label>调解员</label>
+            <select id="schedule-mediator">
+                <option value="">请选择调解员</option>
+            </select>
+        </div>
+        <div class="modal-field">
+            <label>类型</label>
+            <select id="schedule-type">
+                <option value="mediation">调解</option>
+                <option value="meeting">会议</option>
+                <option value="hearing">听证</option>
+                <option value="followup">回访</option>
+            </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="modal-field">
+                <label>开始时间</label>
+                <input type="datetime-local" id="schedule-start">
+            </div>
+            <div class="modal-field">
+                <label>结束时间</label>
+                <input type="datetime-local" id="schedule-end">
+            </div>
+        </div>
+        <div class="modal-field">
+            <label>地点</label>
+            <input type="text" id="schedule-location" placeholder="请输入地点">
+        </div>
+        <div class="modal-field">
+            <label>描述</label>
+            <textarea id="schedule-desc" placeholder="请输入描述"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-schedule')">取消</button>
+            <button class="btn btn-primary" onclick="submitSchedule()">创建日程</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: User -->
+<div class="modal-overlay" id="modal-user" style="display:none" onclick="if(event.target===this)closeModal('modal-user')">
+    <div class="modal-content">
+        <h3 id="modal-user-title">新建用户 <button class="modal-close" onclick="closeModal('modal-user')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div class="modal-field">
+            <label>用户名</label>
+            <input type="text" id="user-username" placeholder="请输入用户名">
+        </div>
+        <div class="modal-field">
+            <label>姓名</label>
+            <input type="text" id="user-name" placeholder="请输入姓名">
+        </div>
+        <div class="modal-field">
+            <label>角色</label>
+            <select id="user-role">
+                <option value="">请选择角色</option>
+                <option value="admin">管理员</option>
+                <option value="mediator">调解员</option>
+                <option value="assistant">助理</option>
+                <option value="viewer">观察者</option>
+            </select>
+        </div>
+        <div class="modal-field">
+            <label>手机</label>
+            <input type="tel" id="user-phone" placeholder="请输入手机号">
+        </div>
+        <div class="modal-field">
+            <label>密码</label>
+            <input type="password" id="user-password" placeholder="请输入密码">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-user')">取消</button>
+            <button class="btn btn-primary" onclick="submitUser()">保存</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Feedback -->
+<div class="modal-overlay" id="modal-feedback" style="display:none" onclick="if(event.target===this)closeModal('modal-feedback')">
+    <div class="modal-content">
+        <h3>提交评价 <button class="modal-close" onclick="closeModal('modal-feedback')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div class="modal-field">
+            <label>案件编号</label>
+            <input type="text" id="feedback-case" placeholder="请输入案件编号">
+        </div>
+        <div class="modal-field">
+            <label>当事人</label>
+            <input type="text" id="feedback-party" placeholder="请输入当事人姓名">
+        </div>
+        <div class="modal-field">
+            <label>评分</label>
+            <div class="star-rating" id="feedback-star-rating">
+                <span class="star material-icons-round" data-value="1" onclick="setFeedbackRating(1)">star_border</span>
+                <span class="star material-icons-round" data-value="2" onclick="setFeedbackRating(2)">star_border</span>
+                <span class="star material-icons-round" data-value="3" onclick="setFeedbackRating(3)">star_border</span>
+                <span class="star material-icons-round" data-value="4" onclick="setFeedbackRating(4)">star_border</span>
+                <span class="star material-icons-round" data-value="5" onclick="setFeedbackRating(5)">star_border</span>
+            </div>
+        </div>
+        <div class="modal-field">
+            <label>评语</label>
+            <textarea id="feedback-comment" placeholder="请输入评价内容"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-feedback')">取消</button>
+            <button class="btn btn-primary" onclick="submitFeedback()">提交评价</button>
         </div>
     </div>
 </div>
@@ -2313,11 +3113,16 @@ var pageTitles = {
     cases: { title: '案件管理', bread: '首页 / 案件管理' },
     archives: { title: '档案管理', bread: '首页 / 档案管理' },
     documents: { title: '文书生成', bread: '首页 / 文书生成' },
+    schedules: { title: '日程管理', bread: '首页 / 日程管理' },
     video: { title: '视频调解', bread: '首页 / 视频调解' },
     push: { title: '信息推送', bread: '首页 / 信息推送' },
     callcenter: { title: '呼叫中心', bread: '首页 / 呼叫中心' },
+    feedbacks: { title: '调解评价', bread: '首页 / 调解评价' },
     sysdesign: { title: '系统设计', bread: '首页 / 系统设计' },
-    settings: { title: '高级设置', bread: '首页 / 高级设置' }
+    settings: { title: '高级设置', bread: '首页 / 高级设置' },
+    users: { title: '用户管理', bread: '首页 / 用户管理' },
+    reports: { title: '数据报表', bread: '首页 / 数据报表' },
+    audit: { title: '审计日志', bread: '首页 / 审计日志' }
 };
 
 var pageLoaded = {};
@@ -2343,11 +3148,16 @@ async function loadPageData(pageId) {
             case 'cases': await loadCases(); break;
             case 'archives': await loadArchives(); break;
             case 'documents': await loadDocuments(); break;
+            case 'schedules': await loadSchedules(); break;
             case 'video': await loadVideoSessions(); break;
             case 'push': await loadNotifications(); break;
             case 'callcenter': await loadCallCenter(); break;
+            case 'feedbacks': await loadFeedbacks(); break;
             case 'sysdesign': await loadSysDesign(); break;
             case 'settings': await loadSettings('general'); break;
+            case 'users': await loadUsers(); break;
+            case 'reports': await loadReports(); break;
+            case 'audit': await loadAuditLogs(); break;
         }
     } catch (err) {
         showToast('加载页面数据失败: ' + err.message);
@@ -3366,6 +4176,718 @@ async function saveSettings() {
     } catch (err) {
         showToast('保存设置失败: ' + err.message);
     }
+}
+
+// ==================== SCHEDULE MANAGEMENT ====================
+var feedbackDistChartInstance = null;
+
+async function loadSchedules() {
+    var now = new Date();
+    var month = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    try {
+        var res = await api.get('/schedules/calendar', { month: month });
+        var data = res.data || res;
+        var schedules = Array.isArray(data) ? data : (data.schedules || []);
+        var calendarMap = data.calendar || {};
+        renderScheduleCalendar(calendarMap, now);
+        renderScheduleList(schedules);
+    } catch (err) {
+        showToast('加载日程数据失败: ' + err.message);
+    }
+}
+
+function renderScheduleCalendar(calendarMap, now) {
+    var container = document.getElementById('schedule-calendar-container');
+    if (!container) return;
+
+    var year = now.getFullYear();
+    var month = now.getMonth();
+    var firstDay = new Date(year, month, 1);
+    var lastDay = new Date(year, month + 1, 0);
+    var startDow = firstDay.getDay();
+    var daysInMonth = lastDay.getDate();
+
+    var prevMonthLast = new Date(year, month, 0).getDate();
+    var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+
+    var html = '<div class="calendar-grid">';
+
+    dayNames.forEach(function(d) {
+        html += '<div class="calendar-header-cell">' + d + '</div>';
+    });
+
+    var totalCells = Math.ceil((startDow + daysInMonth) / 7) * 7;
+
+    for (var i = 0; i < totalCells; i++) {
+        var dayNum;
+        var isOtherMonth = false;
+        var isToday = false;
+        var dateKey;
+
+        if (i < startDow) {
+            dayNum = prevMonthLast - startDow + i + 1;
+            isOtherMonth = true;
+        } else if (i >= startDow + daysInMonth) {
+            dayNum = i - startDow - daysInMonth + 1;
+            isOtherMonth = true;
+        } else {
+            dayNum = i - startDow + 1;
+            if (dayNum === now.getDate()) isToday = true;
+            dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(dayNum).padStart(2, '0');
+        }
+
+        var classes = 'calendar-day';
+        if (isOtherMonth) classes += ' other-month';
+        if (isToday) classes += ' today';
+
+        html += '<div class="' + classes + '">';
+        html += '<div class="day-number">' + dayNum + '</div>';
+
+        if (dateKey && calendarMap[dateKey]) {
+            var items = calendarMap[dateKey];
+            items.slice(0, 3).forEach(function(item) {
+                var typeClass = item.type || 'mediation';
+                html += '<div class="schedule-tag ' + escapeHtml(typeClass) + '">' + escapeHtml(item.title || '') + '</div>';
+            });
+            if (items.length > 3) {
+                html += '<div class="schedule-tag" style="background:var(--bg-tertiary);color:var(--text-muted)">+' + (items.length - 3) + ' 更多</div>';
+            }
+        }
+
+        html += '</div>';
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderScheduleList(schedules) {
+    var container = document.getElementById('schedule-list');
+    if (!container) return;
+
+    if (!schedules || schedules.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无日程</div>';
+        return;
+    }
+
+    var html = '';
+    schedules.forEach(function(s) {
+        var statusTag = '';
+        if (s.status === 'completed') {
+            statusTag = '<span class="status-tag closed">已完成</span>';
+        } else if (s.status === 'cancelled') {
+            statusTag = '<span class="status-tag urgent">已取消</span>';
+        } else {
+            statusTag = '<span class="status-tag active">待进行</span>';
+        }
+
+        html += '<div class="schedule-card">' +
+            '<div class="sc-time">' + escapeHtml(s.startTime || s.time || '') + '</div>' +
+            '<div class="sc-content">' +
+            '<h4>' + escapeHtml(s.title || '') + '</h4>' +
+            '<p>' + escapeHtml(s.mediator || '') + ' · ' + escapeHtml(s.location || '') + '</p>' +
+            '</div>' +
+            '<div class="sc-meta">' + statusTag + '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function showScheduleModal() {
+    document.getElementById('modal-schedule').style.display = 'flex';
+}
+
+async function submitSchedule() {
+    var title = document.getElementById('schedule-title').value.trim();
+    if (!title) {
+        showToast('请输入日程标题', 'info');
+        return;
+    }
+
+    var data = {
+        title: title,
+        caseNumber: document.getElementById('schedule-case').value.trim(),
+        mediator: document.getElementById('schedule-mediator').value,
+        type: document.getElementById('schedule-type').value,
+        startTime: document.getElementById('schedule-start').value,
+        endTime: document.getElementById('schedule-end').value,
+        location: document.getElementById('schedule-location').value.trim(),
+        description: document.getElementById('schedule-desc').value.trim()
+    };
+
+    try {
+        await api.post('/schedules', data);
+        showToast('日程创建成功', 'success');
+        closeModal('modal-schedule');
+        document.getElementById('schedule-title').value = '';
+        document.getElementById('schedule-case').value = '';
+        document.getElementById('schedule-location').value = '';
+        document.getElementById('schedule-desc').value = '';
+        await loadSchedules();
+    } catch (err) {
+        showToast('创建日程失败: ' + err.message);
+    }
+}
+
+// ==================== FEEDBACK MANAGEMENT ====================
+var currentFeedbackRating = 0;
+
+async function loadFeedbacks() {
+    try {
+        var results = await Promise.all([
+            api.get('/feedbacks', { page: 1, pageSize: 10 }),
+            api.get('/feedbacks/stats')
+        ]);
+
+        var listData = results[0].data || results[0];
+        var stats = results[1];
+
+        renderFeedbackStats(stats);
+        renderFeedbackList(Array.isArray(listData) ? listData : (listData.items || []));
+        renderFeedbackCharts(stats);
+        renderFeedbackMediatorRanking(stats);
+    } catch (err) {
+        showToast('加载评价数据失败: ' + err.message);
+    }
+}
+
+function renderFeedbackStats(stats) {
+    var container = document.getElementById('feedback-stats');
+    if (!container || !stats) return;
+
+    var cards = container.querySelectorAll('.feedback-stat-card');
+    if (cards.length >= 3) {
+        cards[0].querySelector('.fsc-value').textContent = stats.avgRating !== undefined ? stats.avgRating.toFixed(1) : '--';
+        cards[1].querySelector('.fsc-value').textContent = stats.totalCount !== undefined ? stats.totalCount : '--';
+        cards[2].querySelector('.fsc-value').textContent = stats.recommendRate !== undefined ? stats.recommendRate + '%' : '--';
+    }
+}
+
+function renderFeedbackList(items) {
+    var container = document.getElementById('feedback-list');
+    if (!container) return;
+
+    if (!items || items.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无评价</div>';
+        return;
+    }
+
+    var html = '';
+    items.forEach(function(item) {
+        var stars = '';
+        var rating = item.rating || item.score || 0;
+        for (var i = 1; i <= 5; i++) {
+            stars += '<span class="material-icons-round star ' + (i <= rating ? 'filled' : '') + '" style="font-size:14px;color:' + (i <= rating ? 'var(--accent-gold)' : 'var(--text-muted)') + '">star</span>';
+        }
+
+        html += '<div class="feedback-item">' +
+            '<div class="fi-header">' +
+            '<span class="fi-case">' + escapeHtml(item.caseNumber || item.caseId || '') + '</span>' +
+            '<div class="star-rating-display">' + stars + '</div>' +
+            '</div>' +
+            '<div class="fi-party">' + escapeHtml(item.party || item.partyName || '') + '</div>' +
+            (item.comment || item.content ? '<div class="fi-comment">' + escapeHtml(item.comment || item.content) + '</div>' : '') +
+            '<div class="fi-time">' + escapeHtml(item.createdAt || item.time || '') + '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function renderFeedbackCharts(stats) {
+    if (feedbackDistChartInstance) feedbackDistChartInstance.destroy();
+
+    var ctx = document.getElementById('feedbackDistChart');
+    if (!ctx) return;
+
+    var labels = stats.distLabels || ['1星', '2星', '3星', '4星', '5星'];
+    var data = stats.distData || [0, 0, 0, 0, 0];
+
+    feedbackDistChartInstance = new Chart(ctx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '评价数量',
+                data: data,
+                backgroundColor: [
+                    'rgba(244, 114, 182, 0.6)',
+                    'rgba(251, 191, 36, 0.6)',
+                    'rgba(96, 165, 250, 0.6)',
+                    'rgba(167, 139, 250, 0.6)',
+                    'rgba(201, 168, 76, 0.6)'
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(201,168,76,0.05)' }, ticks: { font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+}
+
+function renderFeedbackMediatorRanking(stats) {
+    var container = document.getElementById('feedback-mediator-ranking');
+    if (!container) return;
+
+    var ranking = stats.mediatorRanking || [];
+    if (ranking.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无排名数据</div>';
+        return;
+    }
+
+    var medals = ['🥇', '🥈', '🥉'];
+    var html = '';
+    ranking.forEach(function(r, i) {
+        var rankDisplay = i < 3 ? medals[i] : (i + 1);
+        var rating = r.avgRating || r.rating || 0;
+        var stars = '';
+        for (var j = 1; j <= 5; j++) {
+            stars += '<span class="material-icons-round" style="font-size:12px;color:' + (j <= Math.round(rating) ? 'var(--accent-gold)' : 'var(--text-muted)') + '">star</span>';
+        }
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle)">' +
+            '<span style="min-width:24px;text-align:center;font-weight:600">' + rankDisplay + '</span>' +
+            '<span style="flex:1;font-size:13px;color:var(--text-primary)">' + escapeHtml(r.name || '') + '</span>' +
+            '<div class="star-rating-display">' + stars + '</div>' +
+            '<span style="font-size:12px;color:var(--accent-gold);font-weight:600">' + rating.toFixed(1) + '</span>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function showFeedbackModal() {
+    currentFeedbackRating = 0;
+    var stars = document.querySelectorAll('#feedback-star-rating .star');
+    stars.forEach(function(s) {
+        s.classList.remove('filled');
+        s.textContent = 'star_border';
+    });
+    document.getElementById('modal-feedback').style.display = 'flex';
+}
+
+function setFeedbackRating(value) {
+    currentFeedbackRating = value;
+    var stars = document.querySelectorAll('#feedback-star-rating .star');
+    stars.forEach(function(s) {
+        var v = parseInt(s.getAttribute('data-value'));
+        if (v <= value) {
+            s.classList.add('filled');
+            s.textContent = 'star';
+        } else {
+            s.classList.remove('filled');
+            s.textContent = 'star_border';
+        }
+    });
+}
+
+async function submitFeedback() {
+    var caseNumber = document.getElementById('feedback-case').value.trim();
+    if (!caseNumber) {
+        showToast('请输入案件编号', 'info');
+        return;
+    }
+    if (currentFeedbackRating === 0) {
+        showToast('请选择评分', 'info');
+        return;
+    }
+
+    var data = {
+        caseNumber: caseNumber,
+        party: document.getElementById('feedback-party').value.trim(),
+        rating: currentFeedbackRating,
+        comment: document.getElementById('feedback-comment').value.trim()
+    };
+
+    try {
+        await api.post('/feedbacks', data);
+        showToast('评价提交成功', 'success');
+        closeModal('modal-feedback');
+        document.getElementById('feedback-case').value = '';
+        document.getElementById('feedback-party').value = '';
+        document.getElementById('feedback-comment').value = '';
+        await loadFeedbacks();
+    } catch (err) {
+        showToast('提交评价失败: ' + err.message);
+    }
+}
+
+// ==================== USER MANAGEMENT ====================
+var usersCurrentPage = 1;
+
+async function loadUsers(page) {
+    if (page !== undefined) usersCurrentPage = page;
+
+    try {
+        var res = await api.get('/users', { page: usersCurrentPage, pageSize: 20 });
+        var data = res.data || res;
+        var total = res.total || 0;
+        var totalPages = Math.ceil(total / 20) || 1;
+
+        renderUsersTable(Array.isArray(data) ? data : []);
+        renderUsersPagination(totalPages, usersCurrentPage);
+    } catch (err) {
+        showToast('加载用户数据失败: ' + err.message);
+    }
+}
+
+function renderUsersTable(data) {
+    var tbody = document.getElementById('users-tbody');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">暂无用户数据</td></tr>';
+        return;
+    }
+
+    var roleMap = {
+        admin: '管理员',
+        mediator: '调解员',
+        assistant: '助理',
+        viewer: '观察者'
+    };
+
+    var html = '';
+    data.forEach(function(u) {
+        var statusClass = u.status === 'active' ? 'active' : (u.status === 'disabled' ? 'closed' : 'pending');
+        var statusText = u.status === 'active' ? '启用' : (u.status === 'disabled' ? '禁用' : u.statusText || '');
+        var roleText = roleMap[u.role] || u.role || '';
+
+        html += '<tr>' +
+            '<td style="color:var(--accent-gold);font-weight:600">' + escapeHtml(u.username || '') + '</td>' +
+            '<td>' + escapeHtml(u.name || u.displayName || '') + '</td>' +
+            '<td>' + escapeHtml(roleText) + '</td>' +
+            '<td>' + escapeHtml(u.phone || u.mobile || '') + '</td>' +
+            '<td><span class="status-tag ' + statusClass + '">' + escapeHtml(statusText) + '</span></td>' +
+            '<td>' + escapeHtml(u.lastLogin || u.lastLoginAt || '') + '</td>' +
+            '<td>' +
+            '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editUser(\'' + (u.id || u._id || '') + '\')">编辑</button> ' +
+            '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteUser(\'' + (u.id || u._id || '') + '\')">删除</button>' +
+            '</td>' +
+            '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function renderUsersPagination(totalPages, current) {
+    var container = document.getElementById('users-pagination');
+    if (!container) return;
+
+    var html = '<button ' + (current <= 1 ? 'disabled' : '') + ' onclick="loadUsers(' + (current - 1) + ')">上一页</button>';
+    for (var i = 1; i <= totalPages; i++) {
+        html += '<button class="' + (i === current ? 'active' : '') + '" onclick="loadUsers(' + i + ')">' + i + '</button>';
+    }
+    html += '<button ' + (current >= totalPages ? 'disabled' : '') + ' onclick="loadUsers(' + (current + 1) + ')">下一页</button>';
+    container.innerHTML = html;
+}
+
+function showUserModal(userId) {
+    var titleEl = document.getElementById('modal-user-title');
+    if (titleEl) titleEl.innerHTML = (userId ? '编辑用户' : '新建用户') + ' <button class="modal-close" onclick="closeModal(\'modal-user\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+
+    if (!userId) {
+        document.getElementById('user-username').value = '';
+        document.getElementById('user-name').value = '';
+        document.getElementById('user-role').value = '';
+        document.getElementById('user-phone').value = '';
+        document.getElementById('user-password').value = '';
+    }
+
+    document.getElementById('modal-user').style.display = 'flex';
+}
+
+function editUser(id) {
+    showUserModal(id);
+}
+
+async function deleteUser(id) {
+    if (!confirm('确定删除该用户？')) return;
+    try {
+        await api.request('/users/' + id, { method: 'DELETE' });
+        showToast('用户已删除', 'success');
+        await loadUsers();
+    } catch (err) {
+        showToast('删除用户失败: ' + err.message);
+    }
+}
+
+async function submitUser() {
+    var username = document.getElementById('user-username').value.trim();
+    var name = document.getElementById('user-name').value.trim();
+    if (!username || !name) {
+        showToast('请输入用户名和姓名', 'info');
+        return;
+    }
+
+    var data = {
+        username: username,
+        name: name,
+        role: document.getElementById('user-role').value,
+        phone: document.getElementById('user-phone').value.trim(),
+        password: document.getElementById('user-password').value
+    };
+
+    try {
+        await api.post('/users', data);
+        showToast('用户创建成功', 'success');
+        closeModal('modal-user');
+        await loadUsers();
+    } catch (err) {
+        showToast('创建用户失败: ' + err.message);
+    }
+}
+
+// ==================== DATA REPORTS ====================
+async function loadReports() {
+    try {
+        var res = await api.get('/reports/overview');
+        renderReportStats(res);
+        renderReportTables(res);
+    } catch (err) {
+        showToast('加载报表数据失败: ' + err.message);
+    }
+}
+
+function renderReportStats(data) {
+    var container = document.getElementById('report-stats');
+    if (!container || !data) return;
+
+    var cards = container.querySelectorAll('.report-stat');
+    var values = [
+        data.totalCases,
+        data.pendingCases,
+        data.activeCases,
+        data.closedCases,
+        data.terminatedCases
+    ];
+    cards.forEach(function(card, i) {
+        if (values[i] !== undefined) {
+            card.querySelector('.rs-value').textContent = values[i];
+        }
+    });
+}
+
+function renderReportTables(data) {
+    renderReportTypeTable(data.typeDistribution);
+    renderReportMonthlyTable(data.monthlyTrend);
+    renderReportMediatorTable(data.mediatorPerformance);
+    renderReportSatisfactionTable(data.satisfactionStats);
+}
+
+function renderReportTypeTable(typeDist) {
+    var container = document.getElementById('report-type-table');
+    if (!container) return;
+
+    if (!typeDist || typeDist.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
+        return;
+    }
+
+    var html = '<table style="width:100%;border-collapse:collapse">' +
+        '<tr><th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">类型</th>' +
+        '<th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">数量</th>' +
+        '<th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">占比</th></tr>';
+
+    typeDist.forEach(function(t) {
+        html += '<tr>' +
+            '<td style="padding:8px;font-size:13px;color:var(--text-secondary)">' + escapeHtml(t.type || t.name || '') + '</td>' +
+            '<td style="padding:8px;font-size:13px;color:var(--text-primary);text-align:right;font-weight:600">' + (t.count || 0) + '</td>' +
+            '<td style="padding:8px;font-size:13px;color:var(--accent-gold);text-align:right">' + (t.percentage || '0%') + '</td>' +
+            '</tr>';
+    });
+
+    html += '</table>';
+    container.innerHTML = html;
+}
+
+function renderReportMonthlyTable(monthly) {
+    var container = document.getElementById('report-monthly-table');
+    if (!container) return;
+
+    if (!monthly || monthly.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
+        return;
+    }
+
+    var html = '<table style="width:100%;border-collapse:collapse">' +
+        '<tr><th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">月份</th>' +
+        '<th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">新增</th>' +
+        '<th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">结案</th></tr>';
+
+    monthly.forEach(function(m) {
+        html += '<tr>' +
+            '<td style="padding:8px;font-size:13px;color:var(--text-secondary)">' + escapeHtml(m.month || '') + '</td>' +
+            '<td style="padding:8px;font-size:13px;color:var(--accent-gold);text-align:right;font-weight:600">' + (m.newCount || 0) + '</td>' +
+            '<td style="padding:8px;font-size:13px;color:var(--accent-teal);text-align:right;font-weight:600">' + (m.closedCount || 0) + '</td>' +
+            '</tr>';
+    });
+
+    html += '</table>';
+    container.innerHTML = html;
+}
+
+function renderReportMediatorTable(performance) {
+    var container = document.getElementById('report-mediator-table');
+    if (!container) return;
+
+    if (!performance || performance.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
+        return;
+    }
+
+    var html = '<table style="width:100%;border-collapse:collapse">' +
+        '<tr><th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">调解员</th>' +
+        '<th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">案件数</th>' +
+        '<th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">成功率</th></tr>';
+
+    performance.forEach(function(p) {
+        html += '<tr>' +
+            '<td style="padding:8px;font-size:13px;color:var(--text-primary)">' + escapeHtml(p.name || '') + '</td>' +
+            '<td style="padding:8px;font-size:13px;color:var(--text-secondary);text-align:right">' + (p.caseCount || 0) + '</td>' +
+            '<td style="padding:8px;font-size:13px;color:var(--accent-gold);text-align:right;font-weight:600">' + (p.successRate || '0%') + '</td>' +
+            '</tr>';
+    });
+
+    html += '</table>';
+    container.innerHTML = html;
+}
+
+function renderReportSatisfactionTable(satisfaction) {
+    var container = document.getElementById('report-satisfaction-table');
+    if (!container) return;
+
+    if (!satisfaction || satisfaction.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
+        return;
+    }
+
+    var html = '<table style="width:100%;border-collapse:collapse">' +
+        '<tr><th style="padding:8px;text-align:left;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">评分</th>' +
+        '<th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">数量</th>' +
+        '<th style="padding:8px;text-align:right;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">占比</th></tr>';
+
+    satisfaction.forEach(function(s) {
+        html += '<tr>' +
+            '<td style="padding:8px;font-size:13px;color:var(--text-secondary)">' + escapeHtml(s.rating || s.score || '') + ' 星</td>' +
+            '<td style="padding:8px;font-size:13px;color:var(--text-primary);text-align:right;font-weight:600">' + (s.count || 0) + '</td>' +
+            '<td style="padding:8px;font-size:13px;color:var(--accent-gold);text-align:right">' + (s.percentage || '0%') + '</td>' +
+            '</tr>';
+    });
+
+    html += '</table>';
+    container.innerHTML = html;
+}
+
+function exportReportsCSV() {
+    showToast('正在导出报表数据...', 'info');
+    api.get('/reports/overview').then(function(data) {
+        var csv = '\uFEFF';
+        csv += '指标,数值\n';
+        csv += '总案件,' + (data.totalCases || 0) + '\n';
+        csv += '待受理,' + (data.pendingCases || 0) + '\n';
+        csv += '调解中,' + (data.activeCases || 0) + '\n';
+        csv += '已结案,' + (data.closedCases || 0) + '\n';
+        csv += '已终止,' + (data.terminatedCases || 0) + '\n';
+
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '调解数据报表_' + new Date().toISOString().slice(0, 10) + '.csv';
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('报表导出成功', 'success');
+    }).catch(function(err) {
+        showToast('导出失败: ' + err.message);
+    });
+}
+
+// ==================== AUDIT LOG ====================
+var auditCurrentPage = 1;
+
+async function loadAuditLogs(page) {
+    if (page !== undefined) auditCurrentPage = page;
+
+    try {
+        var params = {
+            page: auditCurrentPage,
+            pageSize: 20
+        };
+
+        var actionFilter = document.getElementById('audit-action-filter');
+        var resourceFilter = document.getElementById('audit-resource-filter');
+        var dateFrom = document.getElementById('audit-date-from');
+        var dateTo = document.getElementById('audit-date-to');
+
+        if (actionFilter && actionFilter.value) params.action = actionFilter.value;
+        if (resourceFilter && resourceFilter.value) params.resource = resourceFilter.value;
+        if (dateFrom && dateFrom.value) params.dateFrom = dateFrom.value;
+        if (dateTo && dateTo.value) params.dateTo = dateTo.value;
+
+        var res = await api.get('/sysdesign/audit-logs', params);
+        var data = res.data || res;
+        var total = res.total || 0;
+        var totalPages = Math.ceil(total / 20) || 1;
+
+        renderAuditLogList(Array.isArray(data) ? data : []);
+        renderAuditPagination(totalPages, auditCurrentPage);
+    } catch (err) {
+        showToast('加载审计日志失败: ' + err.message);
+    }
+}
+
+function renderAuditLogList(data) {
+    var container = document.getElementById('audit-log-list');
+    if (!container) return;
+
+    if (!data || data.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无审计日志</div>';
+        return;
+    }
+
+    var actionClassMap = {
+        create: 'create',
+        update: 'update',
+        delete: 'delete',
+        login: 'login',
+        export: 'export'
+    };
+
+    var html = '';
+    data.forEach(function(log) {
+        var actionClass = actionClassMap[log.action] || 'update';
+
+        html += '<div class="audit-log-item">' +
+            '<div class="al-time">' + escapeHtml(log.createdAt || log.time || '') + '</div>' +
+            '<div class="al-user">' + escapeHtml(log.operator || log.user || '') + '</div>' +
+            '<div class="al-action ' + actionClass + '">' + escapeHtml(log.actionText || log.action || '') + '</div>' +
+            '<div class="al-resource">' + escapeHtml(log.resource || log.resourceType || '') + '</div>' +
+            '<div class="al-detail">' + escapeHtml(log.detail || log.description || '') + '</div>' +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function renderAuditPagination(totalPages, current) {
+    var container = document.getElementById('audit-pagination');
+    if (!container) return;
+
+    var html = '<button ' + (current <= 1 ? 'disabled' : '') + ' onclick="loadAuditLogs(' + (current - 1) + ')">上一页</button>';
+    for (var i = 1; i <= totalPages; i++) {
+        html += '<button class="' + (i === current ? 'active' : '') + '" onclick="loadAuditLogs(' + i + ')">' + i + '</button>';
+    }
+    html += '<button ' + (current >= totalPages ? 'disabled' : '') + ' onclick="loadAuditLogs(' + (current + 1) + ')">下一页</button>';
+    container.innerHTML = html;
+}
+
+// ==================== MODAL UTILITY ====================
+function closeModal(modalId) {
+    var modal = document.getElementById(modalId);
+    if (modal) modal.style.display = 'none';
 }
 
 // ==================== UTILITY ====================

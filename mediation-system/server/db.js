@@ -275,6 +275,55 @@ function initDatabase() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(stat_date)
     );
+
+    CREATE TABLE IF NOT EXISTS case_timelines (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL,
+      action TEXT NOT NULL,
+      from_status TEXT,
+      to_status TEXT,
+      operator_id INTEGER NOT NULL,
+      operator_name TEXT NOT NULL,
+      comment TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
+      FOREIGN KEY (operator_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS schedules (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      case_id INTEGER,
+      mediator_id INTEGER NOT NULL,
+      schedule_type TEXT NOT NULL CHECK(schedule_type IN ('mediation', 'consultation', 'meeting', 'training', 'other')),
+      status TEXT DEFAULT 'scheduled' CHECK(status IN ('scheduled', 'in_progress', 'completed', 'cancelled')),
+      start_time DATETIME NOT NULL,
+      end_time DATETIME NOT NULL,
+      location TEXT,
+      description TEXT,
+      reminder INTEGER DEFAULT 15,
+      created_by INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (case_id) REFERENCES cases(id),
+      FOREIGN KEY (mediator_id) REFERENCES users(id),
+      FOREIGN KEY (created_by) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS feedbacks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL,
+      party_id INTEGER NOT NULL,
+      rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5),
+      attitude_score INTEGER CHECK(attitude_score BETWEEN 1 AND 5),
+      efficiency_score INTEGER CHECK(efficiency_score BETWEEN 1 AND 5),
+      fairness_score INTEGER CHECK(fairness_score BETWEEN 1 AND 5),
+      comment TEXT,
+      is_anonymous INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
+      FOREIGN KEY (party_id) REFERENCES case_parties(id)
+    );
   `);
 
   return db;
