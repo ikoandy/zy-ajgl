@@ -2459,28 +2459,51 @@
                 <div class="page-header">
                     <h2>文书生成</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline" onclick="loadDocRecords()"><span class="material-icons-round" style="font-size:16px">history</span> 生成记录</button>
-                        <button class="btn btn-primary" onclick="showToast('请选择模板后生成文书','info')"><span class="material-icons-round" style="font-size:16px">add</span> 自定义模板</button>
+                        <button class="btn btn-outline" onclick="showDocRecordsModal()"><span class="material-icons-round" style="font-size:16px">history</span> 生成记录</button>
+                        <button class="btn btn-primary" onclick="showCreateTemplateModal()"><span class="material-icons-round" style="font-size:16px">add</span> 自定义模板</button>
                     </div>
                 </div>
-                <div class="doc-template-grid" id="doc-template-grid">
-                    <div class="doc-template">
-                        <div class="dt-icon" style="background:var(--bg-tertiary);color:var(--text-muted)"><span class="material-icons-round">hourglass_empty</span></div>
-                        <h4>加载中...</h4>
-                        <span>--</span>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:18px;color:var(--accent-gold)">description</span>
+                            <span style="font-size:13px;font-weight:600">选择模板</span>
+                        </div>
+                        <div class="doc-template-grid" id="doc-template-grid" style="grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:0">
+                            <div class="doc-template" style="padding:12px">
+                                <div class="dt-icon" style="background:var(--bg-tertiary);color:var(--text-muted);width:36px;height:36px;font-size:18px;margin-bottom:8px"><span class="material-icons-round">hourglass_empty</span></div>
+                                <h4 style="font-size:12px">加载中...</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:18px;color:var(--accent-teal)">folder_open</span>
+                            <span style="font-size:13px;font-weight:600">关联案件</span>
+                        </div>
+                        <div style="margin-bottom:10px">
+                            <input type="text" id="doc-case-search" placeholder="搜索案件编号或标题..." style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none" oninput="searchDocCases(this.value)">
+                        </div>
+                        <div id="doc-case-list" style="max-height:260px;overflow-y:auto">
+                            <p style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">请搜索并选择案件</p>
+                        </div>
+                        <div id="doc-selected-case" style="display:none;margin-top:10px;padding:10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px">
+                        </div>
                     </div>
                 </div>
                 <div class="chart-card">
                     <div class="chart-card-header">
-                        <h3>文书生成预览</h3>
+                        <h3 id="doc-preview-title">文书预览</h3>
                         <div style="display:flex;gap:8px">
-                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px">编辑</button>
-                            <button class="btn btn-primary" style="padding:4px 10px;font-size:11px" id="btn-generate-doc">生成文书</button>
+                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="toggleDocEdit()" id="btn-doc-edit"><span class="material-icons-round" style="font-size:14px">edit</span> 编辑</button>
+                            <button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="exportDocRecord()" id="btn-doc-export"><span class="material-icons-round" style="font-size:14px">download</span> 导出</button>
+                            <button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="generateDocument()" id="btn-generate-doc"><span class="material-icons-round" style="font-size:14px">auto_awesome</span> 生成文书</button>
                         </div>
                     </div>
-                    <div id="doc-preview" style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:24px;font-size:13px;color:var(--text-secondary);line-height:2;min-height:200px">
-                        <p style="text-align:center;color:var(--text-muted)">请选择模板以预览文书内容</p>
+                    <div id="doc-preview" style="background:var(--bg-tertiary);border-radius:var(--radius-md);padding:24px;font-size:13px;color:var(--text-secondary);line-height:2;min-height:300px;font-family:'Noto Serif SC',serif;white-space:pre-wrap">
+                        <p style="text-align:center;color:var(--text-muted)">请选择模板和案件以预览文书内容</p>
                     </div>
+                    <textarea id="doc-edit-area" style="display:none;width:100%;min-height:300px;padding:24px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);color:var(--text-primary);font-size:13px;font-family:'Noto Serif SC',serif;line-height:2;resize:vertical;outline:none"></textarea>
                 </div>
             </div>
 
@@ -3351,6 +3374,13 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="modal-generic" style="display:none" onclick="if(event.target===this)closeModal('modal-generic')">
+    <div class="modal-content" style="width:640px;max-height:85vh;overflow-y:auto">
+        <h3 class="modal-title" style="display:flex;justify-content:space-between;align-items:center">通用弹窗 <button class="modal-close" onclick="closeModal('modal-generic')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div class="modal-body"></div>
+    </div>
+</div>
+
 <script>
 // ==================== API CLIENT ====================
 const API_BASE = '/api';
@@ -3447,6 +3477,10 @@ const api = {
             method: 'PUT',
             body: data !== undefined ? JSON.stringify(data) : undefined
         });
+    },
+
+    delete(url) {
+        return this.request(url, { method: 'DELETE' });
     }
 };
 
@@ -5880,10 +5914,17 @@ async function exportArchives() {
 }
 
 // ==================== DOCUMENTS ====================
+var docSelectedTemplate = null;
+var docSelectedCase = null;
+var docCurrentRecordId = null;
+var docIsEditing = false;
+var docAllTemplates = [];
+
 async function loadDocuments() {
     try {
         var templates = await api.get('/documents/templates');
-        renderDocTemplates(templates);
+        docAllTemplates = Array.isArray(templates) ? templates : [];
+        renderDocTemplates(docAllTemplates);
     } catch (err) {
         showToast('加载文书模板失败: ' + err.message);
     }
@@ -5894,11 +5935,22 @@ function renderDocTemplates(templates) {
     if (!grid) return;
 
     if (!templates || templates.length === 0) {
-        grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px;grid-column:1/-1">暂无文书模板</div>';
+        grid.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1;font-size:12px">暂无文书模板</div>';
         return;
     }
 
-    var colorSchemes = [
+    var colorMap = {
+        '#c9a84c': { bg: 'var(--accent-gold-dim)', color: 'var(--accent-gold)' },
+        '#2dd4bf': { bg: 'var(--accent-teal-dim)', color: 'var(--accent-teal)' },
+        '#a78bfa': { bg: 'var(--accent-violet-dim)', color: 'var(--accent-violet)' },
+        '#f472b6': { bg: 'var(--accent-rose-dim)', color: 'var(--accent-rose)' },
+        '#fbbf24': { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
+        '#60a5fa': { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa' },
+        '#34d399': { bg: 'rgba(52,211,153,0.12)', color: '#34d399' },
+        '#fb923c': { bg: 'rgba(251,146,60,0.12)', color: '#fb923c' }
+    };
+
+    var defaultColors = [
         { bg: 'var(--accent-gold-dim)', color: 'var(--accent-gold)' },
         { bg: 'var(--accent-teal-dim)', color: 'var(--accent-teal)' },
         { bg: 'var(--accent-violet-dim)', color: 'var(--accent-violet)' },
@@ -5906,17 +5958,19 @@ function renderDocTemplates(templates) {
         { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
         { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa' },
         { bg: 'rgba(52,211,153,0.12)', color: '#34d399' },
-        { bg: 'rgba(244,114,182,0.12)', color: '#f472b6' }
+        { bg: 'rgba(251,146,60,0.12)', color: '#fb923c' }
     ];
 
     var html = '';
     templates.forEach(function(tpl, i) {
-        var scheme = tpl.colorScheme ? { bg: 'var(--accent-' + tpl.colorScheme + '-dim)', color: 'var(--accent-' + tpl.colorScheme + ')' } : colorSchemes[i % colorSchemes.length];
+        var scheme = colorMap[tpl.color] || defaultColors[i % defaultColors.length];
         var icon = tpl.icon || 'description';
-        html += '<div class="doc-template" onclick="selectDocTemplate(' + (tpl.id || i) + ')">' +
-            '<div class="dt-icon" style="background:' + scheme.bg + ';color:' + scheme.color + '"><span class="material-icons-round">' + icon + '</span></div>' +
-            '<h4>' + escapeHtml(tpl.name || '') + '</h4>' +
-            '<span>使用 ' + (tpl.usageCount || tpl.useCount || 0) + ' 次</span>' +
+        var isSelected = docSelectedTemplate && docSelectedTemplate.id === tpl.id;
+        var borderStyle = isSelected ? 'border-color:var(--accent-gold);box-shadow:0 0 12px rgba(201,168,76,0.2)' : '';
+        html += '<div class="doc-template" style="padding:12px;' + borderStyle + '" onclick="selectDocTemplate(' + tpl.id + ')">' +
+            '<div class="dt-icon" style="background:' + scheme.bg + ';color:' + scheme.color + ';width:36px;height:36px;font-size:18px;margin-bottom:8px"><span class="material-icons-round">' + icon + '</span></div>' +
+            '<h4 style="font-size:12px">' + escapeHtml(tpl.name || '') + '</h4>' +
+            '<span style="font-size:10px">使用 ' + (tpl.usage_count || 0) + ' 次</span>' +
             '</div>';
     });
     grid.innerHTML = html;
@@ -5924,27 +5978,372 @@ function renderDocTemplates(templates) {
 
 async function selectDocTemplate(templateId) {
     try {
-        var templates = await api.get('/documents/templates');
-        var tpl = null;
-        if (Array.isArray(templates)) {
-            tpl = templates.find(function(t) { return t.id === templateId; });
+        var tpl = docAllTemplates.find(function(t) { return t.id === templateId; });
+        if (!tpl) {
+            var detail = await api.get('/documents/templates/' + templateId);
+            tpl = detail;
         }
-        if (tpl && tpl.preview) {
-            document.getElementById('doc-preview').innerHTML = tpl.preview;
+        if (!tpl) return;
+
+        docSelectedTemplate = tpl;
+        renderDocTemplates(docAllTemplates);
+
+        document.getElementById('doc-preview-title').textContent = tpl.name + ' - 预览';
+
+        if (tpl.content_template) {
+            var preview = tpl.content_template;
+            preview = preview.replace(/\{\{([^}]+)\}\}/g, '<span style="color:var(--accent-gold);font-weight:600">{{$1}}</span>');
+            document.getElementById('doc-preview').innerHTML = preview.replace(/\n/g, '<br>');
         } else {
-            document.getElementById('doc-preview').innerHTML = '<p style="text-align:center;font-family:\'Noto Serif SC\',serif;font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px">' + escapeHtml(tpl ? tpl.name : '文书预览') + '</p><p style="color:var(--text-muted)">点击"生成文书"自动填充案件数据</p>';
+            document.getElementById('doc-preview').innerHTML = '<p style="text-align:center;color:var(--text-muted)">模板内容为空</p>';
+        }
+
+        if (docSelectedCase) {
+            previewDocContent();
         }
     } catch (err) {
         showToast('加载模板预览失败: ' + err.message);
     }
 }
 
-async function loadDocRecords() {
+async function searchDocCases(keyword) {
+    var listEl = document.getElementById('doc-case-list');
+    if (!keyword || keyword.trim().length < 1) {
+        listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">请搜索案件编号或标题</p>';
+        return;
+    }
     try {
-        var records = await api.get('/documents/records');
-        showToast('已加载 ' + (records.length || 0) + ' 条生成记录', 'success');
+        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=10');
+        var cases = data.data || data;
+        if (!Array.isArray(cases)) cases = cases.data || [];
+        if (cases.length === 0) {
+            listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">未找到匹配案件</p>';
+            return;
+        }
+        var html = '';
+        cases.forEach(function(c) {
+            var statusClass = c.status || 'pending';
+            var statusLabels = { pending: '待受理', accepted: '已受理', mediating: '调解中', agreed: '已达成协议', terminated: '已终止', closed: '已结案' };
+            html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);border-bottom:1px solid var(--border-subtle)" ' +
+                'onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" ' +
+                'onclick="selectDocCase(' + c.id + ')">' +
+                '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">gavel</span>' +
+                '<div style="flex:1;min-width:0">' +
+                '<div style="font-size:12px;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(c.case_number) + '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(c.title) + '</div>' +
+                '</div>' +
+                '<span class="status-tag ' + statusClass + '" style="font-size:10px;padding:2px 6px">' + (statusLabels[c.status] || c.status) + '</span>' +
+                '</div>';
+        });
+        listEl.innerHTML = html;
     } catch (err) {
-        showToast('加载生成记录失败: ' + err.message);
+        listEl.innerHTML = '<p style="text-align:center;color:var(--accent-rose);font-size:12px;padding:20px">搜索失败</p>';
+    }
+}
+
+async function selectDocCase(caseId) {
+    try {
+        var caseData = await api.get('/cases/' + caseId);
+        docSelectedCase = caseData;
+
+        var selectedEl = document.getElementById('doc-selected-case');
+        selectedEl.style.display = 'block';
+        var statusLabels = { pending: '待受理', accepted: '已受理', mediating: '调解中', agreed: '已达成协议', terminated: '已终止', closed: '已结案' };
+        selectedEl.innerHTML = '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">check_circle</span>' +
+            '<span style="color:var(--accent-teal);font-weight:600">' + escapeHtml(caseData.case_number) + '</span>' +
+            '<span style="color:var(--text-secondary)">' + escapeHtml(caseData.title) + '</span>' +
+            '<span class="status-tag ' + (caseData.status || 'pending') + '" style="font-size:10px;padding:1px 6px;margin-left:auto">' + (statusLabels[caseData.status] || '') + '</span>' +
+            '<span class="material-icons-round" style="font-size:14px;color:var(--text-muted);cursor:pointer;margin-left:4px" onclick="clearDocCase()">close</span>' +
+            '</div>';
+
+        if (docSelectedTemplate) {
+            previewDocContent();
+        }
+    } catch (err) {
+        showToast('加载案件信息失败: ' + err.message);
+    }
+}
+
+function clearDocCase() {
+    docSelectedCase = null;
+    document.getElementById('doc-selected-case').style.display = 'none';
+    if (docSelectedTemplate) {
+        selectDocTemplate(docSelectedTemplate.id);
+    }
+}
+
+function previewDocContent() {
+    if (!docSelectedTemplate || !docSelectedCase) return;
+
+    var tpl = docSelectedTemplate;
+    var c = docSelectedCase;
+    var parties = c.parties || [];
+    var plaintiff = parties.find(function(p) { return p.party_type === 'plaintiff'; });
+    var defendant = parties.find(function(p) { return p.party_type === 'defendant'; });
+    var finance = c.finance || null;
+
+    var vars = {
+        year: new Date().getFullYear(),
+        caseNumber: c.case_number,
+        caseTitle: c.title,
+        partyA: plaintiff ? plaintiff.name : '（甲方）',
+        partyB: defendant ? defendant.name : '（乙方）',
+        partyAPhone: plaintiff ? (plaintiff.phone || plaintiff.contact || '') : '',
+        partyBPhone: defendant ? (defendant.phone || defendant.contact || '') : '',
+        partyAAddress: plaintiff ? (plaintiff.address || '') : '',
+        partyBAddress: defendant ? (defendant.address || '') : '',
+        mediator: c.mediator_name || '（调解员）',
+        date: new Date().toLocaleDateString('zh-CN'),
+        orgName: '某某市人民调解委员会',
+        caseType: c.type_name || '',
+        loanAmount: finance ? (finance.loan_amount || '') : '',
+        loanBalance: finance ? (finance.outstanding_balance || '') : '',
+        interestRate: finance ? (finance.interest_rate || '') : '',
+        loanStartDate: finance ? (finance.loan_start_date || '') : '',
+        loanEndDate: finance ? (finance.loan_end_date || '') : '',
+        partyName: plaintiff ? plaintiff.name : '（当事人）',
+        oppositeParty: defendant ? defendant.name : '（对方当事人）',
+        applicant: plaintiff ? plaintiff.name : '（申请人）'
+    };
+
+    var content = tpl.content_template;
+    for (var key in vars) {
+        content = content.replace(new RegExp('\\{\\{' + key + '\\}\\}', 'g'), vars[key] || '');
+    }
+    content = content.replace(/\{\{([^}]+)\}\}/g, '<span style="color:var(--accent-gold);border-bottom:1px dashed var(--accent-gold);padding:0 4px">$1</span>');
+
+    document.getElementById('doc-preview').innerHTML = content.replace(/\n/g, '<br>');
+}
+
+async function generateDocument() {
+    if (!docSelectedTemplate) {
+        showToast('请先选择文书模板', 'warning');
+        return;
+    }
+    if (!docSelectedCase) {
+        showToast('请先选择关联案件', 'warning');
+        return;
+    }
+
+    try {
+        var result = await api.post('/documents/generate', {
+            template_id: docSelectedTemplate.id,
+            case_id: docSelectedCase.id
+        });
+
+        docCurrentRecordId = result.id;
+        document.getElementById('doc-preview').innerHTML = result.content.replace(/\n/g, '<br>');
+        document.getElementById('doc-edit-area').value = result.content;
+        document.getElementById('doc-preview-title').textContent = result.title || docSelectedTemplate.name;
+        showToast('文书生成成功！', 'success');
+    } catch (err) {
+        showToast('文书生成失败: ' + err.message);
+    }
+}
+
+function toggleDocEdit() {
+    var preview = document.getElementById('doc-preview');
+    var editArea = document.getElementById('doc-edit-area');
+    var btn = document.getElementById('btn-doc-edit');
+
+    if (!docIsEditing) {
+        docIsEditing = true;
+        preview.style.display = 'none';
+        editArea.style.display = 'block';
+        editArea.value = editArea.value || preview.innerText;
+        btn.innerHTML = '<span class="material-icons-round" style="font-size:14px">visibility</span> 预览';
+    } else {
+        docIsEditing = false;
+        preview.style.display = 'block';
+        editArea.style.display = 'none';
+        preview.innerHTML = editArea.value.replace(/\n/g, '<br>');
+        btn.innerHTML = '<span class="material-icons-round" style="font-size:14px">edit</span> 编辑';
+
+        if (docCurrentRecordId) {
+            saveDocContent();
+        }
+    }
+}
+
+async function saveDocContent() {
+    if (!docCurrentRecordId) return;
+    var editArea = document.getElementById('doc-edit-area');
+    try {
+        await api.put('/documents/records/' + docCurrentRecordId, {
+            content: editArea.value
+        });
+        showToast('文书内容已保存', 'success');
+    } catch (err) {
+        showToast('保存失败: ' + err.message);
+    }
+}
+
+function exportDocRecord() {
+    if (!docCurrentRecordId) {
+        showToast('请先生成文书后再导出', 'warning');
+        return;
+    }
+    var token = localStorage.getItem('token');
+    window.open('/api/documents/records/' + docCurrentRecordId + '/export?token=' + token, '_blank');
+}
+
+async function showDocRecordsModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+
+    try {
+        var data = await api.get('/documents/records?pageSize=50');
+        var records = data.data || data;
+        if (!Array.isArray(records)) records = records.data || [];
+
+        var statusLabels = { draft: '草稿', reviewing: '审核中', approved: '已审核', issued: '已签发' };
+        var statusColors = { draft: 'pending', reviewing: 'mediating', approved: 'agreed', issued: 'closed' };
+
+        var html = '<div style="max-height:60vh;overflow-y:auto">';
+        if (!Array.isArray(records) || records.length === 0) {
+            html += '<p style="text-align:center;color:var(--text-muted);padding:40px">暂无文书生成记录</p>';
+        } else {
+            records.forEach(function(r) {
+                var sc = statusColors[r.status] || 'pending';
+                var sl = statusLabels[r.status] || r.status;
+                html += '<div style="display:flex;align-items:center;gap:12px;padding:12px;border-bottom:1px solid var(--border-subtle);transition:var(--transition);cursor:pointer" ' +
+                    'onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" ' +
+                    'onclick="viewDocRecord(' + r.id + ')">' +
+                    '<span class="material-icons-round" style="font-size:20px;color:var(--accent-gold)">description</span>' +
+                    '<div style="flex:1;min-width:0">' +
+                    '<div style="font-size:13px;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(r.title) + '</div>' +
+                    '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' +
+                    (r.template_name ? r.template_name + ' · ' : '') +
+                    (r.case_number || '') + ' · ' +
+                    (r.generated_by_name || '') + ' · ' +
+                    (r.generated_at || '').replace('T', ' ').substring(0, 16) +
+                    '</div></div>' +
+                    '<span class="status-tag ' + sc + '">' + sl + '</span>' +
+                    '<div style="display:flex;gap:4px;margin-left:8px">' +
+                    '<span class="material-icons-round" style="font-size:16px;color:var(--text-muted);cursor:pointer" onclick="event.stopPropagation();changeDocStatus(' + r.id + ',\'' + getNextDocStatus(r.status) + '\')" title="变更状态">autorenew</span>' +
+                    '<span class="material-icons-round" style="font-size:16px;color:var(--accent-rose);cursor:pointer" onclick="event.stopPropagation();deleteDocRecord(' + r.id + ')" title="删除">delete</span>' +
+                    '</div></div>';
+            });
+        }
+        html += '</div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').textContent = '文书生成记录';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载记录失败: ' + err.message);
+    }
+}
+
+function getNextDocStatus(current) {
+    var flow = { draft: 'reviewing', reviewing: 'approved', approved: 'issued', issued: 'draft' };
+    return flow[current] || 'draft';
+}
+
+async function viewDocRecord(recordId) {
+    try {
+        var record = await api.get('/documents/records/' + recordId);
+        docCurrentRecordId = record.id;
+        docSelectedTemplate = docAllTemplates.find(function(t) { return t.id === record.template_id; }) || null;
+
+        document.getElementById('doc-preview').innerHTML = record.content.replace(/\n/g, '<br>');
+        document.getElementById('doc-edit-area').value = record.content;
+        document.getElementById('doc-preview-title').textContent = record.title;
+
+        var modal = document.getElementById('modal-generic');
+        if (modal) modal.style.display = 'none';
+
+        showToast('已加载文书: ' + record.title, 'success');
+    } catch (err) {
+        showToast('加载文书详情失败: ' + err.message);
+    }
+}
+
+async function changeDocStatus(recordId, newStatus) {
+    var statusLabels = { draft: '草稿', reviewing: '审核中', approved: '已审核', issued: '已签发' };
+    try {
+        await api.put('/documents/records/' + recordId + '/status', { status: newStatus });
+        showToast('状态已更新为: ' + (statusLabels[newStatus] || newStatus), 'success');
+        showDocRecordsModal();
+    } catch (err) {
+        showToast('状态更新失败: ' + err.message);
+    }
+}
+
+async function deleteDocRecord(recordId) {
+    if (!confirm('确定要删除该文书吗？')) return;
+    try {
+        await api.delete('/documents/records/' + recordId);
+        showToast('文书已删除', 'success');
+        if (docCurrentRecordId === recordId) {
+            docCurrentRecordId = null;
+            document.getElementById('doc-preview').innerHTML = '<p style="text-align:center;color:var(--text-muted)">请选择模板和案件以预览文书内容</p>';
+        }
+        showDocRecordsModal();
+    } catch (err) {
+        showToast('删除失败: ' + err.message);
+    }
+}
+
+function showCreateTemplateModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+
+    var html = '<div style="padding:4px 0">' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">模板名称 *</label>' +
+        '<input id="tpl-name" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:inherit;outline:none" placeholder="如：调解协议书"></div>' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">模板代码 *</label>' +
+        '<input id="tpl-code" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:inherit;outline:none" placeholder="如：custom_agreement"></div>' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">模板描述</label>' +
+        '<input id="tpl-desc" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:inherit;outline:none" placeholder="简要描述模板用途"></div>' +
+        '<div style="margin-bottom:14px"><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">模板内容 *</label>' +
+        '<textarea id="tpl-content" style="width:100%;min-height:200px;padding:12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:inherit;line-height:1.8;resize:vertical;outline:none" placeholder="使用 {{变量名}} 作为占位符&#10;可用变量: {{year}} {{caseNumber}} {{caseTitle}} {{partyA}} {{partyB}} {{mediator}} {{date}} {{orgName}} {{partyName}} {{oppositeParty}} {{applicant}}"></textarea></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">' +
+        '<div><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">图标</label>' +
+        '<select id="tpl-icon" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none">' +
+        '<option value="description">文档</option><option value="assignment">协议</option><option value="receipt_long">笔录</option><option value="task_alt">通知</option><option value="gavel">法律</option><option value="verified_user">确认</option><option value="mail">函件</option><option value="schedule">日程</option>' +
+        '</select></div>' +
+        '<div><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">颜色</label>' +
+        '<select id="tpl-color" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none">' +
+        '<option value="#c9a84c">金色</option><option value="#2dd4bf">青色</option><option value="#a78bfa">紫色</option><option value="#f472b6">粉色</option><option value="#fbbf24">黄色</option><option value="#60a5fa">蓝色</option><option value="#34d399">绿色</option><option value="#fb923c">橙色</option>' +
+        '</select></div></div>' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="createDocTemplate()">创建模板</button>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').textContent = '创建文书模板';
+    modal.style.display = 'flex';
+}
+
+async function createDocTemplate() {
+    var name = document.getElementById('tpl-name').value.trim();
+    var code = document.getElementById('tpl-code').value.trim();
+    var desc = document.getElementById('tpl-desc').value.trim();
+    var content = document.getElementById('tpl-content').value;
+    var icon = document.getElementById('tpl-icon').value;
+    var color = document.getElementById('tpl-color').value;
+
+    if (!name || !code || !content) {
+        showToast('请填写模板名称、代码和内容', 'warning');
+        return;
+    }
+
+    try {
+        await api.post('/documents/templates', {
+            name: name,
+            code: code,
+            description: desc,
+            content_template: content,
+            icon: icon,
+            color: color
+        });
+        showToast('模板创建成功！', 'success');
+        var modal = document.getElementById('modal-generic');
+        if (modal) modal.style.display = 'none';
+        loadDocuments();
+    } catch (err) {
+        showToast('创建失败: ' + err.message);
     }
 }
 
