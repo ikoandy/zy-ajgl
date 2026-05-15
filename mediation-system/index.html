@@ -6290,30 +6290,201 @@ function showCreateTemplateModal() {
     var modal = document.getElementById('modal-generic');
     if (!modal) return;
 
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '960px';
+
+    var demoTemplates = {
+        payment_demand: {
+            name: '催款通知书',
+            code: 'payment_demand',
+            desc: '催促债务人履行还款义务的正式通知',
+            icon: 'gavel',
+            color: '#c9a84c',
+            content: '催款通知书\n\n编号：催字〔{{year}}〕第 {{caseNumber}} 号\n\n{{partyName}}：\n\n你/你单位与{{oppositeParty}}关于「{{caseTitle}}」一案，经查，你/你单位尚有未履行款项共计人民币{{loanAmount}}元。\n\n现正式通知如下：\n\n一、请你/你单位于收到本通知之日起15日内，将上述款项汇入以下账户：\n    户名：__________\n    开户行：__________\n    账号：__________\n\n二、如逾期未履行，本委员会将依法协助权利人通过法律途径追偿，届时你/你单位需承担由此产生的一切法律后果，包括但不限于诉讼费、律师费、执行费等。\n\n三、如你/你单位对上述款项有异议，请于收到本通知之日起7日内向本委员会提出书面异议并附相关证据。\n\n特此通知。\n\n\n{{orgName}}（盖章）\n{{date}}'
+        },
+        evidence_receipt: {
+            name: '证据收据',
+            code: 'evidence_receipt',
+            desc: '收到当事人提交证据材料时出具的收据',
+            icon: 'receipt_long',
+            color: '#2dd4bf',
+            content: '证据材料收据\n\n案件编号：{{caseNumber}}\n案件名称：{{caseTitle}}\n\n兹收到 {{partyName}} 提交的以下证据材料：\n\n序号  材料名称                    份数  原件/复印件  页数\n──────────────────────────────────────────\n 1    __________                  __    __________   __\n 2    __________                  __    __________   __\n 3    __________                  __    __________   __\n 4    __________                  __    __________   __\n 5    __________                  __    __________   __\n──────────────────────────────────────────\n\n以上材料共计 __ 份 __ 页，已由本委员会妥善保管。\n\n提交人确认：以上材料清单与实际提交一致。\n\n\n提交人（签字）：__________  日期：__________\n\n接收人（签字）：__________  日期：__________\n\n{{orgName}}'
+        },
+        mediation_statement: {
+            name: '当事人陈述书',
+            code: 'mediation_statement',
+            desc: '当事人在调解过程中提交的书面陈述',
+            icon: 'description',
+            color: '#a78bfa',
+            content: '当事人陈述书\n\n案件编号：{{caseNumber}}\n案件名称：{{caseTitle}}\n\n陈述人：{{partyName}}\n身份证号：__________\n联系电话：__________\n住址：__________\n\n对方当事人：{{oppositeParty}}\n\n──────────────────────────\n\n一、纠纷基本情况：\n__________\n\n二、事实经过：\n__________\n\n三、本人诉求：\n__________\n\n四、事实依据及证据：\n__________\n\n五、其他需要说明的事项：\n__________\n\n──────────────────────────\n\n本人承诺以上陈述内容真实、准确、完整，如有虚假，愿承担相应法律责任。\n\n\n陈述人（签字）：__________\n日期：{{date}}'
+        },
+        power_of_attorney: {
+            name: '授权委托书',
+            code: 'power_of_attorney',
+            desc: '当事人委托代理人参加调解的授权文书',
+            icon: 'assignment',
+            color: '#60a5fa',
+            content: '授 权 委 托 书\n\n委托人：{{partyA}}\n身份证号：__________\n联系电话：{{partyAPhone}}\n住址：{{partyAAddress}}\n\n受托人：__________\n身份证号：__________\n联系电话：__________\n住址：__________\n\n与委托人关系：__________\n\n──────────────────────────\n\n因{{caseTitle}}一案（案件编号：{{caseNumber}}），现委托上述受托人作为本人的代理人，参加{{orgName}}组织的调解活动。\n\n委托权限如下：\n□ 一般授权：代为参加调解、陈述意见、签收文书\n□ 特别授权：代为参加调解、陈述意见、进行和解、签署调解协议、签收文书\n\n委托期限：自本委托书签署之日起至本案调解终结之日止。\n\n\n委托人（签字/盖章）：__________  日期：__________\n\n受托人（签字）：__________  日期：__________'
+        },
+        case_transfer: {
+            name: '案件移送函',
+            code: 'case_transfer',
+            desc: '将案件移送至其他调解组织或部门的函件',
+            icon: 'mail',
+            color: '#fb923c',
+            content: '案 件 移 送 函\n\n移字〔{{year}}〕第 {{caseNumber}} 号\n\n__________（接收单位）：\n\n本委员会受理的{{partyA}}与{{partyB}}关于「{{caseTitle}}」一案（案件编号：{{caseNumber}}），因以下原因，现移送贵单位处理：\n\n□ 案件不属于本委员会管辖范围\n□ 案件涉及专业领域，需专业调解组织处理\n□ 当事人申请移送\n□ 其他：__________\n\n案件基本情况：\n__________\n\n随函附送以下材料：\n1. 调解申请书\n2. 相关证据材料\n3. 调解笔录（如有）\n4. 其他：__________\n\n请贵单位收到后及时处理，并将处理结果函告本委员会。\n\n\n{{orgName}}（盖章）\n{{date}}'
+        }
+    };
+
+    var demoBtnsHtml = '';
+    for (var key in demoTemplates) {
+        var dt = demoTemplates[key];
+        var colorMap = {
+            '#c9a84c': 'var(--accent-gold-dim)',
+            '#2dd4bf': 'var(--accent-teal-dim)',
+            '#a78bfa': 'var(--accent-violet-dim)',
+            '#60a5fa': 'rgba(96,165,250,0.12)',
+            '#fb923c': 'rgba(251,146,60,0.12)'
+        };
+        var bgColor = colorMap[dt.color] || 'var(--accent-gold-dim)';
+        demoBtnsHtml += '<div onclick="fillDemoTemplate(\'' + key + '\')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:' + bgColor + ';border:1px solid transparent;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition)" onmouseover="this.style.borderColor=\'' + dt.color + '\'" onmouseout="this.style.borderColor=\'transparent\'">' +
+            '<span class="material-icons-round" style="font-size:20px;color:' + dt.color + '">' + dt.icon + '</span>' +
+            '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;color:var(--text-primary)">' + dt.name + '</div>' +
+            '<div style="font-size:10px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + dt.desc + '</div></div>' +
+            '<span class="material-icons-round" style="font-size:14px;color:var(--text-muted)">arrow_forward</span></div>';
+    }
+
     var html = '<div style="padding:4px 0">' +
-        '<div style="margin-bottom:14px"><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">模板名称 *</label>' +
-        '<input id="tpl-name" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:inherit;outline:none" placeholder="如：调解协议书"></div>' +
-        '<div style="margin-bottom:14px"><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">模板代码 *</label>' +
-        '<input id="tpl-code" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:inherit;outline:none" placeholder="如：custom_agreement"></div>' +
-        '<div style="margin-bottom:14px"><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">模板描述</label>' +
-        '<input id="tpl-desc" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:inherit;outline:none" placeholder="简要描述模板用途"></div>' +
-        '<div style="margin-bottom:14px"><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">模板内容 *</label>' +
-        '<textarea id="tpl-content" style="width:100%;min-height:200px;padding:12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:13px;font-family:inherit;line-height:1.8;resize:vertical;outline:none" placeholder="使用 {{变量名}} 作为占位符&#10;可用变量: {{year}} {{caseNumber}} {{caseTitle}} {{partyA}} {{partyB}} {{mediator}} {{date}} {{orgName}} {{partyName}} {{oppositeParty}} {{applicant}}"></textarea></div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">' +
-        '<div><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">图标</label>' +
-        '<select id="tpl-icon" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none">' +
+        '<div style="margin-bottom:16px;padding:14px;background:var(--bg-tertiary);border-radius:var(--radius-md);border:1px solid var(--border-subtle)">' +
+        '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">' +
+        '<span class="material-icons-round" style="font-size:18px;color:var(--accent-gold)">auto_awesome</span>' +
+        '<span style="font-size:13px;font-weight:600;color:var(--text-primary)">快速演示 — 选择演示模板自动填充</span>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px">' +
+        demoBtnsHtml +
+        '</div></div>' +
+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">' +
+
+        '<div>' +
+        '<div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">edit_note</span>编辑模板</div>' +
+        '<div style="margin-bottom:10px"><label style="display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px">模板名称 *</label>' +
+        '<input id="tpl-name" style="width:100%;padding:7px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none" placeholder="如：调解协议书" oninput="previewDocTemplateLive()"></div>' +
+        '<div style="margin-bottom:10px"><label style="display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px">模板代码 *</label>' +
+        '<input id="tpl-code" style="width:100%;padding:7px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none" placeholder="如：custom_agreement"></div>' +
+        '<div style="margin-bottom:10px"><label style="display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px">模板描述</label>' +
+        '<input id="tpl-desc" style="width:100%;padding:7px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none" placeholder="简要描述模板用途"></div>' +
+        '<div style="margin-bottom:10px"><label style="display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px">模板内容 *</label>' +
+        '<textarea id="tpl-content" style="width:100%;min-height:260px;padding:10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;line-height:1.8;resize:vertical;outline:none" placeholder="使用 {{变量名}} 作为占位符" oninput="previewDocTemplateLive()"></textarea></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">' +
+        '<div><label style="display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px">图标</label>' +
+        '<select id="tpl-icon" style="width:100%;padding:7px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none">' +
         '<option value="description">文档</option><option value="assignment">协议</option><option value="receipt_long">笔录</option><option value="task_alt">通知</option><option value="gavel">法律</option><option value="verified_user">确认</option><option value="mail">函件</option><option value="schedule">日程</option>' +
         '</select></div>' +
-        '<div><label style="display:block;font-size:12px;color:var(--text-secondary);margin-bottom:6px">颜色</label>' +
-        '<select id="tpl-color" style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none">' +
+        '<div><label style="display:block;font-size:11px;color:var(--text-secondary);margin-bottom:4px">颜色</label>' +
+        '<select id="tpl-color" style="width:100%;padding:7px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none">' +
         '<option value="#c9a84c">金色</option><option value="#2dd4bf">青色</option><option value="#a78bfa">紫色</option><option value="#f472b6">粉色</option><option value="#fbbf24">黄色</option><option value="#60a5fa">蓝色</option><option value="#34d399">绿色</option><option value="#fb923c">橙色</option>' +
         '</select></div></div>' +
-        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="createDocTemplate()">创建模板</button>' +
-        '</div>';
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="createDocTemplate()"><span class="material-icons-round" style="font-size:16px">add_circle</span> 创建模板</button>' +
+        '</div>' +
+
+        '<div>' +
+        '<div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:10px;display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">visibility</span>实时预览</div>' +
+        '<div id="tpl-live-preview" style="background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:20px;font-size:12px;font-family:\'Noto Serif SC\',serif;line-height:2;color:var(--text-secondary);min-height:260px;white-space:pre-wrap;overflow-y:auto;max-height:520px">' +
+        '<p style="text-align:center;color:var(--text-muted)">输入模板内容后实时预览</p>' +
+        '</div>' +
+        '<div style="margin-top:10px;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border:1px solid var(--border-subtle)">' +
+        '<div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-bottom:6px;display:flex;align-items:center;gap:4px"><span class="material-icons-round" style="font-size:14px;color:var(--accent-gold)">help_outline</span>可用变量说明</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 12px;font-size:10px;color:var(--text-muted);line-height:1.8">' +
+        '<span><code style="color:var(--accent-gold)">{{year}}</code> 年份</span>' +
+        '<span><code style="color:var(--accent-gold)">{{date}}</code> 日期</span>' +
+        '<span><code style="color:var(--accent-gold)">{{caseNumber}}</code> 案件编号</span>' +
+        '<span><code style="color:var(--accent-gold)">{{caseTitle}}</code> 案件标题</span>' +
+        '<span><code style="color:var(--accent-gold)">{{partyA}}</code> 甲方/原告</span>' +
+        '<span><code style="color:var(--accent-gold)">{{partyB}}</code> 乙方/被告</span>' +
+        '<span><code style="color:var(--accent-gold)">{{partyAPhone}}</code> 甲方电话</span>' +
+        '<span><code style="color:var(--accent-gold)">{{partyBPhone}}</code> 乙方电话</span>' +
+        '<span><code style="color:var(--accent-gold)">{{partyAAddress}}</code> 甲方地址</span>' +
+        '<span><code style="color:var(--accent-gold)">{{partyBAddress}}</code> 乙方地址</span>' +
+        '<span><code style="color:var(--accent-gold)">{{mediator}}</code> 调解员</span>' +
+        '<span><code style="color:var(--accent-gold)">{{orgName}}</code> 机构名称</span>' +
+        '<span><code style="color:var(--accent-gold)">{{partyName}}</code> 当事人</span>' +
+        '<span><code style="color:var(--accent-gold)">{{oppositeParty}}</code> 对方当事人</span>' +
+        '<span><code style="color:var(--accent-gold)">{{applicant}}</code> 申请人</span>' +
+        '<span><code style="color:var(--accent-gold)">{{loanAmount}}</code> 借款金额</span>' +
+        '</div></div>' +
+        '</div>' +
+
+        '</div></div>';
 
     modal.querySelector('.modal-body').innerHTML = html;
-    modal.querySelector('.modal-title').textContent = '创建文书模板';
+    modal.querySelector('.modal-title').innerHTML = '创建文书模板 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
     modal.style.display = 'flex';
+
+    window._docDemoTemplates = demoTemplates;
+}
+
+function fillDemoTemplate(key) {
+    var tpl = window._docDemoTemplates[key];
+    if (!tpl) return;
+
+    document.getElementById('tpl-name').value = tpl.name;
+    document.getElementById('tpl-code').value = tpl.code;
+    document.getElementById('tpl-desc').value = tpl.desc;
+    document.getElementById('tpl-content').value = tpl.content;
+    document.getElementById('tpl-icon').value = tpl.icon;
+    document.getElementById('tpl-color').value = tpl.color;
+
+    previewDocTemplateLive();
+    showToast('已填充「' + tpl.name + '」演示模板', 'success');
+}
+
+function previewDocTemplateLive() {
+    var content = document.getElementById('tpl-content').value;
+    var previewEl = document.getElementById('tpl-live-preview');
+    if (!previewEl) return;
+
+    if (!content.trim()) {
+        previewEl.innerHTML = '<p style="text-align:center;color:var(--text-muted)">输入模板内容后实时预览</p>';
+        return;
+    }
+
+    var demoData = {
+        year: new Date().getFullYear(),
+        caseNumber: '2024-1092',
+        caseTitle: '张某某与李某房屋租赁押金退还纠纷',
+        partyA: '张某某',
+        partyB: '李某',
+        partyAPhone: '139****5678',
+        partyBPhone: '158****3456',
+        partyAAddress: '某某市某某区某某路123号',
+        partyBAddress: '某某市某某区某某路456号',
+        mediator: '李明华',
+        date: new Date().toLocaleDateString('zh-CN'),
+        orgName: '某某市人民调解委员会',
+        partyName: '张某某',
+        oppositeParty: '李某',
+        applicant: '张某某',
+        loanAmount: '150,000.00',
+        loanBalance: '120,000.00',
+        interestRate: '4.35%',
+        loanStartDate: '2023-01-15',
+        loanEndDate: '2024-01-15'
+    };
+
+    var rendered = content;
+    for (var key in demoData) {
+        rendered = rendered.replace(new RegExp('\\{\\{' + key + '\\}\\}', 'g'), demoData[key]);
+    }
+    rendered = rendered.replace(/\{\{([^}]+)\}\}/g, '<span style="color:var(--accent-gold);border-bottom:1px dashed var(--accent-gold);padding:0 2px">$1</span>');
+
+    var nameVal = document.getElementById('tpl-name').value.trim();
+    var headerHtml = '';
+    if (nameVal) {
+        headerHtml = '<div style="text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border-subtle)"><span style="font-size:15px;font-weight:700;color:var(--text-primary);letter-spacing:2px">' + escapeHtml(nameVal) + '</span></div>';
+    }
+
+    previewEl.innerHTML = headerHtml + rendered.replace(/\n/g, '<br>');
 }
 
 async function createDocTemplate() {
