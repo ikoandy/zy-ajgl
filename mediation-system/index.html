@@ -2514,36 +2514,60 @@
                 <div class="page-header">
                     <h2>视频调解</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">event</span> 预约调解</button>
-                        <button class="btn btn-primary" onclick="createVideoSession()"><span class="material-icons-round" style="font-size:16px">videocam</span> 开始调解</button>
+                        <button class="btn btn-outline" onclick="showVideoSessionsList()"><span class="material-icons-round" style="font-size:16px">list</span> 会话列表</button>
+                        <button class="btn btn-primary" onclick="showCreateVideoSessionModal()"><span class="material-icons-round" style="font-size:16px">videocam</span> 开始调解</button>
                     </div>
                 </div>
-                <div class="video-layout">
-                    <div class="video-main">
-                        <div class="video-grid-view" id="video-grid-view">
-                            <div class="video-panel" style="background:#0a0e1a;grid-column:1/-1">
-                                <span style="font-size:13px;color:var(--text-muted)">暂无进行中的视频调解会话</span>
+                <div id="video-session-view" style="display:none">
+                    <div class="video-layout">
+                        <div class="video-main">
+                            <div class="video-grid-view" id="video-grid-view">
+                                <div class="video-panel" style="background:#0a0e1a;grid-column:1/-1">
+                                    <span style="font-size:13px;color:var(--text-muted)">暂无进行中的视频调解会话</span>
+                                </div>
+                            </div>
+                            <div class="video-controls">
+                                <button class="vc-btn" id="vc-mic" onclick="toggleVCMic()" title="麦克风"><span class="material-icons-round">mic</span></button>
+                                <button class="vc-btn" id="vc-cam" onclick="toggleVCCam()" title="摄像头"><span class="material-icons-round">videocam</span></button>
+                                <button class="vc-btn" title="屏幕共享"><span class="material-icons-round">screen_share</span></button>
+                                <button class="vc-btn" title="录制"><span class="material-icons-round">fiber_manual_record</span></button>
+                                <button class="vc-btn" title="邀请"><span class="material-icons-round">person_add</span></button>
+                                <button class="vc-btn danger" onclick="endVideoSession()" title="结束调解"><span class="material-icons-round">call_end</span></button>
                             </div>
                         </div>
-                        <div class="video-controls">
-                            <button class="vc-btn"><span class="material-icons-round">mic</span></button>
-                            <button class="vc-btn"><span class="material-icons-round">videocam</span></button>
-                            <button class="vc-btn"><span class="material-icons-round">screen_share</span></button>
-                            <button class="vc-btn"><span class="material-icons-round">note_add</span></button>
-                            <button class="vc-btn"><span class="material-icons-round">record_voice_over</span></button>
-                            <button class="vc-btn danger"><span class="material-icons-round">call_end</span></button>
+                        <div class="video-sidebar">
+                            <div class="video-sidebar-header" id="video-session-info">调解讨论区</div>
+                            <div class="chat-messages" id="video-chat-messages">
+                                <div class="chat-msg">
+                                    <div class="msg-text" style="color:var(--text-muted);text-align:center">选择会话后显示消息</div>
+                                </div>
+                            </div>
+                            <div class="chat-input-area">
+                                <input type="text" id="video-chat-input" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendVideoMessage()">
+                                <button onclick="sendVideoMessage()"><span class="material-icons-round" style="font-size:16px">send</span></button>
+                            </div>
                         </div>
                     </div>
-                    <div class="video-sidebar">
-                        <div class="video-sidebar-header" id="video-session-info">调解讨论区</div>
-                        <div class="chat-messages" id="video-chat-messages">
-                            <div class="chat-msg">
-                                <div class="msg-text" style="color:var(--text-muted);text-align:center">选择会话后显示消息</div>
+                </div>
+                <div id="video-list-view">
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px" id="video-stats-cards">
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-card-header">
+                            <h3>调解会话</h3>
+                            <div style="display:flex;gap:8px;align-items:center">
+                                <input type="text" id="video-search" placeholder="搜索会话..." style="padding:4px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none;width:140px" oninput="loadVideoSessionList()">
+                                <select id="video-status-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadVideoSessionList()">
+                                    <option value="">全部状态</option>
+                                    <option value="scheduled">已安排</option>
+                                    <option value="in_progress">进行中</option>
+                                    <option value="completed">已完成</option>
+                                    <option value="cancelled">已取消</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="chat-input-area">
-                            <input type="text" id="video-chat-input" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendVideoMessage()">
-                            <button onclick="sendVideoMessage()"><span class="material-icons-round" style="font-size:16px">send</span></button>
+                        <div id="video-session-list">
+                            <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
                         </div>
                     </div>
                 </div>
@@ -6599,23 +6623,124 @@ async function createDocTemplate() {
 
 // ==================== VIDEO MEDIATION ====================
 var currentVideoSessionId = null;
+var vcMicOn = true;
+var vcCamOn = true;
 
 async function loadVideoSessions() {
+    await loadVideoSessionList();
+    await loadVideoStats();
+}
+
+async function loadVideoStats() {
     try {
-        var sessions = await api.get('/video/sessions');
-        var data = Array.isArray(sessions) ? sessions : (sessions.data || []);
+        var allSessions = await api.get('/video/sessions?pageSize=100');
+        var data = allSessions.data || allSessions;
+        if (!Array.isArray(data)) data = data.data || [];
+
+        var stats = { scheduled: 0, in_progress: 0, completed: 0, cancelled: 0 };
+        data.forEach(function(s) { if (stats[s.status] !== undefined) stats[s.status]++; });
+
+        var container = document.getElementById('video-stats-cards');
+        if (!container) return;
+
+        var cards = [
+            { label: '已安排', count: stats.scheduled, icon: 'schedule', color: 'var(--accent-gold)', bg: 'var(--accent-gold-dim)' },
+            { label: '进行中', count: stats.in_progress, icon: 'play_circle', color: 'var(--accent-teal)', bg: 'var(--accent-teal-dim)' },
+            { label: '已完成', count: stats.completed, icon: 'check_circle', color: 'var(--accent-violet)', bg: 'var(--accent-violet-dim)' }
+        ];
+
+        var html = '';
+        cards.forEach(function(c) {
+            html += '<div class="chart-card" style="padding:16px;display:flex;align-items:center;gap:12px">' +
+                '<div style="width:40px;height:40px;border-radius:var(--radius-md);background:' + c.bg + ';display:flex;align-items:center;justify-content:center"><span class="material-icons-round" style="font-size:20px;color:' + c.color + '">' + c.icon + '</span></div>' +
+                '<div><div style="font-size:20px;font-weight:700;color:var(--text-primary)">' + c.count + '</div><div style="font-size:11px;color:var(--text-muted)">' + c.label + '</div></div></div>';
+        });
+        container.innerHTML = html;
 
         var badge = document.getElementById('video-badge');
-        if (badge) badge.textContent = data.length;
+        if (badge) badge.textContent = stats.in_progress || stats.scheduled || 0;
+    } catch (err) { }
+}
 
-        if (data.length > 0) {
-            var session = data[0];
-            currentVideoSessionId = session.id || session._id;
-            renderVideoSession(session);
-            await loadVideoMessages(currentVideoSessionId);
+async function loadVideoSessionList() {
+    var search = document.getElementById('video-search') ? document.getElementById('video-search').value.trim() : '';
+    var statusFilter = document.getElementById('video-status-filter') ? document.getElementById('video-status-filter').value : '';
+
+    var params = { pageSize: 50 };
+    if (search) params.search = search;
+    if (statusFilter) params.status = statusFilter;
+
+    try {
+        var res = await api.get('/video/sessions' + buildQueryString(params));
+        var data = res.data || res;
+        if (!Array.isArray(data)) data = data.data || [];
+
+        var container = document.getElementById('video-session-list');
+        if (!container) return;
+
+        if (data.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无视频调解会话</div>';
+            return;
         }
+
+        var statusLabels = { scheduled: '已安排', in_progress: '进行中', completed: '已完成', cancelled: '已取消' };
+        var statusClasses = { scheduled: 'pending', in_progress: 'mediating', completed: 'closed', cancelled: 'urgent' };
+
+        var html = '';
+        data.forEach(function(s) {
+            var sc = statusClasses[s.status] || 'pending';
+            var sl = statusLabels[s.status] || s.status;
+            var participants = s.participants || [];
+            var participantNames = participants.map(function(p) { return p.display_name || p.user_name || ''; }).join('、');
+            var scheduledTime = s.scheduled_at ? new Date(s.scheduled_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+            var duration = '';
+            if (s.duration) duration = s.duration + '分钟';
+            else if (s.duration_minutes) duration = s.duration_minutes + '分钟';
+
+            html += '<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--border-subtle);cursor:pointer;transition:var(--transition)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="joinVideoSession(' + s.id + ')">' +
+                '<div style="width:44px;height:44px;border-radius:var(--radius-md);background:' + (s.status === 'in_progress' ? 'var(--accent-teal-dim)' : 'var(--bg-tertiary)') + ';display:flex;align-items:center;justify-content:center"><span class="material-icons-round" style="font-size:22px;color:' + (s.status === 'in_progress' ? 'var(--accent-teal)' : 'var(--text-muted)') + '">' + (s.status === 'in_progress' ? 'videocam' : 'videocam_off') + '</span></div>' +
+                '<div style="flex:1;min-width:0">' +
+                '<div style="font-size:13px;font-weight:600;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(s.title || '') + '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' +
+                (s.case_number ? '#' + escapeHtml(s.case_number) + ' · ' : '') +
+                scheduledTime + (duration ? ' · ' + duration : '') +
+                '</div>' +
+                (participantNames ? '<div style="font-size:10px;color:var(--text-secondary);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">参与者: ' + escapeHtml(participantNames) + '</div>' : '') +
+                '</div>' +
+                '<span class="status-tag ' + sc + '">' + sl + '</span>' +
+                '<div style="display:flex;gap:4px;margin-left:8px">' +
+                (s.status === 'scheduled' ? '<span class="material-icons-round" style="font-size:16px;color:var(--accent-teal);cursor:pointer" onclick="event.stopPropagation();startVideoSession(' + s.id + ')" title="开始">play_arrow</span>' : '') +
+                '<span class="material-icons-round" style="font-size:16px;color:var(--text-muted);cursor:pointer" onclick="event.stopPropagation();viewVideoSessionDetail(' + s.id + ')" title="详情">info</span>' +
+                '<span class="material-icons-round" style="font-size:16px;color:var(--accent-rose);cursor:pointer" onclick="event.stopPropagation();deleteVideoSession(' + s.id + ')" title="删除">delete</span>' +
+                '</div></div>';
+        });
+        container.innerHTML = html;
     } catch (err) {
-        showToast('加载视频调解会话失败: ' + err.message);
+        showToast('加载会话列表失败: ' + err.message);
+    }
+}
+
+function showVideoSessionsList() {
+    document.getElementById('video-session-view').style.display = 'none';
+    document.getElementById('video-list-view').style.display = 'block';
+    loadVideoSessionList();
+}
+
+function showVideoRoom() {
+    document.getElementById('video-session-view').style.display = 'block';
+    document.getElementById('video-list-view').style.display = 'none';
+}
+
+async function joinVideoSession(sessionId) {
+    currentVideoSessionId = sessionId;
+    showVideoRoom();
+
+    try {
+        var detail = await api.get('/video/sessions/' + sessionId);
+        renderVideoSession(detail);
+        renderVideoMessages(detail.messages || []);
+    } catch (err) {
+        showToast('加载会话详情失败: ' + err.message);
     }
 }
 
@@ -6624,7 +6749,7 @@ function renderVideoSession(session) {
     var sessionInfo = document.getElementById('video-session-info');
 
     if (sessionInfo) {
-        sessionInfo.textContent = '调解讨论区 · 案件 #' + (session.caseId || session.caseNumber || '');
+        sessionInfo.textContent = '调解讨论区 · ' + (session.case_number || session.room_id || '');
     }
 
     if (!gridView) return;
@@ -6635,41 +6760,28 @@ function renderVideoSession(session) {
         return;
     }
 
-    var colorMap = {
-        gold: 'linear-gradient(135deg,var(--accent-gold),var(--accent-gold-light))',
-        teal: 'linear-gradient(135deg,var(--accent-teal),#14b8a6)',
-        violet: 'linear-gradient(135deg,var(--accent-violet),#8b5cf6)',
-        rose: 'linear-gradient(135deg,var(--accent-rose),#ec4899)'
-    };
+    var colors = ['var(--accent-gold)', 'var(--accent-teal)', 'var(--accent-violet)', 'var(--accent-rose)', '#fbbf24', '#60a5fa'];
+    var bgColors = ['var(--accent-gold-dim)', 'var(--accent-teal-dim)', 'var(--accent-violet-dim)', 'var(--accent-rose-dim)', 'rgba(251,191,36,0.12)', 'rgba(96,165,250,0.12)'];
 
     var html = '';
-    participants.forEach(function(p) {
-        var gradient = colorMap[p.colorScheme || p.color] || colorMap.gold;
-        var textColor = (p.colorScheme === 'violet' || p.color === 'violet') ? 'white' : '#0a0e1a';
-        var micIcon = p.mic !== false ? 'mic' : 'mic_off';
-        var micColor = p.mic !== false ? 'var(--accent-teal)' : 'var(--accent-rose)';
+    participants.forEach(function(p, i) {
+        var name = p.display_name || p.user_name || '未知';
+        var color = colors[i % colors.length];
+        var bgColor = bgColors[i % bgColors.length];
         html += '<div class="video-panel">' +
-            '<div class="vp-avatar" style="background:' + gradient + ';color:' + textColor + '">' + escapeHtml((p.name || '').charAt(0)) + '</div>' +
-            '<span class="vp-name">' + escapeHtml(p.name || '') + '（' + escapeHtml(p.role || '') + '）</span>' +
-            '<span class="vp-mic" style="color:' + micColor + '">' + micIcon + '</span>' +
+            '<div class="vp-avatar" style="background:' + bgColor + ';color:' + color + '">' + escapeHtml(name.charAt(0)) + '</div>' +
+            '<span class="vp-name">' + escapeHtml(name) + '</span>' +
+            '<span class="vp-mic" style="color:var(--accent-teal)">mic</span>' +
             '</div>';
     });
 
     if (participants.length < 4) {
-        html += '<div class="video-panel" style="background:#0a0e1a"><span class="vp-name" style="top:50%;left:50%;transform:translate(-50%,-50%);font-size:13px;color:var(--text-muted)">等待加入...</span></div>';
+        for (var j = participants.length; j < 4; j++) {
+            html += '<div class="video-panel" style="background:#0a0e1a"><span style="font-size:13px;color:var(--text-muted)">等待加入...</span></div>';
+        }
     }
 
     gridView.innerHTML = html;
-}
-
-async function loadVideoMessages(sessionId) {
-    try {
-        var messages = await api.get('/video/sessions/' + sessionId + '/messages');
-        var data = Array.isArray(messages) ? messages : (messages.data || []);
-        renderVideoMessages(data);
-    } catch (err) {
-        showToast('加载消息失败: ' + err.message);
-    }
 }
 
 function renderVideoMessages(messages) {
@@ -6681,20 +6793,19 @@ function renderVideoMessages(messages) {
         return;
     }
 
-    var colorMap = {
-        gold: 'var(--accent-gold)',
-        teal: 'var(--accent-teal)',
-        violet: 'var(--accent-violet)',
-        rose: 'var(--accent-rose)'
-    };
+    var senderColors = { mediator: 'var(--accent-gold)', party: 'var(--accent-teal)', system: 'var(--text-muted)' };
 
     var html = '';
     messages.forEach(function(msg) {
-        var senderColor = msg.senderColor ? (colorMap[msg.senderColor] || msg.senderColor) : 'var(--accent-gold)';
-        html += '<div class="chat-msg">' +
-            '<div class="msg-sender" style="color:' + senderColor + '">' + escapeHtml(msg.sender || '') + '</div>' +
-            '<div class="msg-text">' + escapeHtml(msg.text || msg.content || '') + '</div>' +
-            '</div>';
+        if (msg.message_type === 'system') {
+            html += '<div class="chat-msg"><div class="msg-text" style="color:var(--text-muted);text-align:center;font-size:11px;font-style:italic">' + escapeHtml(msg.content) + '</div></div>';
+        } else {
+            var color = senderColors[msg.sender_type] || 'var(--accent-gold)';
+            html += '<div class="chat-msg">' +
+                '<div class="msg-sender" style="color:' + color + '">' + escapeHtml(msg.sender_name || '') + '</div>' +
+                '<div class="msg-text">' + escapeHtml(msg.content) + '</div>' +
+                '</div>';
+        }
     });
     container.innerHTML = html;
     container.scrollTop = container.scrollHeight;
@@ -6703,40 +6814,247 @@ function renderVideoMessages(messages) {
 async function sendVideoMessage() {
     var input = document.getElementById('video-chat-input');
     if (!input || !input.value.trim()) return;
-    if (!currentVideoSessionId) {
-        showToast('请先选择调解会话', 'info');
-        return;
-    }
+    if (!currentVideoSessionId) { showToast('请先选择调解会话', 'warning'); return; }
 
     var text = input.value.trim();
     input.value = '';
 
     try {
-        await api.post('/video/sessions/' + currentVideoSessionId + '/messages', { text: text });
-        await loadVideoMessages(currentVideoSessionId);
+        await api.post('/video/sessions/' + currentVideoSessionId + '/messages', { content: text });
+        var msgs = await api.get('/video/sessions/' + currentVideoSessionId + '/messages');
+        var data = Array.isArray(msgs) ? msgs : (msgs.data || []);
+        renderVideoMessages(data);
     } catch (err) {
         showToast('发送消息失败: ' + err.message);
     }
 }
 
-async function createVideoSession() {
+function toggleVCMic() {
+    vcMicOn = !vcMicOn;
+    var btn = document.getElementById('vc-mic');
+    if (btn) {
+        btn.innerHTML = '<span class="material-icons-round">' + (vcMicOn ? 'mic' : 'mic_off') + '</span>';
+        btn.style.background = vcMicOn ? 'var(--bg-tertiary)' : 'var(--accent-rose-dim)';
+        btn.style.color = vcMicOn ? 'var(--text-primary)' : 'var(--accent-rose)';
+    }
+}
+
+function toggleVCCam() {
+    vcCamOn = !vcCamOn;
+    var btn = document.getElementById('vc-cam');
+    if (btn) {
+        btn.innerHTML = '<span class="material-icons-round">' + (vcCamOn ? 'videocam' : 'videocam_off') + '</span>';
+        btn.style.background = vcCamOn ? 'var(--bg-tertiary)' : 'var(--accent-rose-dim)';
+        btn.style.color = vcCamOn ? 'var(--text-primary)' : 'var(--accent-rose)';
+    }
+}
+
+async function startVideoSession(id) {
     try {
-        var cases = await api.get('/cases', { pageSize: 100 });
-        var caseList = cases.data || [];
-        if (caseList.length === 0) {
-            showToast('暂无可用的案件，请先创建案件', 'info');
-            return;
+        await api.put('/video/sessions/' + id + '/status', { status: 'in_progress' });
+        showToast('视频调解已开始', 'success');
+        await joinVideoSession(id);
+        await loadVideoStats();
+    } catch (err) {
+        showToast('开始调解失败: ' + err.message);
+    }
+}
+
+async function endVideoSession() {
+    if (!currentVideoSessionId) return;
+    if (!confirm('确定要结束当前视频调解吗？')) return;
+    try {
+        await api.put('/video/sessions/' + currentVideoSessionId + '/status', { status: 'completed' });
+        showToast('视频调解已结束', 'success');
+        currentVideoSessionId = null;
+        showVideoSessionsList();
+        await loadVideoStats();
+    } catch (err) {
+        showToast('结束调解失败: ' + err.message);
+    }
+}
+
+async function deleteVideoSession(id) {
+    if (!confirm('确定要删除该会话吗？此操作不可恢复。')) return;
+    try {
+        await api.delete('/video/sessions/' + id);
+        showToast('会话已删除', 'success');
+        if (currentVideoSessionId === id) {
+            currentVideoSessionId = null;
         }
-        var c = caseList[0];
-        var session = await api.post('/video/sessions', {
-            case_id: c.id,
-            title: c.title || '视频调解',
-            scheduled_at: new Date().toISOString()
-        });
-        showToast('已创建视频调解会话', 'success');
         await loadVideoSessions();
     } catch (err) {
-        showToast('创建会话失败: ' + err.message);
+        showToast('删除失败: ' + err.message);
+    }
+}
+
+async function viewVideoSessionDetail(id) {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '560px';
+
+    try {
+        var s = await api.get('/video/sessions/' + id);
+        var statusLabels = { scheduled: '已安排', in_progress: '进行中', completed: '已完成', cancelled: '已取消' };
+        var statusClasses = { scheduled: 'pending', in_progress: 'mediating', completed: 'closed', cancelled: 'urgent' };
+        var sc = statusClasses[s.status] || 'pending';
+
+        var html = '<div style="padding:4px 0">' +
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">' +
+            '<span class="status-tag ' + sc + '">' + (statusLabels[s.status] || '') + '</span>' +
+            '<span style="font-size:11px;color:var(--text-muted)">房间号: ' + escapeHtml(s.room_id || '') + '</span></div>' +
+            '<h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px">' + escapeHtml(s.title) + '</h3>';
+
+        html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">';
+        if (s.case_number) {
+            html += '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">关联案件</div><div style="font-size:13px;color:var(--text-primary)">' + escapeHtml(s.case_number) + '</div></div>';
+        }
+        if (s.scheduled_at) {
+            html += '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">安排时间</div><div style="font-size:13px;color:var(--text-primary)">' + new Date(s.scheduled_at).toLocaleString('zh-CN') + '</div></div>';
+        }
+        if (s.duration_minutes) {
+            html += '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">调解时长</div><div style="font-size:13px;color:var(--text-primary)">' + s.duration_minutes + ' 分钟</div></div>';
+        }
+        if (s.created_by_name) {
+            html += '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)"><div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">创建人</div><div style="font-size:13px;color:var(--text-primary)">' + escapeHtml(s.created_by_name) + '</div></div>';
+        }
+        html += '</div>';
+
+        var participants = s.participants || [];
+        if (participants.length > 0) {
+            html += '<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px">参与者 (' + participants.length + ')</div>';
+            participants.forEach(function(p) {
+                var name = p.display_name || p.user_name || '未知';
+                var roleLabel = p.user_id ? '调解员' : '当事人';
+                html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-subtle)">' +
+                    '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">person</span>' +
+                    '<span style="font-size:12px;color:var(--text-primary)">' + escapeHtml(name) + '</span>' +
+                    '<span style="font-size:10px;color:var(--text-muted);margin-left:auto">' + roleLabel + '</span></div>';
+            });
+            html += '</div>';
+        }
+
+        var messages = s.messages || [];
+        if (messages.length > 0) {
+            html += '<div style="margin-bottom:16px"><div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px">聊天记录 (' + messages.length + ')</div>' +
+                '<div style="max-height:200px;overflow-y:auto;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">';
+            messages.forEach(function(msg) {
+                if (msg.message_type === 'system') {
+                    html += '<div style="text-align:center;font-size:10px;color:var(--text-muted);padding:4px 0;font-style:italic">' + escapeHtml(msg.content) + '</div>';
+                } else {
+                    html += '<div style="padding:4px 0"><span style="font-size:11px;font-weight:600;color:var(--accent-gold)">' + escapeHtml(msg.sender_name) + ':</span> <span style="font-size:12px;color:var(--text-secondary)">' + escapeHtml(msg.content) + '</span></div>';
+                }
+            });
+            html += '</div></div>';
+        }
+
+        html += '<div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border-subtle)">';
+        if (s.status === 'scheduled') {
+            html += '<button class="btn btn-primary" style="flex:1;justify-content:center" onclick="closeModal(\'modal-generic\');startVideoSession(' + s.id + ')"><span class="material-icons-round" style="font-size:14px">play_arrow</span> 开始调解</button>';
+        }
+        if (s.status === 'in_progress') {
+            html += '<button class="btn btn-primary" style="flex:1;justify-content:center" onclick="closeModal(\'modal-generic\');joinVideoSession(' + s.id + ')"><span class="material-icons-round" style="font-size:14px">videocam</span> 进入调解室</button>';
+        }
+        html += '<button class="btn btn-outline" style="flex:1;justify-content:center" onclick="closeModal(\'modal-generic\')">关闭</button>';
+        html += '</div></div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '会话详情 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载会话详情失败: ' + err.message);
+    }
+}
+
+function showCreateVideoSessionModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '520px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div class="modal-field"><label>关联案件 *</label>' +
+        '<div style="position:relative"><input type="text" id="vs-case-search" placeholder="搜索案件编号或标题..." oninput="searchVideoCases(this.value)" autocomplete="off">' +
+        '<div id="vs-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
+        '<input type="hidden" id="vs-case-id" value=""></div>' +
+        '<div id="vs-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div class="modal-field"><label>会话标题 *</label><input type="text" id="vs-title" placeholder="如：张某某与李某视频调解"></div>' +
+        '<div class="modal-field"><label>调解员</label><select id="vs-mediator"><option value="">请选择调解员</option></select></div>' +
+        '<div class="modal-field"><label>安排时间</label><input type="datetime-local" id="vs-scheduled-at"></div>' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitVideoSession()"><span class="material-icons-round" style="font-size:16px">videocam</span> 创建视频调解</button></div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '创建视频调解 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+
+    loadVideoMediatorOptions();
+}
+
+async function loadVideoMediatorOptions() {
+    try {
+        var mediators = await api.get('/schedules/mediators');
+        var data = Array.isArray(mediators) ? mediators : (mediators.data || []);
+        var selectEl = document.getElementById('vs-mediator');
+        if (selectEl) {
+            var html = '<option value="">请选择调解员</option>';
+            data.forEach(function(m) { html += '<option value="' + m.id + '">' + escapeHtml(m.real_name) + '</option>'; });
+            selectEl.innerHTML = html;
+        }
+    } catch (err) { }
+}
+
+async function searchVideoCases(keyword) {
+    var dropdown = document.getElementById('vs-case-dropdown');
+    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
+    try {
+        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=8');
+        var cases = data.data || data;
+        if (!Array.isArray(cases)) cases = cases.data || [];
+        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
+        var html = '';
+        cases.forEach(function(c) {
+            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectVideoCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
+                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
+        });
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } catch (err) { }
+}
+
+function selectVideoCase(id, caseNumber, title) {
+    document.getElementById('vs-case-id').value = id;
+    document.getElementById('vs-case-search').value = caseNumber;
+    document.getElementById('vs-case-dropdown').style.display = 'none';
+    document.getElementById('vs-title').value = title + ' - 视频调解';
+    var selEl = document.getElementById('vs-case-selected');
+    selEl.style.display = 'block';
+    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+}
+
+async function submitVideoSession() {
+    var caseId = document.getElementById('vs-case-id').value;
+    var title = document.getElementById('vs-title').value.trim();
+    var mediatorId = document.getElementById('vs-mediator').value;
+    var scheduledAt = document.getElementById('vs-scheduled-at').value;
+
+    if (!caseId) { showToast('请选择关联案件', 'warning'); return; }
+    if (!title) { showToast('请输入会话标题', 'warning'); return; }
+
+    var data = {
+        case_id: parseInt(caseId),
+        title: title,
+        mediator_id: mediatorId ? parseInt(mediatorId) : undefined,
+        scheduled_at: scheduledAt ? new Date(scheduledAt).toISOString() : new Date().toISOString()
+    };
+
+    try {
+        var result = await api.post('/video/sessions', data);
+        showToast('视频调解创建成功', 'success');
+        closeModal('modal-generic');
+        await loadVideoSessions();
+    } catch (err) {
+        showToast('创建失败: ' + err.message);
     }
 }
 
