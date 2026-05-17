@@ -300,6 +300,46 @@ router.get('/import/template', (req, res) => {
   res.send(buf);
 });
 
+router.get('/search', (req, res) => {
+  const { q } = req.query;
+  if (!q || q.trim().length === 0) return res.json(formatResponse({ cases: [], archives: [], documents: [], users: [] }));
+
+  const db = getDb();
+  const keyword = `%${q.trim()}%`;
+  const limit = 5;
+
+  const cases = db.prepare(`
+    SELECT c.id, c.case_number, c.title, c.status, c.priority, c.created_at,
+           ct.name as type_name, u.real_name as mediator_name
+    FROM cases c LEFT JOIN case_types ct ON c.type_id = ct.id LEFT JOIN users u ON c.mediator_id = u.id
+    WHERE c.case_number LIKE ? OR c.title LIKE ?
+    ORDER BY c.updated_at DESC LIMIT ?
+  `).all(keyword, keyword, limit);
+
+  const archives = db.prepare(`
+    SELECT a.id, a.archive_number, a.title, a.status, a.created_at
+    FROM archives a
+    WHERE a.archive_number LIKE ? OR a.title LIKE ?
+    ORDER BY a.created_at DESC LIMIT ?
+  `).all(keyword, keyword, limit);
+
+  const documents = db.prepare(`
+    SELECT d.id, d.title, d.status, d.generated_at as created_at
+    FROM document_records d
+    WHERE d.title LIKE ?
+    ORDER BY d.generated_at DESC LIMIT ?
+  `).all(keyword, limit);
+
+  const users = db.prepare(`
+    SELECT u.id, u.username, u.real_name, u.phone, u.email, r.display_name as role_display_name
+    FROM users u JOIN roles r ON u.role_id = r.id
+    WHERE u.real_name LIKE ? OR u.username LIKE ? OR u.phone LIKE ?
+    ORDER BY u.real_name LIMIT ?
+  `).all(keyword, keyword, keyword, limit);
+
+  res.json(formatResponse({ cases, archives, documents, users }));
+});
+
 router.get('/stats', (req, res) => {
   const db = getDb();
 

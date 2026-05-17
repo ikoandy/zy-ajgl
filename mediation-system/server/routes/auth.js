@@ -51,7 +51,63 @@ router.post('/login', (req, res) => {
 });
 
 router.get('/me', authMiddleware, (req, res) => {
-  res.json(formatResponse(req.user));
+  const db = getDb();
+  const user = db.prepare(`
+    SELECT u.*, r.name as role_name, r.display_name as role_display_name
+    FROM users u JOIN roles r ON u.role_id = r.id
+    WHERE u.id = ?
+  `).get(req.user.id);
+
+  if (!user) return res.status(404).json(formatError('用户不存在'));
+
+  const caseStats = db.prepare(`
+    SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN status IN ('closed', 'agreed') THEN 1 ELSE 0 END) as closed,
+      SUM(CASE WHEN status = 'mediating' THEN 1 ELSE 0 END) as ongoing,
+      SUM(CASE WHEN status = 'terminated' THEN 1 ELSE 0 END) as terminated
+    FROM cases WHERE mediator_id = ?
+  `).get(req.user.id);
+
+  const recentCases = db.prepare(`
+    SELECT case_number, title, status, updated_at FROM cases
+    WHERE mediator_id = ? ORDER BY updated_at DESC LIMIT 5
+  `).all(req.user.id);
+
+  const scheduleCount = db.prepare(`
+    SELECT COUNT(*) as count FROM schedules
+    WHERE mediator_id = ? AND start_time >= datetime('now')
+  `).get(req.user.id).count;
+
+  const feedbackAvg = db.prepare(`
+    SELECT ROUND(AVG(f.rating), 1) as avg_rating, COUNT(*) as total_reviews
+    FROM feedbacks f JOIN cases c ON f.case_id = c.id
+    WHERE c.mediator_id = ?
+  `).get(req.user.id);
+
+  const auditCount = db.prepare(`
+    SELECT COUNT(*) as count FROM audit_logs WHERE user_id = ? AND created_at >= datetime('now', '-30 days')
+  `).get(req.user.id).count;
+
+  res.json(formatResponse({
+    id: user.id,
+    username: user.username,
+    real_name: user.real_name,
+    phone: user.phone,
+    email: user.email,
+    role_id: user.role_id,
+    role_name: user.role_name,
+    role_display_name: user.role_display_name,
+    avatar_color: user.avatar_color,
+    status: user.status,
+    last_login_at: user.last_login_at,
+    created_at: user.created_at,
+    case_stats: caseStats,
+    recent_cases: recentCases,
+    schedule_count: scheduleCount,
+    feedback: feedbackAvg,
+    audit_count_30d: auditCount
+  }));
 });
 
 router.post('/logout', authMiddleware, (req, res) => {

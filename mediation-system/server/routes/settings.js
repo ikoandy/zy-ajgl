@@ -82,4 +82,48 @@ router.get('/about', (req, res) => {
   }));
 });
 
+function parseSettingValue(raw) {
+  if (!raw) return null;
+  try {
+    var parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && parsed.value !== undefined) return parsed.value;
+    return parsed;
+  } catch (e) {
+    return raw;
+  }
+}
+
+router.get('/branding', (req, res) => {
+  const db = getDb();
+  const orgName = db.prepare("SELECT value FROM settings WHERE category = 'general' AND key = 'org_name'").get();
+  const systemName = db.prepare("SELECT value FROM settings WHERE category = 'general' AND key = 'system_name'").get();
+  const systemLogo = db.prepare("SELECT value FROM settings WHERE category = 'general' AND key = 'system_logo'").get();
+  const systemSubtitle = db.prepare("SELECT value FROM settings WHERE category = 'general' AND key = 'system_subtitle'").get();
+
+  res.json(formatResponse({
+    org_name: orgName ? parseSettingValue(orgName.value) : '某某市人民调解委员会',
+    system_name: systemName ? parseSettingValue(systemName.value) : '和调',
+    system_subtitle: systemSubtitle ? parseSettingValue(systemSubtitle.value) : 'MEDIATION PLATFORM',
+    system_logo: systemLogo ? parseSettingValue(systemLogo.value) : '⚖'
+  }));
+});
+
+router.put('/branding', (req, res) => {
+  const { org_name, system_name, system_subtitle, system_logo } = req.body;
+  const db = getDb();
+
+  const upsert = db.prepare(`
+    INSERT INTO settings (category, key, value, value_type, description) VALUES ('general', ?, ?, 'string', ?)
+    ON CONFLICT(category, key) DO UPDATE SET value = excluded.value, updated_at = CURRENT_TIMESTAMP
+  `);
+
+  if (org_name !== undefined) upsert.run('org_name', JSON.stringify({ value: org_name, type: 'string', description: '机构名称' }), '机构名称');
+  if (system_name !== undefined) upsert.run('system_name', JSON.stringify({ value: system_name, type: 'string', description: '系统名称' }), '系统名称');
+  if (system_subtitle !== undefined) upsert.run('system_subtitle', JSON.stringify({ value: system_subtitle, type: 'string', description: '系统副标题' }), '系统副标题');
+  if (system_logo !== undefined) upsert.run('system_logo', JSON.stringify({ value: system_logo, type: 'string', description: '系统Logo图标' }), '系统Logo图标');
+
+  logAudit(db, req.user.id, 'UPDATE_SETTINGS', 'settings', null, '更新系统品牌设置', req);
+  res.json(formatResponse(null, '品牌设置已更新'));
+});
+
 module.exports = router;

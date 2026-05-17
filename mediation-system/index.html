@@ -2108,11 +2108,11 @@
 <div id="main-system">
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="sidebar-brand">
-            <div class="s-logo">⚖</div>
+        <div class="sidebar-brand" onclick="showBrandingModal()" style="cursor:pointer" title="点击修改品牌设置">
+            <div class="s-logo" id="sidebar-logo">⚖</div>
             <div class="s-text">
-                <h2>和调</h2>
-                <span>MEDIATION PLATFORM</span>
+                <h2 id="sidebar-brand-name">和调</h2>
+                <span id="sidebar-brand-subtitle">MEDIATION PLATFORM</span>
             </div>
         </div>
         <div class="sidebar-nav">
@@ -2185,7 +2185,7 @@
             </div>
         </div>
         <div class="sidebar-footer">
-            <div class="sidebar-user">
+            <div class="sidebar-user" onclick="showProfileModal()" style="cursor:pointer" title="点击查看个人信息">
                 <div class="avatar" id="user-avatar">--</div>
                 <div class="user-info">
                     <span id="user-name">--</span>
@@ -2204,17 +2204,27 @@
                 <span class="breadcrumb" id="breadcrumb">首页 / 数据概览</span>
             </div>
             <div class="topbar-right">
-                <div class="topbar-search">
+                <div class="topbar-search" style="position:relative">
                     <span class="material-icons-round">search</span>
-                    <input type="text" placeholder="搜索案件、档案、文书...">
+                    <input type="text" id="global-search-input" placeholder="搜索案件、档案、文书..." oninput="handleGlobalSearch(this.value)" onfocus="handleGlobalSearch(this.value)" onkeydown="if(event.key==='Enter')handleGlobalSearch(this.value)">
+                    <div id="global-search-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);margin-top:4px;max-height:400px;overflow-y:auto;z-index:1000;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>
                 </div>
                 <button class="topbar-icon-btn" onclick="switchPage('push', document.querySelector('[data-page=push]'))">
                     <span class="material-icons-round" style="font-size:18px">notifications</span>
                     <span class="notif-badge" id="unread-badge">0</span>
                 </button>
-                <button class="topbar-icon-btn">
-                    <span class="material-icons-round" style="font-size:18px">settings</span>
-                </button>
+                <div style="position:relative">
+                    <button class="topbar-icon-btn" id="settings-dropdown-btn" onclick="toggleSettingsDropdown()">
+                        <span class="material-icons-round" style="font-size:18px">settings</span>
+                    </button>
+                    <div id="settings-dropdown" style="display:none;position:absolute;top:100%;right:0;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-md);margin-top:4px;min-width:180px;z-index:1000;box-shadow:0 8px 24px rgba(0,0,0,0.3);padding:4px 0">
+                        <div style="padding:8px 14px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">快捷操作</div>
+                        <div style="padding:8px 14px;cursor:pointer;font-size:13px;color:var(--text-primary);display:flex;align-items:center;gap:8px" onclick="switchPage('settings',document.querySelector('[data-page=settings]'));closeSettingsDropdown()" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background=''"><span class="material-icons-round" style="font-size:16px">tune</span> 高级设置</div>
+                        <div style="padding:8px 14px;cursor:pointer;font-size:13px;color:var(--text-primary);display:flex;align-items:center;gap:8px" onclick="showBrandingModal();closeSettingsDropdown()" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background=''"><span class="material-icons-round" style="font-size:16px">palette</span> 品牌设置</div>
+                        <div style="padding:8px 14px;cursor:pointer;font-size:13px;color:var(--text-primary);display:flex;align-items:center;gap:8px" onclick="switchPage('users',document.querySelector('[data-page=users]'));closeSettingsDropdown()" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background=''"><span class="material-icons-round" style="font-size:16px">people</span> 用户管理</div>
+                        <div style="padding:8px 14px;cursor:pointer;font-size:13px;color:var(--text-primary);display:flex;align-items:center;gap:8px" onclick="switchPage('audit',document.querySelector('[data-page=audit]'));closeSettingsDropdown()" onmouseenter="this.style.background='var(--bg-hover)'" onmouseleave="this.style.background=''"><span class="material-icons-round" style="font-size:16px">fact_check</span> 审计日志</div>
+                    </div>
+                </div>
                 <button class="topbar-icon-btn" onclick="doLogout()">
                     <span class="material-icons-round" style="font-size:18px">logout</span>
                 </button>
@@ -3667,6 +3677,61 @@
     </div>
 </div>
 
+<!-- Modal: Profile -->
+<div class="modal-overlay" id="modal-profile" style="display:none" onclick="if(event.target===this)closeModal('modal-profile')">
+    <div class="modal-content" style="max-width:600px">
+        <h3>个人信息 <button class="modal-close" onclick="closeModal('modal-profile')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div id="profile-content" style="max-height:70vh;overflow-y:auto"></div>
+    </div>
+</div>
+
+<!-- Modal: Branding -->
+<div class="modal-overlay" id="modal-branding" style="display:none" onclick="if(event.target===this)closeModal('modal-branding')">
+    <div class="modal-content" style="max-width:480px">
+        <h3>品牌设置 <button class="modal-close" onclick="closeModal('modal-branding')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <div class="modal-field">
+            <label>机构名称</label>
+            <input type="text" id="branding-org-name" placeholder="请输入机构名称">
+        </div>
+        <div class="modal-field">
+            <label>系统名称</label>
+            <input type="text" id="branding-system-name" placeholder="请输入系统名称">
+        </div>
+        <div class="modal-field">
+            <label>系统副标题</label>
+            <input type="text" id="branding-system-subtitle" placeholder="请输入系统副标题">
+        </div>
+        <div class="modal-field">
+            <label>Logo图标 (Emoji)</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                <button class="btn btn-outline" style="font-size:20px;padding:6px 10px" onclick="selectLogoIcon('⚖')">⚖</button>
+                <button class="btn btn-outline" style="font-size:20px;padding:6px 10px" onclick="selectLogoIcon('🏛')">🏛</button>
+                <button class="btn btn-outline" style="font-size:20px;padding:6px 10px" onclick="selectLogoIcon('🛡')">🛡</button>
+                <button class="btn btn-outline" style="font-size:20px;padding:6px 10px" onclick="selectLogoIcon('📜')">📜</button>
+                <button class="btn btn-outline" style="font-size:20px;padding:6px 10px" onclick="selectLogoIcon('⭐')">⭐</button>
+                <button class="btn btn-outline" style="font-size:20px;padding:6px 10px" onclick="selectLogoIcon('🏛️')">🏛️</button>
+                <button class="btn btn-outline" style="font-size:20px;padding:6px 10px" onclick="selectLogoIcon('🤝')">🤝</button>
+                <button class="btn btn-outline" style="font-size:20px;padding:6px 10px" onclick="selectLogoIcon('✨')">✨</button>
+            </div>
+            <input type="text" id="branding-system-logo" placeholder="或输入自定义图标" style="margin-top:8px">
+        </div>
+        <div style="margin-top:12px;padding:12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);text-align:center">
+            <div style="font-size:10px;color:var(--text-muted);margin-bottom:8px">预览效果</div>
+            <div style="display:flex;align-items:center;gap:10px;justify-content:center">
+                <div id="branding-preview-logo" style="width:36px;height:36px;background:linear-gradient(135deg,var(--accent-gold),var(--accent-gold-light));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px">⚖</div>
+                <div>
+                    <div id="branding-preview-name" style="font-family:'Noto Serif SC',serif;font-size:16px;font-weight:600;color:var(--text-primary);letter-spacing:2px">和调</div>
+                    <div id="branding-preview-subtitle" style="font-size:10px;color:var(--text-muted);letter-spacing:1px">MEDIATION PLATFORM</div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('modal-branding')">取消</button>
+            <button class="btn btn-primary" onclick="submitBranding()">保存</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="modal-generic" style="display:none" onclick="if(event.target===this)closeModal('modal-generic')">
     <div class="modal-content" style="width:640px;max-height:85vh;overflow-y:auto">
         <h3 class="modal-title" style="display:flex;justify-content:space-between;align-items:center">通用弹窗 <button class="modal-close" onclick="closeModal('modal-generic')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
@@ -3928,6 +3993,7 @@ async function doLogin() {
 }
 
 async function doLogout() {
+    if (!confirm('确定要退出登录吗？')) return;
     try {
         await api.post('/auth/logout', {});
     } catch (e) {}
@@ -10939,6 +11005,296 @@ function renderAuditPagination(totalPages, current) {
     container.innerHTML = html;
 }
 
+// ==================== GLOBAL SEARCH ====================
+var searchTimer = null;
+
+function handleGlobalSearch(value) {
+    var dropdown = document.getElementById('global-search-dropdown');
+    if (!value || value.trim().length === 0) {
+        dropdown.style.display = 'none';
+        return;
+    }
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function() { doGlobalSearch(value.trim()); }, 300);
+}
+
+async function doGlobalSearch(keyword) {
+    var dropdown = document.getElementById('global-search-dropdown');
+    dropdown.innerHTML = '<div style="padding:16px;text-align:center;color:var(--text-muted)"><span class="material-icons-round" style="animation:spin 1s linear infinite;display:inline-block;font-size:20px">refresh</span> 搜索中...</div>';
+    dropdown.style.display = 'block';
+    try {
+        var data = await api.get('/cases/search', { q: keyword });
+        renderSearchResults(data, keyword);
+    } catch (e) {
+        dropdown.innerHTML = '<div style="padding:16px;text-align:center;color:var(--accent-rose)">搜索失败: ' + escapeHtml(e.message) + '</div>';
+    }
+}
+
+function renderSearchResults(data, keyword) {
+    var dropdown = document.getElementById('global-search-dropdown');
+    var html = '';
+    var hasResult = false;
+
+    var sections = [
+        { key: 'cases', label: '案件', icon: 'gavel', color: 'var(--accent-gold)' },
+        { key: 'archives', label: '档案', icon: 'folder_open', color: 'var(--accent-teal)' },
+        { key: 'documents', label: '文书', icon: 'description', color: 'var(--accent-violet)' },
+        { key: 'users', label: '用户', icon: 'people', color: 'var(--accent-rose)' }
+    ];
+
+    sections.forEach(function(sec) {
+        var items = data[sec.key] || [];
+        if (items.length > 0) {
+            hasResult = true;
+            html += '<div style="padding:6px 12px;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:14px;color:' + sec.color + '">' + sec.icon + '</span> ' + sec.label + '</div>';
+            items.forEach(function(item) {
+                var title = item.title || item.real_name || item.username || '--';
+                var sub = '';
+                if (sec.key === 'cases') sub = item.case_number || '';
+                else if (sec.key === 'archives') sub = item.archive_number || '';
+                else if (sec.key === 'documents') sub = item.doc_type || '';
+                else if (sec.key === 'users') sub = item.role_display_name || item.phone || '';
+                html += '<div style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03);display:flex;justify-content:space-between;align-items:center" onmouseenter="this.style.background=\'var(--bg-tertiary)\'" onmouseleave="this.style.background=\'\'" onclick="onSearchResultClick(\'' + sec.key + '\',' + (item.id || 0) + ')">';
+                html += '<span style="color:var(--text-primary)">' + highlightKeyword(escapeHtml(title), keyword) + '</span>';
+                if (sub) html += '<span style="font-size:11px;color:var(--text-muted);margin-left:8px">' + escapeHtml(sub) + '</span>';
+                html += '</div>';
+            });
+        }
+    });
+
+    if (!hasResult) {
+        html = '<div style="padding:24px;text-align:center;color:var(--text-muted)"><span class="material-icons-round" style="font-size:32px;display:block;margin-bottom:8px;opacity:0.3">search_off</span>未找到相关结果</div>';
+    }
+
+    dropdown.innerHTML = html;
+}
+
+function highlightKeyword(text, keyword) {
+    if (!keyword) return text;
+    var regex = new RegExp('(' + keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return text.replace(regex, '<span style="color:var(--accent-gold);font-weight:600">$1</span>');
+}
+
+function onSearchResultClick(type, id) {
+    var dropdown = document.getElementById('global-search-dropdown');
+    dropdown.style.display = 'none';
+    document.getElementById('global-search-input').value = '';
+    if (type === 'cases') switchPage('cases', document.querySelector('[data-page=cases]'));
+    else if (type === 'archives') switchPage('archives', document.querySelector('[data-page=archives]'));
+    else if (type === 'documents') switchPage('documents', document.querySelector('[data-page=documents]'));
+    else if (type === 'users') switchPage('users', document.querySelector('[data-page=users]'));
+}
+
+// ==================== SETTINGS DROPDOWN ====================
+function toggleSettingsDropdown() {
+    var dd = document.getElementById('settings-dropdown');
+    dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+
+function closeSettingsDropdown() {
+    document.getElementById('settings-dropdown').style.display = 'none';
+}
+
+// ==================== PROFILE MODAL ====================
+async function showProfileModal() {
+    var modal = document.getElementById('modal-profile');
+    var content = document.getElementById('profile-content');
+    content.innerHTML = '<div style="text-align:center;padding:32px"><span class="material-icons-round" style="animation:spin 1s linear infinite;font-size:32px;color:var(--accent-gold)">refresh</span><div style="margin-top:12px;color:var(--text-muted)">加载中...</div></div>';
+    modal.style.display = 'flex';
+    try {
+        var user = await api.get('/auth/me');
+        renderProfile(user);
+    } catch (e) {
+        content.innerHTML = '<div style="text-align:center;padding:32px;color:var(--accent-rose)">加载失败: ' + escapeHtml(e.message) + '</div>';
+    }
+}
+
+function renderProfile(user) {
+    var content = document.getElementById('profile-content');
+    var displayName = user.real_name || user.username || '--';
+    var roleName = user.role_display_name || user.role_name || '--';
+    var avatarColor = user.avatar_color || 'var(--accent-gold)';
+
+    var cs = user.case_stats || {};
+    var recentCases = user.recent_cases || [];
+    var fb = user.feedback || {};
+
+    var html = '';
+
+    html += '<div style="text-align:center;padding:20px 0 16px;border-bottom:1px solid var(--border-subtle)">';
+    html += '<div style="width:64px;height:64px;border-radius:50%;background:' + avatarColor + ';display:inline-flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;margin-bottom:8px">' + escapeHtml(displayName.charAt(0)) + '</div>';
+    html += '<div style="font-size:18px;font-weight:600;color:var(--text-primary)">' + escapeHtml(displayName) + '</div>';
+    html += '<div style="font-size:13px;color:var(--text-muted);margin-top:4px">' + escapeHtml(roleName) + '</div>';
+    html += '</div>';
+
+    html += '<div style="padding:12px 0;border-bottom:1px solid var(--border-subtle)">';
+    html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500">基本信息</div>';
+    var infoItems = [
+        { icon: 'person', label: '用户名', value: user.username || '--' },
+        { icon: 'badge', label: '真实姓名', value: user.real_name || '--' },
+        { icon: 'phone', label: '手机号', value: user.phone || '--' },
+        { icon: 'email', label: '邮箱', value: user.email || '--' },
+        { icon: 'admin_panel_settings', label: '角色', value: roleName },
+        { icon: 'schedule', label: '注册时间', value: user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '--' },
+        { icon: 'login', label: '最后登录', value: user.last_login_at ? new Date(user.last_login_at).toLocaleString('zh-CN') : '--' }
+    ];
+    infoItems.forEach(function(item) {
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px">';
+        html += '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">' + item.icon + '</span>';
+        html += '<span style="color:var(--text-muted);min-width:64px">' + item.label + '</span>';
+        html += '<span style="color:var(--text-primary)">' + escapeHtml(item.value) + '</span>';
+        html += '</div>';
+    });
+    html += '</div>';
+
+    html += '<div style="padding:12px 0;border-bottom:1px solid var(--border-subtle)">';
+    html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500">案件统计</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">';
+    var statItems = [
+        { label: '总数', value: cs.total || 0, color: 'var(--accent-gold)' },
+        { label: '进行中', value: cs.ongoing || 0, color: 'var(--accent-teal)' },
+        { label: '已结案', value: cs.closed || 0, color: '#34d399' },
+        { label: '已终止', value: cs.terminated || 0, color: 'var(--accent-rose)' }
+    ];
+    statItems.forEach(function(s) {
+        html += '<div style="text-align:center;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">';
+        html += '<div style="font-size:20px;font-weight:700;color:' + s.color + '">' + s.value + '</div>';
+        html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">' + s.label + '</div>';
+        html += '</div>';
+    });
+    html += '</div></div>';
+
+    html += '<div style="padding:12px 0;border-bottom:1px solid var(--border-subtle)">';
+    html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500">工作指标</div>';
+    html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">';
+    html += '<div style="text-align:center;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">';
+    html += '<div style="font-size:18px;font-weight:700;color:var(--accent-violet)">' + (user.schedule_count || 0) + '</div>';
+    html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">日程安排</div>';
+    html += '</div>';
+    html += '<div style="text-align:center;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">';
+    html += '<div style="font-size:18px;font-weight:700;color:var(--accent-gold)">' + (fb.avg_rating ? fb.avg_rating.toFixed(1) : '--') + '</div>';
+    html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">平均评分</div>';
+    html += '</div>';
+    html += '<div style="text-align:center;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">';
+    html += '<div style="font-size:18px;font-weight:700;color:var(--accent-teal)">' + (user.audit_count_30d || 0) + '</div>';
+    html += '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">近30天操作</div>';
+    html += '</div>';
+    html += '</div></div>';
+
+    if (recentCases.length > 0) {
+        html += '<div style="padding:12px 0">';
+        html += '<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500">近期案件</div>';
+        recentCases.forEach(function(c) {
+            var statusColors = { pending: '#fb923c', accepted: 'var(--accent-teal)', mediating: 'var(--accent-gold)', agreed: '#34d399', closed: '#60a5fa', terminated: 'var(--accent-rose)' };
+            var statusLabels = { pending: '待受理', accepted: '已受理', mediating: '调解中', agreed: '已达成', closed: '已结案', terminated: '已终止' };
+            var sc = statusColors[c.status] || 'var(--text-muted)';
+            var sl = statusLabels[c.status] || c.status;
+            html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.03)">';
+            html += '<span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60%">' + escapeHtml(c.title) + '</span>';
+            html += '<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:' + sc + '20;color:' + sc + '">' + sl + '</span>';
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+
+    content.innerHTML = html;
+}
+
+// ==================== BRANDING MODAL ====================
+async function showBrandingModal() {
+    var modal = document.getElementById('modal-branding');
+    modal.style.display = 'flex';
+    try {
+        var data = await api.get('/settings/branding');
+        document.getElementById('branding-org-name').value = data.org_name || '';
+        document.getElementById('branding-system-name').value = data.system_name || '';
+        document.getElementById('branding-system-subtitle').value = data.system_subtitle || '';
+        document.getElementById('branding-system-logo').value = data.system_logo || '';
+        updateBrandingPreview();
+    } catch (e) {
+        console.error('Failed to load branding:', e);
+    }
+}
+
+function selectLogoIcon(icon) {
+    document.getElementById('branding-system-logo').value = icon;
+    updateBrandingPreview();
+}
+
+function updateBrandingPreview() {
+    var name = document.getElementById('branding-system-name').value || '和调';
+    var subtitle = document.getElementById('branding-system-subtitle').value || 'MEDIATION PLATFORM';
+    var logo = document.getElementById('branding-system-logo').value || '⚖';
+    var previewLogo = document.getElementById('branding-preview-logo');
+    var previewName = document.getElementById('branding-preview-name');
+    var previewSubtitle = document.getElementById('branding-preview-subtitle');
+    if (previewLogo) previewLogo.textContent = logo;
+    if (previewName) previewName.textContent = name;
+    if (previewSubtitle) previewSubtitle.textContent = subtitle;
+}
+
+async function submitBranding() {
+    var orgName = document.getElementById('branding-org-name').value.trim();
+    var systemName = document.getElementById('branding-system-name').value.trim();
+    var systemSubtitle = document.getElementById('branding-system-subtitle').value.trim();
+    var systemLogo = document.getElementById('branding-system-logo').value.trim();
+    try {
+        await api.put('/settings/branding', {
+            org_name: orgName,
+            system_name: systemName,
+            system_subtitle: systemSubtitle,
+            system_logo: systemLogo
+        });
+        applyBranding({ org_name: orgName, system_name: systemName, system_subtitle: systemSubtitle, system_logo: systemLogo });
+        closeModal('modal-branding');
+    } catch (e) {
+        alert('保存失败: ' + e.message);
+    }
+}
+
+function applyBranding(data) {
+    var logoEl = document.getElementById('sidebar-logo');
+    var nameEl = document.getElementById('sidebar-brand-name');
+    var subtitleEl = document.getElementById('sidebar-brand-subtitle');
+    if (logoEl && data.system_logo) logoEl.textContent = data.system_logo;
+    if (nameEl && data.system_name) nameEl.textContent = data.system_name;
+    if (subtitleEl && data.system_subtitle) subtitleEl.textContent = data.system_subtitle;
+    if (data.system_name) {
+        document.title = data.system_name + ' · 调解机构管理平台';
+    }
+}
+
+async function loadBranding() {
+    try {
+        var data = await api.get('/settings/branding');
+        applyBranding(data);
+    } catch (e) {
+        console.error('Failed to load branding:', e);
+    }
+}
+
+// ==================== CLICK OUTSIDE HANDLERS ====================
+document.addEventListener('click', function(e) {
+    var searchContainer = document.querySelector('.topbar-search');
+    var searchDropdown = document.getElementById('global-search-dropdown');
+    if (searchContainer && searchDropdown && !searchContainer.contains(e.target)) {
+        searchDropdown.style.display = 'none';
+    }
+    var settingsBtn = document.getElementById('settings-dropdown-btn');
+    var settingsDropdown = document.getElementById('settings-dropdown');
+    if (settingsBtn && settingsDropdown && !settingsBtn.contains(e.target) && !settingsDropdown.contains(e.target)) {
+        settingsDropdown.style.display = 'none';
+    }
+});
+
+// ==================== BRANDING INPUT LIVE PREVIEW ====================
+document.addEventListener('DOMContentLoaded', function() {
+    ['branding-system-name', 'branding-system-subtitle', 'branding-system-logo'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.addEventListener('input', updateBrandingPreview);
+    });
+});
+
 // ==================== MODAL UTILITY ====================
 function closeModal(modalId) {
     var modal = document.getElementById(modalId);
@@ -10975,6 +11331,7 @@ async function initApp() {
             document.getElementById('main-system').classList.add('active');
             stopLoginArt();
             updateUserInfo();
+            loadBranding();
             await loadDashboard();
             await loadUnreadCount();
         }
