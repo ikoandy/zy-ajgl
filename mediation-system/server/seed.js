@@ -258,6 +258,36 @@ function seed() {
   });
   sInsert(settings);
 
+  const insertAudit = db.prepare(
+    `INSERT INTO audit_logs (user_id, action, resource_type, resource_id, detail, ip_address, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+  const auditLogs = [
+    [1, 'LOGIN', 'auth', null, '管理员登录系统', '192.168.1.100', '2024-12-09 09:00:00'],
+    [1, 'CREATE', 'case', 1, '创建案件: #2024-1088', '192.168.1.100', '2024-12-09 09:15:00'],
+    [7, 'LOGIN', 'auth', null, '调解员登录系统', '192.168.1.101', '2024-12-09 09:20:00'],
+    [1, 'CREATE', 'case', 2, '创建案件: #2024-1089', '192.168.1.100', '2024-12-09 09:30:00'],
+    [7, 'UPDATE', 'case', 1, '更新案件状态: 受理中 → 调解中', '192.168.1.101', '2024-12-09 10:00:00'],
+    [1, 'CREATE', 'document', 1, '生成文书: 调解受理通知书', '192.168.1.100', '2024-12-09 10:15:00'],
+    [7, 'CREATE', 'schedule', 1, '创建调解日程', '192.168.1.101', '2024-12-09 10:30:00'],
+    [1, 'UPDATE_SETTINGS', 'settings', null, '更新系统设置', '192.168.1.100', '2024-12-09 11:00:00'],
+    [1, 'CREATE', 'user', 8, '创建用户: assistant01', '192.168.1.100', '2024-12-09 11:15:00'],
+    [7, 'CREATE', 'video_session', 1, '创建视频调解会话', '192.168.1.101', '2024-12-09 14:00:00'],
+    [1, 'CREATE', 'push_record', 1, '推送受理通知至当事人', '192.168.1.100', '2024-12-09 14:15:00'],
+    [7, 'UPDATE', 'case', 1, '更新案件状态: 调解中 → 已达成协议', '192.168.1.101', '2024-12-09 15:30:00'],
+    [1, 'CREATE', 'archive', 1, '归档案件材料', '192.168.1.100', '2024-12-09 16:00:00'],
+    [1, 'LOGIN', 'auth', null, '管理员登录系统', '192.168.1.100', '2024-12-08 08:45:00'],
+    [7, 'LOGIN', 'auth', null, '调解员登录系统', '192.168.1.101', '2024-12-08 09:00:00'],
+    [1, 'CREATE', 'case', 3, '创建案件: #2024-1090', '192.168.1.100', '2024-12-08 09:30:00'],
+    [1, 'DELETE', 'document', 5, '删除文书草稿', '192.168.1.100', '2024-12-08 10:00:00'],
+    [7, 'CREATE', 'feedback', 1, '提交调解评价', '192.168.1.101', '2024-12-08 14:00:00'],
+    [1, 'UPDATE', 'call_record', 1, '接听来电: 138****5678', '192.168.1.100', '2024-12-08 15:00:00'],
+    [1, 'OUTBOUND', 'call_record', 10, '外呼: 176****4321', '192.168.1.100', '2024-12-08 16:00:00']
+  ];
+  const auditInsert = db.transaction((rows) => {
+    for (const a of rows) insertAudit.run(...a);
+  });
+  auditInsert(auditLogs);
+
   const insertStats = db.prepare(
     `INSERT INTO dashboard_stats (stat_date, total_cases, new_cases, closed_cases, success_rate, avg_duration, total_calls, answered_calls) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
   );

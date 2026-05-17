@@ -2751,27 +2751,37 @@
             <div class="page-section" id="page-sysdesign">
                 <div class="page-header">
                     <h2>系统设计</h2>
-                    <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">visibility</span> 预览</button>
-                        <button class="btn btn-primary" onclick="showToast('配置已保存','success')"><span class="material-icons-round" style="font-size:16px">save</span> 保存配置</button>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">admin_panel_settings</span>
+                            <span style="font-size:13px;font-weight:600">角色权限</span>
+                        </div>
+                        <div id="sysdesign-roles"></div>
+                    </div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">account_tree</span>
+                            <span style="font-size:13px;font-weight:600">调解业务流程</span>
+                        </div>
+                        <div id="sysdesign-flows"></div>
                     </div>
                 </div>
-                <div class="sys-design-grid" id="sysdesign-grid">
-                    <div class="sys-design-card" id="sysdesign-roles">
-                        <h4><span class="material-icons-round">people</span> 角色权限设计</h4>
-                        <div class="role-list"><span class="role-tag">加载中...</span></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-violet)">extension</span>
+                            <span style="font-size:13px;font-weight:600">系统集成架构</span>
+                        </div>
+                        <div id="sysdesign-integrations"></div>
                     </div>
-                    <div class="sys-design-card" id="sysdesign-flows">
-                        <h4><span class="material-icons-round">account_tree</span> 调解流程设计</h4>
-                        <div class="flow-steps"><div class="flow-step"><span class="step-num">-</span> 加载中...</div></div>
-                    </div>
-                    <div class="sys-design-card" id="sysdesign-integrations">
-                        <h4><span class="material-icons-round">hub</span> 系统集成架构</h4>
-                        <div class="role-list"><span class="role-tag">加载中...</span></div>
-                    </div>
-                    <div class="sys-design-card" id="sysdesign-security">
-                        <h4><span class="material-icons-round">security</span> 安全合规设计</h4>
-                        <div class="flow-steps"><div class="flow-step"><span class="step-num">-</span> 加载中...</div></div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:#34d399">verified_user</span>
+                            <span style="font-size:13px;font-weight:600">安全合规</span>
+                        </div>
+                        <div id="sysdesign-security"></div>
                     </div>
                 </div>
             </div>
@@ -2781,7 +2791,7 @@
                 <div class="page-header">
                     <h2>高级设置</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline" onclick="showToast('已恢复默认设置','success')"><span class="material-icons-round" style="font-size:16px">restore</span> 恢复默认</button>
+                        <button class="btn btn-outline" onclick="resetSettings()"><span class="material-icons-round" style="font-size:16px">restore</span> 恢复默认</button>
                         <button class="btn btn-primary" onclick="saveSettings()"><span class="material-icons-round" style="font-size:16px">save</span> 保存设置</button>
                     </div>
                 </div>
@@ -2966,29 +2976,49 @@
                 <div class="page-header">
                     <h2>用户管理</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">download</span> 导出</button>
                         <button class="btn btn-primary" onclick="showUserModal()"><span class="material-icons-round" style="font-size:16px">person_add</span> 新建用户</button>
                     </div>
                 </div>
-                <div class="data-table">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>用户名</th>
-                                <th>姓名</th>
-                                <th>角色</th>
-                                <th>手机</th>
-                                <th>状态</th>
-                                <th>最后登录</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-tbody">
-                            <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3>用户列表</h3>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <input type="text" id="user-search-input" placeholder="搜索用户名/姓名..." style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none;width:140px" onkeydown="if(event.key==='Enter')loadUsers()">
+                            <select id="user-role-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadUsers()">
+                                <option value="">全部角色</option>
+                                <option value="1">超级管理员</option>
+                                <option value="2">机构管理员</option>
+                                <option value="3">调解员</option>
+                                <option value="4">调解助理</option>
+                            </select>
+                            <select id="user-status-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadUsers()">
+                                <option value="">全部状态</option>
+                                <option value="active">启用</option>
+                                <option value="inactive">停用</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>用户名</th>
+                                    <th>姓名</th>
+                                    <th>角色</th>
+                                    <th>手机</th>
+                                    <th>邮箱</th>
+                                    <th>状态</th>
+                                    <th>最后登录</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                                <tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="users-pagination" style="display:flex;gap:6px;justify-content:center;margin-top:12px"></div>
                 </div>
-                <div class="pagination" id="users-pagination"></div>
             </div>
 
             <!-- ===== DATA REPORTS ===== -->
@@ -3050,31 +3080,58 @@
                         <button class="btn btn-outline" onclick="loadAuditLogs()"><span class="material-icons-round" style="font-size:16px">refresh</span> 刷新</button>
                     </div>
                 </div>
-                <div class="audit-filter-bar">
-                    <select id="audit-action-filter">
-                        <option value="">全部操作</option>
-                        <option value="create">创建</option>
-                        <option value="update">更新</option>
-                        <option value="delete">删除</option>
-                        <option value="login">登录</option>
-                        <option value="export">导出</option>
-                    </select>
-                    <select id="audit-resource-filter">
-                        <option value="">全部资源</option>
-                        <option value="case">案件</option>
-                        <option value="archive">档案</option>
-                        <option value="document">文书</option>
-                        <option value="user">用户</option>
-                        <option value="setting">设置</option>
-                    </select>
-                    <input type="date" id="audit-date-from" placeholder="开始日期">
-                    <input type="date" id="audit-date-to" placeholder="结束日期">
-                    <button class="btn btn-outline" style="padding:8px 14px" onclick="loadAuditLogs()"><span class="material-icons-round" style="font-size:16px">search</span> 筛选</button>
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px" id="audit-stats-cards"></div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3>操作日志</h3>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                            <input type="text" id="audit-search-input" placeholder="搜索操作详情..." style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none;width:130px" onkeydown="if(event.key==='Enter')loadAuditLogs()">
+                            <select id="audit-action-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadAuditLogs()">
+                                <option value="">全部操作</option>
+                                <option value="CREATE">创建</option>
+                                <option value="UPDATE">更新</option>
+                                <option value="DELETE">删除</option>
+                                <option value="LOGIN">登录</option>
+                                <option value="OUTBOUND">外呼</option>
+                            </select>
+                            <select id="audit-resource-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadAuditLogs()">
+                                <option value="">全部资源</option>
+                                <option value="case">案件</option>
+                                <option value="archive">档案</option>
+                                <option value="document">文书</option>
+                                <option value="user">用户</option>
+                                <option value="settings">设置</option>
+                                <option value="auth">认证</option>
+                                <option value="schedule">日程</option>
+                                <option value="video_session">视频</option>
+                                <option value="push_record">推送</option>
+                                <option value="call_record">通话</option>
+                                <option value="feedback">评价</option>
+                            </select>
+                            <input type="date" id="audit-date-from" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none">
+                            <input type="date" id="audit-date-to" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none">
+                            <button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="loadAuditLogs()"><span class="material-icons-round" style="font-size:14px">search</span></button>
+                        </div>
+                    </div>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>操作人</th>
+                                    <th>操作类型</th>
+                                    <th>资源类型</th>
+                                    <th>操作详情</th>
+                                    <th>IP地址</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-tbody">
+                                <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="audit-pagination" style="display:flex;gap:6px;justify-content:center;margin-top:12px"></div>
                 </div>
-                <div id="audit-log-list">
-                    <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
-                </div>
-                <div class="pagination" id="audit-pagination"></div>
             </div>
 
         </div>
@@ -3548,6 +3605,7 @@
 <div class="modal-overlay" id="modal-user" style="display:none" onclick="if(event.target===this)closeModal('modal-user')">
     <div class="modal-content">
         <h3 id="modal-user-title">新建用户 <button class="modal-close" onclick="closeModal('modal-user')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <input type="hidden" id="user-edit-id" value="">
         <div class="modal-field">
             <label>用户名</label>
             <input type="text" id="user-username" placeholder="请输入用户名">
@@ -3560,10 +3618,14 @@
             <label>角色</label>
             <select id="user-role">
                 <option value="">请选择角色</option>
-                <option value="admin">管理员</option>
-                <option value="mediator">调解员</option>
-                <option value="assistant">助理</option>
-                <option value="viewer">观察者</option>
+                <option value="1">超级管理员</option>
+                <option value="2">机构负责人</option>
+                <option value="3">高级调解员</option>
+                <option value="4">调解员</option>
+                <option value="5">档案管理员</option>
+                <option value="6">呼叫中心坐席</option>
+                <option value="7">数据分析师</option>
+                <option value="8">系统运维</option>
             </select>
         </div>
         <div class="modal-field">
@@ -3571,8 +3633,19 @@
             <input type="tel" id="user-phone" placeholder="请输入手机号">
         </div>
         <div class="modal-field">
-            <label>密码</label>
+            <label>邮箱</label>
+            <input type="email" id="user-email" placeholder="请输入邮箱">
+        </div>
+        <div class="modal-field">
+            <label>密码 <span id="user-password-hint" style="font-weight:400;color:var(--text-muted)"></span></label>
             <input type="password" id="user-password" placeholder="请输入密码">
+        </div>
+        <div class="modal-field" id="user-status-field" style="display:none">
+            <label>状态</label>
+            <select id="user-status">
+                <option value="active">启用</option>
+                <option value="inactive">停用</option>
+            </select>
         </div>
         <div class="modal-actions">
             <button class="btn btn-outline" onclick="closeModal('modal-user')">取消</button>
@@ -8939,14 +9012,20 @@ async function showProviderLogs(id) {
 // ==================== SYSTEM DESIGN ====================
 async function loadSysDesign() {
     try {
-        var roles = await api.get('/sysdesign/roles');
-        var flows = await api.get('/sysdesign/flows');
-        var integrations = await api.get('/sysdesign/integrations');
-        var security = await api.get('/sysdesign/security');
-
+        var rolesRes = await api.get('/sysdesign/roles');
+        var roles = Array.isArray(rolesRes) ? rolesRes : [];
         renderSysDesignRoles(roles);
+
+        var flowsRes = await api.get('/sysdesign/flows');
+        var flows = Array.isArray(flowsRes) ? flowsRes : [];
         renderSysDesignFlows(flows);
+
+        var integrationsRes = await api.get('/sysdesign/integrations');
+        var integrations = Array.isArray(integrationsRes) ? integrationsRes : [];
         renderSysDesignIntegrations(integrations);
+
+        var securityRes = await api.get('/sysdesign/security');
+        var security = securityRes || {};
         renderSysDesignSecurity(security);
     } catch (err) {
         showToast('加载系统设计数据失败: ' + err.message);
@@ -8957,36 +9036,92 @@ function renderSysDesignRoles(roles) {
     var container = document.getElementById('sysdesign-roles');
     if (!container) return;
 
-    var data = Array.isArray(roles) ? roles : [];
-    var colorMap = {
-        gold: 'var(--accent-gold)',
-        teal: 'var(--accent-teal)',
-        violet: 'var(--accent-violet)',
-        rose: 'var(--accent-rose)'
-    };
+    var colorPalette = ['#c9a84c', '#2dd4bf', '#a78bfa', '#f472b6', '#60a5fa', '#34d399', '#fb923c', '#f87171'];
 
-    var html = '<h4><span class="material-icons-round">people</span> 角色权限设计</h4><div class="role-list">';
-    data.forEach(function(r) {
-        var borderColor = r.color ? (colorMap[r.color] || r.color) : '';
-        var textColor = r.color ? (colorMap[r.color] || r.color) : '';
-        var style = borderColor ? 'border-color:' + borderColor + ';color:' + textColor : '';
-        html += '<span class="role-tag" style="' + style + '">' + escapeHtml(r.name || '') + '</span>';
+    var html = '';
+    roles.forEach(function(r, i) {
+        var color = colorPalette[i % colorPalette.length];
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:all .15s" onmouseenter="this.style.background=\'var(--bg-hover)\'" onmouseleave="this.style.background=\'var(--bg-tertiary)\'" onclick="showRolePermissions(' + r.id + ')">' +
+            '<div style="display:flex;align-items:center;gap:10px">' +
+            '<div style="width:8px;height:8px;border-radius:50%;background:' + color + '"></div>' +
+            '<div>' +
+            '<div style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(r.display_name || r.name) + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' + escapeHtml(r.description || '') + '</div>' +
+            '</div></div>' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:11px;color:var(--text-muted);background:var(--bg-secondary);padding:2px 8px;border-radius:10px">' + (r.user_count || 0) + ' 人</span>' +
+            '<span class="material-icons-round" style="font-size:14px;color:var(--text-muted)">chevron_right</span>' +
+            '</div></div>';
     });
-    html += '</div>';
     container.innerHTML = html;
+}
+
+async function showRolePermissions(roleId) {
+    try {
+        var res = await api.get('/sysdesign/roles/' + roleId + '/permissions');
+        var data = res || {};
+        var role = data.role || {};
+        var modules = data.modules || [];
+
+        var html = '<div style="margin-bottom:16px">' +
+            '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+            '<span style="font-size:15px;font-weight:600;color:var(--text-primary)">' + escapeHtml(role.display_name || role.name || '') + '</span>' +
+            '</div>' +
+            '<div style="font-size:12px;color:var(--text-muted)">' + escapeHtml(role.description || '') + '</div>' +
+            '</div>';
+
+        html += '<table style="width:100%;border-collapse:collapse">' +
+            '<thead><tr>' +
+            '<th style="padding:8px 12px;text-align:left;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">模块</th>' +
+            '<th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">查看</th>' +
+            '<th style="padding:8px 12px;text-align:center;font-size:11px;color:var(--text-muted);border-bottom:1px solid var(--border-subtle)">编辑</th>' +
+            '</tr></thead><tbody>';
+
+        modules.forEach(function(m) {
+            html += '<tr>' +
+                '<td style="padding:8px 12px;font-size:13px;color:var(--text-primary)">' + escapeHtml(m.name) + '</td>' +
+                '<td style="padding:8px 12px;text-align:center">' +
+                (m.read ? '<span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">check_circle</span>' : '<span class="material-icons-round" style="font-size:16px;color:var(--text-muted)">cancel</span>') +
+                '</td>' +
+                '<td style="padding:8px 12px;text-align:center">' +
+                (m.write ? '<span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">check_circle</span>' : '<span class="material-icons-round" style="font-size:16px;color:var(--text-muted)">cancel</span>') +
+                '</td></tr>';
+        });
+
+        html += '</tbody></table>';
+
+        var modal = document.getElementById('modal-generic');
+        if (modal) {
+            modal.querySelector('.modal-title').innerHTML = '角色权限详情 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+            modal.querySelector('.modal-body').innerHTML = html;
+            modal.style.display = 'flex';
+        }
+    } catch (err) {
+        showToast('加载角色权限失败: ' + err.message);
+    }
 }
 
 function renderSysDesignFlows(flows) {
     var container = document.getElementById('sysdesign-flows');
     if (!container) return;
 
-    var data = Array.isArray(flows) ? flows : [];
-    var html = '<h4><span class="material-icons-round">account_tree</span> 调解流程设计</h4><div class="flow-steps">';
-    data.forEach(function(f, i) {
-        if (i > 0) html += '<div class="flow-step"><span class="step-arrow">↓</span></div>';
-        var step = f.step || (i + 1);
-        var name = f.name || f.title || '';
-        html += '<div class="flow-step"><span class="step-num">' + step + '</span> ' + escapeHtml(name) + '</div>';
+    var html = '<div style="display:flex;flex-direction:column;gap:0">';
+    flows.forEach(function(f, i) {
+        var color = f.color || 'var(--accent-gold)';
+        html += '<div style="display:flex;align-items:flex-start;gap:12px;position:relative;padding:8px 0">';
+        html += '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0">';
+        html += '<div style="width:32px;height:32px;border-radius:50%;background:' + color + ';display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700">' + f.step + '</div>';
+        if (i < flows.length - 1) {
+            html += '<div style="width:2px;height:28px;background:var(--border-subtle);margin-top:4px"></div>';
+        }
+        html += '</div>';
+        html += '<div style="padding-top:4px;flex:1;min-width:0">';
+        html += '<div style="display:flex;align-items:center;gap:6px">';
+        html += '<span class="material-icons-round" style="font-size:14px;color:' + color + '">' + (f.icon || 'circle') + '</span>';
+        html += '<span style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(f.name) + '</span>';
+        html += '</div>';
+        html += '<div style="font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.4">' + escapeHtml(f.description || '') + '</div>';
+        html += '</div></div>';
     });
     html += '</div>';
     container.innerHTML = html;
@@ -8996,10 +9131,20 @@ function renderSysDesignIntegrations(integrations) {
     var container = document.getElementById('sysdesign-integrations');
     if (!container) return;
 
-    var data = Array.isArray(integrations) ? integrations : [];
-    var html = '<h4><span class="material-icons-round">hub</span> 系统集成架构</h4><div class="role-list">';
-    data.forEach(function(item) {
-        html += '<span class="role-tag">' + escapeHtml(item.name || '') + '</span>';
+    var html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">';
+    integrations.forEach(function(item) {
+        var statusColor = item.status === 'active' ? 'var(--accent-teal)' : 'var(--text-muted)';
+        var statusText = item.status === 'active' ? '运行中' : '已停止';
+        html += '<div style="padding:10px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm);border-left:3px solid ' + statusColor + '">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+            '<span class="material-icons-round" style="font-size:14px;color:' + statusColor + '">' + (item.icon || 'extension') + '</span>' +
+            '<span style="font-size:12px;font-weight:600;color:var(--text-primary)">' + escapeHtml(item.name) + '</span>' +
+            '</div>' +
+            '<span style="font-size:10px;color:' + statusColor + ';background:' + statusColor + '15;padding:1px 6px;border-radius:8px">' + statusText + '</span>' +
+            '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted);line-height:1.3">' + escapeHtml(item.description || '') + '</div>' +
+            '</div>';
     });
     html += '</div>';
     container.innerHTML = html;
@@ -9009,16 +9154,47 @@ function renderSysDesignSecurity(security) {
     var container = document.getElementById('sysdesign-security');
     if (!container) return;
 
-    var data = Array.isArray(security) ? security : [];
-    var html = '<h4><span class="material-icons-round">security</span> 安全合规设计</h4><div class="flow-steps">';
-    data.forEach(function(s, i) {
-        if (i > 0) html += '<div class="flow-step"><span class="step-arrow">↓</span></div>';
-        var step = s.step || (i + 1);
-        var name = s.name || s.title || '';
-        html += '<div class="flow-step"><span class="step-num">' + step + '</span> ' + escapeHtml(name) + '</div>';
+    var statusIcon = function(status) {
+        return status === 'compliant'
+            ? '<span class="material-icons-round" style="font-size:14px;color:var(--accent-teal)">verified</span>'
+            : '<span class="material-icons-round" style="font-size:14px;color:var(--accent-rose)">warning</span>';
+    };
+
+    var html = '';
+
+    var sections = [
+        { key: 'data_classification', label: '数据分级', detail: function(d) { return d.level + ' - ' + d.description; } },
+        { key: 'encryption', label: '加密算法', detail: function(d) { return d.algorithm + ' (密钥管理: ' + d.key_management + ')'; } },
+        { key: 'audit', label: '审计日志', detail: function(d) { return '保留 ' + d.retention_days + ' 天，记录: ' + (d.log_types || []).join('、'); } },
+        { key: 'access_control', label: '访问控制', detail: function(d) { return d.type + ' - ' + d.description; } }
+    ];
+
+    sections.forEach(function(sec) {
+        var d = security[sec.key];
+        if (!d) return;
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle)">' +
+            statusIcon(d.status) +
+            '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:12px;font-weight:600;color:var(--text-primary)">' + sec.label + '</div>' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' + escapeHtml(sec.detail(d)) + '</div>' +
+            '</div></div>';
     });
-    html += '</div>';
-    container.innerHTML = html;
+
+    var compliance = security.compliance;
+    if (compliance && compliance.items) {
+        html += '<div style="margin-top:10px"><div style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:8px">合规认证</div>';
+        compliance.items.forEach(function(item) {
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0">' +
+                statusIcon(item.status) +
+                '<span class="material-icons-round" style="font-size:14px;color:var(--accent-gold)">' + (item.icon || 'policy') + '</span>' +
+                '<span style="font-size:12px;color:var(--text-primary)">' + escapeHtml(item.name) + '</span>' +
+                (item.level ? '<span style="font-size:10px;color:var(--text-muted);background:var(--bg-tertiary);padding:1px 6px;border-radius:8px">' + escapeHtml(item.level) + '</span>' : '') +
+                '</div>';
+        });
+        html += '</div>';
+    }
+
+    container.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无安全合规数据</div>';
 }
 
 // ==================== SETTINGS ====================
@@ -9028,9 +9204,20 @@ var currentSettingsData = {};
 async function loadSettings(category) {
     if (category) currentSettingsCategory = category;
 
+    if (currentSettingsCategory === 'about') {
+        try {
+            var res = await api.get('/settings/about');
+            renderSettingsAbout(res);
+        } catch (err) {
+            renderSettingsAbout({});
+        }
+        return;
+    }
+
     try {
         var res = await api.get('/settings', { category: currentSettingsCategory });
-        var settings = res.settings || res;
+        var grouped = res || {};
+        var settings = grouped[currentSettingsCategory] || {};
         currentSettingsData = settings;
         renderSettings(settings, currentSettingsCategory);
     } catch (err) {
@@ -9048,12 +9235,6 @@ function renderSettings(settings, category) {
     var container = document.getElementById('settings-content');
     if (!container) return;
 
-    if (category === 'about') {
-        renderSettingsAbout(settings);
-        return;
-    }
-
-    var html = '';
     var groupTitle = {
         general: '通用配置',
         notification: '通知配置',
@@ -9063,78 +9244,71 @@ function renderSettings(settings, category) {
         data: '数据管理'
     };
 
-    html += '<div class="setting-group"><h4>' + (groupTitle[category] || '配置') + '</h4>';
+    var labelMap = {
+        org_name: '机构名称',
+        case_prefix: '案件编号前缀',
+        auto_assign: '自动分配调解员',
+        timeout_reminder: '调解超时提醒',
+        timeout_days: '超时天数阈值',
+        sms_enabled: '短信通知',
+        email_enabled: '邮件通知',
+        wechat_enabled: '微信推送',
+        sms_template: '短信模板',
+        password_min_length: '密码最小长度',
+        login_max_attempts: '最大登录尝试次数',
+        session_timeout: '会话超时时间(分钟)',
+        two_factor_auth: '双因素认证',
+        ip_whitelist: 'IP白名单',
+        theme: '主题设置',
+        language: '界面语言',
+        page_size: '默认分页大小',
+        rate_limit: 'API限流(次/分钟)',
+        log_retention_days: '日志保留天数',
+        backup_enabled: '自动备份',
+        backup_interval: '备份间隔(小时)',
+        backup_retention: '备份保留天数'
+    };
 
-    if (settings && typeof settings === 'object') {
+    var html = '<div class="setting-group"><h4>' + (groupTitle[category] || '配置') + '</h4>';
+
+    if (settings && typeof settings === 'object' && Object.keys(settings).length > 0) {
         Object.keys(settings).forEach(function(key) {
-            var val = settings[key];
-            var label = key.replace(/([A-Z])/g, ' $1').replace(/^./, function(s) { return s.toUpperCase(); });
-            var labelMap = {
-                orgName: '机构名称',
-                casePrefix: '案件编号前缀',
-                autoAssign: '自动分配调解员',
-                timeoutReminder: '调解超时提醒',
-                sms: '短信通知',
-                email: '邮件通知',
-                wechat: '微信推送',
-                twoFactor: '双因素认证',
-                sessionTimeout: '会话超时',
-                passwordPolicy: '密码策略',
-                theme: '主题设置',
-                language: '语言设置',
-                fontSize: '字体大小',
-                webhookUrl: 'Webhook 地址',
-                apiRateLimit: 'API 速率限制',
-                backupFrequency: '备份频率',
-                dataRetention: '数据保留期限',
-                logLevel: '日志级别'
-            };
-            var descMap = {
-                orgName: '显示在系统标题和文书中',
-                casePrefix: '自动生成案件编号的前缀规则',
-                autoAssign: '新案件自动根据负载均衡分配调解员',
-                timeoutReminder: '案件超过设定天数未结案时自动提醒',
-                sms: '案件状态变更时发送短信通知当事人',
-                email: '发送邮件通知调解员和当事人',
-                wechat: '通过微信公众号推送案件动态',
-                twoFactor: '登录时需要二次验证',
-                sessionTimeout: '无操作自动登出时间',
-                passwordPolicy: '密码复杂度要求',
-                theme: '选择系统主题风格',
-                language: '选择系统显示语言',
-                fontSize: '调整界面字体大小',
-                webhookUrl: '接收事件回调的地址',
-                apiRateLimit: '每分钟最大请求数',
-                backupFrequency: '自动备份执行频率',
-                dataRetention: '历史数据保留天数',
-                logLevel: '系统日志记录级别'
-            };
+            var item = settings[key];
+            var val, valueType, desc;
 
-            var displayLabel = labelMap[key] || label;
-            var displayDesc = descMap[key] || '';
+            if (item && typeof item === 'object' && item.value !== undefined) {
+                val = item.value;
+                valueType = item.type || 'string';
+                desc = item.description || '';
+            } else {
+                val = item;
+                valueType = typeof item;
+                desc = '';
+            }
 
-            if (typeof val === 'boolean') {
+            var displayLabel = labelMap[key] || key.replace(/_/g, ' ').replace(/\b\w/g, function(c) { return c.toUpperCase(); });
+            var displayDesc = desc;
+
+            if (typeof val === 'boolean' || valueType === 'boolean') {
                 html += '<div class="setting-row">' +
                     '<div><div class="sr-label">' + displayLabel + '</div>' +
                     (displayDesc ? '<div class="sr-desc">' + displayDesc + '</div>' : '') +
                     '</div>' +
-                    '<div class="toggle-switch ' + (val ? 'on' : '') + '" data-key="' + key + '" onclick="toggleSetting(this)"></div>' +
+                    '<div class="toggle-switch ' + (val ? 'on' : '') + '" data-key="' + key + '" data-type="boolean" onclick="toggleSetting(this)"></div>' +
                     '</div>';
-            } else if (key.toLowerCase().indexOf('prefix') !== -1 || key.toLowerCase().indexOf('policy') !== -1 || key.toLowerCase().indexOf('frequency') !== -1 || key.toLowerCase().indexOf('level') !== -1) {
+            } else if (valueType === 'number') {
                 html += '<div class="setting-row">' +
                     '<div><div class="sr-label">' + displayLabel + '</div>' +
                     (displayDesc ? '<div class="sr-desc">' + displayDesc + '</div>' : '') +
                     '</div>' +
-                    '<select class="select-input" data-key="' + key + '">' +
-                    '<option>' + escapeHtml(String(val)) + '</option>' +
-                    '</select>' +
+                    '<input type="number" data-key="' + key + '" data-type="number" value="' + escapeHtml(String(val)) + '" style="padding:6px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none;width:120px">' +
                     '</div>';
             } else {
                 html += '<div class="setting-row">' +
                     '<div><div class="sr-label">' + displayLabel + '</div>' +
                     (displayDesc ? '<div class="sr-desc">' + displayDesc + '</div>' : '') +
                     '</div>' +
-                    '<input type="text" data-key="' + key + '" value="' + escapeHtml(String(val)) + '" style="padding:6px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none;width:240px">' +
+                    '<input type="text" data-key="' + key + '" data-type="string" value="' + escapeHtml(String(val)) + '" style="padding:6px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none;width:240px">' +
                     '</div>';
             }
         });
@@ -9151,16 +9325,17 @@ function renderSettingsAbout(data) {
     if (!container) return;
 
     var info = data || {};
-    var html = '<div class="setting-group"><h4>关于系统</h4>';
     var fields = [
         { label: '系统名称', key: 'name', default: '和调 · 调解机构管理平台' },
         { label: '版本号', key: 'version', default: '--' },
-        { label: '构建日期', key: 'buildDate', default: '--' },
-        { label: '技术架构', key: 'techStack', default: '--' },
-        { label: '许可证', key: 'license', default: '--' },
-        { label: '联系方式', key: 'contact', default: '--' }
+        { label: '构建日期', key: 'build_date', default: '--' },
+        { label: '运行环境', key: 'environment', default: '--' },
+        { label: 'Node版本', key: 'node_version', default: '--' },
+        { label: '数据库', key: 'database', default: '--' },
+        { label: '许可证', key: 'license', default: '--' }
     ];
 
+    var html = '<div class="setting-group"><h4>关于系统</h4>';
     fields.forEach(function(f) {
         var val = info[f.key] || f.default;
         html += '<div class="setting-row">' +
@@ -9168,16 +9343,12 @@ function renderSettingsAbout(data) {
             '<span style="font-size:13px;color:var(--text-secondary)">' + escapeHtml(String(val)) + '</span>' +
             '</div>';
     });
-
     html += '</div>';
     container.innerHTML = html;
 }
 
 function toggleSetting(el) {
     el.classList.toggle('on');
-    var key = el.getAttribute('data-key');
-    var isOn = el.classList.contains('on');
-    currentSettingsData[key] = isOn;
 }
 
 async function saveSettings() {
@@ -9186,20 +9357,36 @@ async function saveSettings() {
         var inputs = document.querySelectorAll('#settings-content [data-key]');
         inputs.forEach(function(input) {
             var key = input.getAttribute('data-key');
+            var type = input.getAttribute('data-type');
             if (input.tagName === 'SELECT' || input.tagName === 'INPUT') {
-                settings[key] = input.value;
+                if (type === 'number') {
+                    settings[key] = parseFloat(input.value);
+                } else {
+                    settings[key] = input.value;
+                }
             } else if (input.classList.contains('toggle-switch')) {
                 settings[key] = input.classList.contains('on');
             }
         });
 
         var payload = {};
-        payload[currentSettingsCategory] = Object.keys(settings).length > 0 ? settings : currentSettingsData;
+        payload[currentSettingsCategory] = settings;
 
         await api.put('/settings', { settings: payload });
         showToast('设置已保存', 'success');
     } catch (err) {
         showToast('保存设置失败: ' + err.message);
+    }
+}
+
+async function resetSettings() {
+    if (!confirm('确定恢复默认设置？此操作将重置所有配置项。')) return;
+    try {
+        await api.put('/settings/reset', {});
+        showToast('设置已恢复默认', 'success');
+        await loadSettings(currentSettingsCategory);
+    } catch (err) {
+        showToast('恢复默认设置失败: ' + err.message);
     }
 }
 
@@ -10218,7 +10405,17 @@ async function loadUsers(page) {
     if (page !== undefined) usersCurrentPage = page;
 
     try {
-        var res = await api.get('/users', { page: usersCurrentPage, pageSize: 20 });
+        var params = { page: usersCurrentPage, pageSize: 20 };
+
+        var searchInput = document.getElementById('user-search-input');
+        var roleFilter = document.getElementById('user-role-filter');
+        var statusFilter = document.getElementById('user-status-filter');
+
+        if (searchInput && searchInput.value.trim()) params.search = searchInput.value.trim();
+        if (roleFilter && roleFilter.value) params.role_id = roleFilter.value;
+        if (statusFilter && statusFilter.value) params.status = statusFilter.value;
+
+        var res = await api.get('/users', params);
         var data = res.data || [];
         var total = res.pagination ? res.pagination.total : 0;
         var totalPages = res.pagination ? res.pagination.totalPages : 1;
@@ -10235,33 +10432,28 @@ function renderUsersTable(data) {
     if (!tbody) return;
 
     if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:40px">暂无用户数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:40px">暂无用户数据</td></tr>';
         return;
     }
 
-    var roleMap = {
-        admin: '管理员',
-        mediator: '调解员',
-        assistant: '助理',
-        viewer: '观察者'
-    };
-
     var html = '';
     data.forEach(function(u) {
-        var statusClass = u.status === 'active' ? 'active' : (u.status === 'disabled' ? 'closed' : 'pending');
-        var statusText = u.status === 'active' ? '启用' : (u.status === 'disabled' ? '禁用' : u.statusText || '');
-        var roleText = roleMap[u.role] || u.role || '';
+        var statusClass = u.status === 'active' ? 'active' : 'closed';
+        var statusText = u.status === 'active' ? '启用' : '停用';
+        var roleText = u.role_display_name || u.role_name || '';
 
         html += '<tr>' +
             '<td style="color:var(--accent-gold);font-weight:600">' + escapeHtml(u.username || '') + '</td>' +
-            '<td>' + escapeHtml(u.name || u.displayName || '') + '</td>' +
-            '<td>' + escapeHtml(roleText) + '</td>' +
-            '<td>' + escapeHtml(u.phone || u.mobile || '') + '</td>' +
-            '<td><span class="status-tag ' + statusClass + '">' + escapeHtml(statusText) + '</span></td>' +
-            '<td>' + escapeHtml(u.lastLogin || u.lastLoginAt || '') + '</td>' +
+            '<td>' + escapeHtml(u.real_name || '') + '</td>' +
+            '<td><span style="font-size:11px;background:var(--bg-tertiary);padding:2px 8px;border-radius:10px;color:var(--text-secondary)">' + escapeHtml(roleText) + '</span></td>' +
+            '<td>' + escapeHtml(u.phone || '') + '</td>' +
+            '<td style="font-size:12px;color:var(--text-muted)">' + escapeHtml(u.email || '') + '</td>' +
+            '<td><span class="status-tag ' + statusClass + '">' + statusText + '</span></td>' +
+            '<td style="font-size:12px;color:var(--text-muted)">' + escapeHtml(u.last_login_at || '') + '</td>' +
             '<td>' +
-            '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editUser(\'' + (u.id || u._id || '') + '\')">编辑</button> ' +
-            '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteUser(\'' + (u.id || u._id || '') + '\')">删除</button>' +
+            '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="editUser(' + (u.id || '') + ')">编辑</button> ' +
+            '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:var(--accent-teal);border-color:var(--accent-teal-dim)" onclick="toggleUserStatus(' + (u.id || '') + ',\'' + u.status + '\')">' + (u.status === 'active' ? '停用' : '启用') + '</button> ' +
+            '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteUser(' + (u.id || '') + ')">删除</button>' +
             '</td>' +
             '</tr>';
     });
@@ -10282,25 +10474,80 @@ function renderUsersPagination(totalPages, current) {
 
 function showUserModal(userId) {
     var titleEl = document.getElementById('modal-user-title');
-    if (titleEl) titleEl.innerHTML = (userId ? '编辑用户' : '新建用户') + ' <button class="modal-close" onclick="closeModal(\'modal-user\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    var editIdEl = document.getElementById('user-edit-id');
+    var statusField = document.getElementById('user-status-field');
+    var passwordHint = document.getElementById('user-password-hint');
 
     if (!userId) {
+        if (titleEl) titleEl.innerHTML = '新建用户 <button class="modal-close" onclick="closeModal(\'modal-user\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        if (editIdEl) editIdEl.value = '';
         document.getElementById('user-username').value = '';
+        document.getElementById('user-username').disabled = false;
         document.getElementById('user-name').value = '';
         document.getElementById('user-role').value = '';
         document.getElementById('user-phone').value = '';
+        document.getElementById('user-email').value = '';
         document.getElementById('user-password').value = '';
+        document.getElementById('user-password').placeholder = '请输入密码';
+        if (passwordHint) passwordHint.textContent = '';
+        if (statusField) statusField.style.display = 'none';
     }
 
     document.getElementById('modal-user').style.display = 'flex';
 }
 
-function editUser(id) {
-    showUserModal(id);
+async function editUser(id) {
+    try {
+        var user = await api.get('/users/' + id);
+        if (!user) { showToast('用户不存在'); return; }
+
+        var titleEl = document.getElementById('modal-user-title');
+        var editIdEl = document.getElementById('user-edit-id');
+        var statusField = document.getElementById('user-status-field');
+        var passwordHint = document.getElementById('user-password-hint');
+
+        if (titleEl) titleEl.innerHTML = '编辑用户 <button class="modal-close" onclick="closeModal(\'modal-user\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        if (editIdEl) editIdEl.value = id;
+        document.getElementById('user-username').value = user.username || '';
+        document.getElementById('user-username').disabled = true;
+        document.getElementById('user-name').value = user.real_name || '';
+        document.getElementById('user-role').value = user.role_id || '';
+        document.getElementById('user-phone').value = user.phone || '';
+        document.getElementById('user-email').value = user.email || '';
+        document.getElementById('user-password').value = '';
+        document.getElementById('user-password').placeholder = '留空则不修改';
+        if (passwordHint) passwordHint.textContent = '(留空则不修改)';
+        if (statusField) {
+            statusField.style.display = '';
+            document.getElementById('user-status').value = user.status || 'active';
+        }
+
+        document.getElementById('modal-user').style.display = 'flex';
+    } catch (err) {
+        showToast('加载用户信息失败: ' + err.message);
+    }
+}
+
+async function toggleUserStatus(id, currentStatus) {
+    var newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    var actionText = newStatus === 'active' ? '启用' : '停用';
+    if (!confirm('确定' + actionText + '该用户？')) return;
+
+    try {
+        await api.request('/users/' + id, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus })
+        });
+        showToast('用户已' + actionText, 'success');
+        await loadUsers();
+    } catch (err) {
+        showToast(actionText + '用户失败: ' + err.message);
+    }
 }
 
 async function deleteUser(id) {
-    if (!confirm('确定删除该用户？')) return;
+    if (!confirm('确定删除该用户？删除后用户将被停用。')) return;
     try {
         await api.request('/users/' + id, { method: 'DELETE' });
         showToast('用户已删除', 'success');
@@ -10311,28 +10558,51 @@ async function deleteUser(id) {
 }
 
 async function submitUser() {
+    var editId = document.getElementById('user-edit-id').value;
     var username = document.getElementById('user-username').value.trim();
     var name = document.getElementById('user-name').value.trim();
-    if (!username || !name) {
-        showToast('请输入用户名和姓名', 'info');
+    var roleId = document.getElementById('user-role').value;
+    var phone = document.getElementById('user-phone').value.trim();
+    var email = document.getElementById('user-email').value.trim();
+    var password = document.getElementById('user-password').value;
+
+    if (!username || !name || !roleId) {
+        showToast('请输入用户名、姓名和角色', 'info');
         return;
     }
 
-    var data = {
-        username: username,
-        name: name,
-        role: document.getElementById('user-role').value,
-        phone: document.getElementById('user-phone').value.trim(),
-        password: document.getElementById('user-password').value
-    };
-
     try {
-        await api.post('/users', data);
-        showToast('用户创建成功', 'success');
+        if (editId) {
+            var data = { real_name: name, role_id: parseInt(roleId), phone: phone, email: email };
+            if (password) data.password = password;
+            var statusEl = document.getElementById('user-status');
+            if (statusEl) data.status = statusEl.value;
+
+            await api.request('/users/' + editId, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            showToast('用户更新成功', 'success');
+        } else {
+            if (!password) {
+                showToast('请输入密码', 'info');
+                return;
+            }
+            await api.post('/users', {
+                username: username,
+                password: password,
+                real_name: name,
+                role_id: parseInt(roleId),
+                phone: phone,
+                email: email
+            });
+            showToast('用户创建成功', 'success');
+        }
         closeModal('modal-user');
         await loadUsers();
     } catch (err) {
-        showToast('创建用户失败: ' + err.message);
+        showToast((editId ? '更新' : '创建') + '用户失败: ' + err.message);
     }
 }
 
@@ -10513,58 +10783,119 @@ async function loadAuditLogs(page) {
             pageSize: 20
         };
 
+        var searchInput = document.getElementById('audit-search-input');
         var actionFilter = document.getElementById('audit-action-filter');
         var resourceFilter = document.getElementById('audit-resource-filter');
         var dateFrom = document.getElementById('audit-date-from');
         var dateTo = document.getElementById('audit-date-to');
 
+        if (searchInput && searchInput.value.trim()) params.search = searchInput.value.trim();
         if (actionFilter && actionFilter.value) params.action = actionFilter.value;
-        if (resourceFilter && resourceFilter.value) params.resource = resourceFilter.value;
-        if (dateFrom && dateFrom.value) params.dateFrom = dateFrom.value;
-        if (dateTo && dateTo.value) params.dateTo = dateTo.value;
+        if (resourceFilter && resourceFilter.value) params.resource_type = resourceFilter.value;
+        if (dateFrom && dateFrom.value) params.date_from = dateFrom.value;
+        if (dateTo && dateTo.value) params.date_to = dateTo.value;
 
         var res = await api.get('/sysdesign/audit-logs', params);
         var data = res.data || [];
-        var total = res.pagination ? res.pagination.total : 0;
-        var totalPages = res.pagination ? res.pagination.totalPages : 1;
+        var pagination = res.pagination || {};
+        var totalPages = pagination.totalPages || 1;
 
-        renderAuditLogList(Array.isArray(data) ? data : []);
+        renderAuditTable(Array.isArray(data) ? data : []);
         renderAuditPagination(totalPages, auditCurrentPage);
+        await loadAuditStats();
     } catch (err) {
         showToast('加载审计日志失败: ' + err.message);
     }
 }
 
-function renderAuditLogList(data) {
-    var container = document.getElementById('audit-log-list');
-    if (!container) return;
+async function loadAuditStats() {
+    try {
+        var stats = await api.get('/sysdesign/audit-stats');
+        renderAuditStats(stats);
+    } catch (err) {
+    }
+}
+
+function renderAuditStats(stats) {
+    var container = document.getElementById('audit-stats-cards');
+    if (!container || !stats) return;
+
+    var actionMap = {
+        LOGIN: '登录',
+        CREATE: '创建',
+        UPDATE: '更新',
+        DELETE: '删除',
+        UPDATE_SETTINGS: '设置',
+        OUTBOUND: '外呼'
+    };
+
+    var html = '<div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">' +
+        '<div style="font-size:24px;font-weight:700;color:var(--accent-gold)">' + (stats.total || 0) + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">总操作数</div></div>';
+
+    html += '<div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">' +
+        '<div style="font-size:24px;font-weight:700;color:var(--accent-teal)">' + (stats.today || 0) + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">今日操作</div></div>';
+
+    var topAction = (stats.by_action && stats.by_action.length > 0) ? stats.by_action[0] : null;
+    html += '<div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">' +
+        '<div style="font-size:24px;font-weight:700;color:var(--accent-violet)">' + (topAction ? (actionMap[topAction.action] || topAction.action) : '--') + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">最多操作类型</div></div>';
+
+    container.innerHTML = html;
+}
+
+function renderAuditTable(data) {
+    var tbody = document.getElementById('audit-tbody');
+    if (!tbody) return;
 
     if (!data || data.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无审计日志</div>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px">暂无审计日志</td></tr>';
         return;
     }
 
-    var actionClassMap = {
-        create: 'create',
-        update: 'update',
-        delete: 'delete',
-        login: 'login',
-        export: 'export'
+    var actionStyleMap = {
+        LOGIN: { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa', text: '登录' },
+        CREATE: { bg: 'rgba(52,211,153,0.12)', color: '#34d399', text: '创建' },
+        UPDATE: { bg: 'rgba(167,139,250,0.12)', color: '#a78bfa', text: '更新' },
+        DELETE: { bg: 'rgba(248,113,113,0.12)', color: '#f87171', text: '删除' },
+        UPDATE_SETTINGS: { bg: 'rgba(201,168,76,0.12)', color: '#c9a84c', text: '设置' },
+        OUTBOUND: { bg: 'rgba(251,146,60,0.12)', color: '#fb923c', text: '外呼' },
+        UPDATE_PERMISSIONS: { bg: 'rgba(167,139,250,0.12)', color: '#a78bfa', text: '权限' },
+        RESET_SETTINGS: { bg: 'rgba(201,168,76,0.12)', color: '#c9a84c', text: '重置' }
+    };
+
+    var resourceMap = {
+        auth: '认证',
+        case: '案件',
+        archive: '档案',
+        document: '文书',
+        user: '用户',
+        settings: '设置',
+        schedule: '日程',
+        video_session: '视频',
+        push_record: '推送',
+        call_record: '通话',
+        feedback: '评价',
+        role: '角色'
     };
 
     var html = '';
     data.forEach(function(log) {
-        var actionClass = actionClassMap[log.action] || 'update';
+        var style = actionStyleMap[log.action] || { bg: 'rgba(167,139,250,0.12)', color: '#a78bfa', text: log.action };
+        var resourceText = resourceMap[log.resource_type] || log.resource_type;
+        var userName = log.user_name || log.user_username || '系统';
 
-        html += '<div class="audit-log-item">' +
-            '<div class="al-time">' + escapeHtml(log.createdAt || log.time || '') + '</div>' +
-            '<div class="al-user">' + escapeHtml(log.operator || log.user || '') + '</div>' +
-            '<div class="al-action ' + actionClass + '">' + escapeHtml(log.actionText || log.action || '') + '</div>' +
-            '<div class="al-resource">' + escapeHtml(log.resource || log.resourceType || '') + '</div>' +
-            '<div class="al-detail">' + escapeHtml(log.detail || log.description || '') + '</div>' +
-            '</div>';
+        html += '<tr>' +
+            '<td style="font-size:12px;color:var(--text-muted);white-space:nowrap">' + escapeHtml(log.created_at || '') + '</td>' +
+            '<td style="font-size:13px;color:var(--text-primary)">' + escapeHtml(userName) + '</td>' +
+            '<td><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:' + style.bg + ';color:' + style.color + '">' + style.text + '</span></td>' +
+            '<td style="font-size:12px;color:var(--text-secondary)">' + escapeHtml(resourceText) + '</td>' +
+            '<td style="font-size:12px;color:var(--text-secondary);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(log.detail || '') + '">' + escapeHtml(log.detail || '') + '</td>' +
+            '<td style="font-size:12px;color:var(--text-muted);font-family:monospace">' + escapeHtml(log.ip_address || '') + '</td>' +
+            '</tr>';
     });
-    container.innerHTML = html;
+    tbody.innerHTML = html;
 }
 
 function renderAuditPagination(totalPages, current) {
