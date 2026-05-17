@@ -176,17 +176,25 @@ function seed() {
   ppInsert(partyPushes);
 
   const insertCall = db.prepare(
-    `INSERT INTO call_records (caller_number, callee_id, call_type, category, status, wait_duration, talk_duration, note, started_at, answered_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO call_records (caller_number, caller_name, callee_id, call_type, category, status, case_id, wait_duration, talk_duration, satisfaction, transfer_to, note, started_at, answered_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );
   const calls = [
-    ['138****5678', null, 'inbound', 'consultation', 'waiting', 192, null, null, '2024-12-09 14:23:15', null, null],
-    ['159****3456', null, 'inbound', 'appointment', 'waiting', 319, null, null, '2024-12-09 14:21:08', null, null],
-    ['186****7890', 7, 'inbound', 'query', 'connected', 45, null, '查询案件 #2024-1090 进度', '2024-12-09 14:18:42', '2024-12-09 14:19:27', null],
-    ['177****2345', 7, 'inbound', 'complaint', 'connected', 30, null, '投诉调解员态度问题', '2024-12-09 14:15:30', '2024-12-09 14:16:00', null],
-    ['135****8901', 7, 'inbound', 'consultation', 'completed', 15, 320, '咨询房屋租赁纠纷调解流程', '2024-12-09 14:10:00', '2024-12-09 14:10:15', '2024-12-09 14:15:35'],
-    ['188****4567', 7, 'inbound', 'appointment', 'completed', 8, 180, '预约下周调解', '2024-12-09 14:05:00', '2024-12-09 14:05:08', '2024-12-09 14:08:08'],
-    ['139****1234', 7, 'inbound', 'query', 'completed', 22, 95, '查询调解协议书模板', '2024-12-09 13:55:00', '2024-12-09 13:55:22', '2024-12-09 13:56:57'],
-    ['156****7890', null, 'inbound', 'consultation', 'abandoned', 120, null, null, '2024-12-09 13:50:00', null, '2024-12-09 13:52:00']
+    ['138****5678', '张某', null, 'inbound', 'consultation', 'waiting', null, 192, null, null, null, null, '2024-12-09 14:23:15', null, null],
+    ['159****3456', '李某', null, 'inbound', 'appointment', 'waiting', null, 319, null, null, null, null, '2024-12-09 14:21:08', null, null],
+    ['186****7890', '王某', 7, 'inbound', 'query', 'connected', 2, 45, null, null, null, '查询案件 #2024-1090 进度', '2024-12-09 14:18:42', '2024-12-09 14:19:27', null],
+    ['177****2345', '赵某', 7, 'inbound', 'complaint', 'connected', null, 30, null, null, null, '投诉调解员态度问题', '2024-12-09 14:15:30', '2024-12-09 14:16:00', null],
+    ['135****8901', '孙某', 7, 'inbound', 'consultation', 'completed', null, 15, 320, 4, null, '咨询房屋租赁纠纷调解流程', '2024-12-09 14:10:00', '2024-12-09 14:10:15', '2024-12-09 14:15:35'],
+    ['188****4567', '周某', 7, 'inbound', 'appointment', 'completed', 1, 8, 180, 5, null, '预约下周调解', '2024-12-09 14:05:00', '2024-12-09 14:05:08', '2024-12-09 14:08:08'],
+    ['139****1234', '吴某', 7, 'inbound', 'query', 'completed', 3, 22, 95, 3, null, '查询调解协议书模板', '2024-12-09 13:55:00', '2024-12-09 13:55:22', '2024-12-09 13:56:57'],
+    ['156****7890', '郑某', null, 'inbound', 'consultation', 'abandoned', null, 120, null, null, null, null, '2024-12-09 13:50:00', null, '2024-12-09 13:52:00'],
+    ['131****2345', '钱某', 7, 'inbound', 'mediation', 'completed', 1, 12, 480, 5, null, '确认调解时间，已安排12月10日下午2点', '2024-12-09 11:30:00', '2024-12-09 11:30:12', '2024-12-09 11:38:12'],
+    ['152****6789', '冯某', 7, 'inbound', 'complaint', 'transferred', null, 25, 60, null, '投诉处理部', '投诉调解结果不满意，转接投诉处理部', '2024-12-09 10:45:00', '2024-12-09 10:45:25', '2024-12-09 10:46:25'],
+    ['176****4321', '陈某', 7, 'outbound', 'followup', 'completed', 2, 0, 210, 4, null, '回访调解进展，当事人表示满意', '2024-12-09 10:15:00', '2024-12-09 10:15:00', '2024-12-09 10:18:30'],
+    ['133****8765', '杨某', 7, 'outbound', 'mediation', 'completed', 4, 0, 360, 5, null, '通知调解安排，确认双方出席', '2024-12-09 09:30:00', '2024-12-09 09:30:00', '2024-12-09 09:36:00'],
+    ['185****5432', '黄某', null, 'inbound', 'query', 'missed', null, 60, null, null, null, null, '2024-12-09 09:10:00', null, null],
+    ['157****9876', '朱某', 7, 'inbound', 'consultation', 'completed', null, 18, 150, 4, null, '咨询金融纠纷调解所需材料', '2024-12-08 16:20:00', '2024-12-08 16:20:18', '2024-12-08 16:22:48'],
+    ['189****3210', '何某', 7, 'outbound', 'followup', 'completed', 5, 0, 180, 3, null, '回访调解协议履行情况', '2024-12-08 15:00:00', '2024-12-08 15:00:00', '2024-12-08 15:03:00'],
+    ['136****6543', '林某', 7, 'inbound', 'appointment', 'completed', 3, 10, 120, 5, null, '预约12月12日调解', '2024-12-08 14:30:00', '2024-12-08 14:30:10', '2024-12-08 14:32:10']
   ];
   const callInsert = db.transaction((rows) => {
     for (const c of rows) insertCall.run(...c);

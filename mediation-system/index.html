@@ -2642,48 +2642,86 @@
                 <div class="page-header">
                     <h2>呼叫中心</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline"><span class="material-icons-round" style="font-size:16px">bar_chart</span> 报表</button>
-                        <button class="btn btn-primary" onclick="showToast('请输入呼叫号码','info')"><span class="material-icons-round" style="font-size:16px">call</span> 发起呼叫</button>
+                        <button class="btn btn-outline" onclick="showOutboundModal()"><span class="material-icons-round" style="font-size:16px">call_made</span> 外呼</button>
+                        <button class="btn btn-primary" onclick="showNewCallModal()"><span class="material-icons-round" style="font-size:16px">call</span> 来电登记</button>
                     </div>
                 </div>
-                <div class="call-dashboard">
-                    <div class="call-stat">
-                        <div class="cs-value" id="call-stat-queue" style="color:var(--accent-gold)">--</div>
-                        <div class="cs-label">当前排队</div>
+                <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px" id="call-stats-cards"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">donut_small</span>
+                            <span style="font-size:13px;font-weight:600">来电类别分布</span>
+                        </div>
+                        <div id="call-category-chart" style="display:flex;gap:12px;flex-wrap:wrap"></div>
                     </div>
-                    <div class="call-stat">
-                        <div class="cs-value" id="call-stat-active" style="color:var(--accent-teal)">--</div>
-                        <div class="cs-label">通话中</div>
-                    </div>
-                    <div class="call-stat">
-                        <div class="cs-value" id="call-stat-today" style="color:var(--accent-violet)">--</div>
-                        <div class="cs-label">今日接听</div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">bar_chart</span>
+                            <span style="font-size:13px;font-weight:600">今日呼叫量趋势</span>
+                        </div>
+                        <div class="chart-wrapper" style="height:160px">
+                            <canvas id="callChart"></canvas>
+                        </div>
                     </div>
                 </div>
-                <div class="data-table" style="margin-bottom:16px">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>来电号码</th>
-                                <th>来电时间</th>
-                                <th>等待时长</th>
-                                <th>类型</th>
-                                <th>状态</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="callcenter-tbody">
-                            <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
-                        </tbody>
-                    </table>
+                <div class="chart-card" style="margin-bottom:16px">
+                    <div class="chart-card-header">
+                        <h3>实时通话</h3>
+                    </div>
+                    <div id="call-active-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;padding:4px"></div>
                 </div>
                 <div class="chart-card">
                     <div class="chart-card-header">
-                        <h3>今日呼叫量趋势</h3>
+                        <h3>通话记录</h3>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <input type="text" id="call-search-input" placeholder="搜索号码/姓名/备注..." style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none;width:160px" onkeydown="if(event.key==='Enter')loadCallRecords()">
+                            <select id="call-type-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadCallRecords()">
+                                <option value="">全部类型</option>
+                                <option value="inbound">呼入</option>
+                                <option value="outbound">呼出</option>
+                            </select>
+                            <select id="call-category-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadCallRecords()">
+                                <option value="">全部类别</option>
+                                <option value="consultation">咨询</option>
+                                <option value="appointment">预约</option>
+                                <option value="query">查询</option>
+                                <option value="complaint">投诉</option>
+                                <option value="mediation">调解</option>
+                                <option value="followup">回访</option>
+                            </select>
+                            <select id="call-status-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadCallRecords()">
+                                <option value="">全部状态</option>
+                                <option value="waiting">等待中</option>
+                                <option value="connected">通话中</option>
+                                <option value="completed">已完成</option>
+                                <option value="missed">未接</option>
+                                <option value="abandoned">放弃</option>
+                                <option value="transferred">已转接</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="chart-wrapper" style="height:180px">
-                        <canvas id="callChart"></canvas>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>号码/姓名</th>
+                                    <th>类型</th>
+                                    <th>类别</th>
+                                    <th>关联案件</th>
+                                    <th>开始时间</th>
+                                    <th>等待</th>
+                                    <th>通话</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="callcenter-tbody">
+                                <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
+                    <div id="call-pagination" style="display:flex;gap:6px;justify-content:center;margin-top:12px"></div>
                 </div>
             </div>
 
@@ -7453,97 +7491,135 @@ async function markAllRead() {
 
 // ==================== CALL CENTER ====================
 var callChartInstance = null;
+var callCurrentPage = 1;
+
+var callTypeLabels = { inbound: '呼入', outbound: '呼出' };
+var callTypeIcons = { inbound: 'call_received', outbound: 'call_made' };
+var callTypeColors = { inbound: 'var(--accent-gold)', outbound: 'var(--accent-teal)' };
+var callCategoryLabels = { consultation: '咨询', appointment: '预约', query: '查询', complaint: '投诉', mediation: '调解', followup: '回访', other: '其他' };
+var callCategoryIcons = { consultation: 'help', appointment: 'event', query: 'search', complaint: 'report_problem', mediation: 'handshake', followup: 'callback', other: 'more_horiz' };
+var callCategoryColors = { consultation: 'var(--accent-gold)', appointment: 'var(--accent-teal)', query: 'var(--accent-violet)', complaint: 'var(--accent-rose)', mediation: '#34d399', followup: '#60a5fa', other: 'var(--text-muted)' };
+var callStatusLabels = { waiting: '等待中', connected: '通话中', completed: '已完成', missed: '未接', abandoned: '已放弃', transferred: '已转接' };
+var callStatusClasses = { waiting: 'pending', connected: 'mediating', completed: 'agreed', missed: 'urgent', abandoned: 'closed', transferred: 'accepted' };
+
+function formatDuration(seconds) {
+    if (!seconds || seconds <= 0) return '—';
+    var m = Math.floor(seconds / 60);
+    var s = seconds % 60;
+    if (m > 0) return m + '分' + s + '秒';
+    return s + '秒';
+}
 
 async function loadCallCenter() {
     try {
         var stats = await api.get('/callcenter/stats');
-        renderCallCenterStats(stats);
-
-        var records = await api.get('/callcenter/records');
-        renderCallCenterRecords(Array.isArray(records) ? records : (records.data || []));
-
-        if (!callChartInstance) {
-            initCallChart(stats);
-        }
+        renderCallStats(stats);
+        renderCallActiveList(stats.recent || []);
+        renderCallCategoryChart(stats.by_category || []);
+        renderCallHourlyChart(stats.hourly_stats || []);
+        await loadCallRecords();
     } catch (err) {
         showToast('加载呼叫中心数据失败: ' + err.message);
     }
 }
 
-function renderCallCenterStats(stats) {
-    var queueEl = document.getElementById('call-stat-queue');
-    var activeEl = document.getElementById('call-stat-active');
-    var todayEl = document.getElementById('call-stat-today');
+function renderCallStats(stats) {
+    var s = stats.summary || stats;
+    var container = document.getElementById('call-stats-cards');
+    if (!container) return;
 
-    if (queueEl) queueEl.textContent = stats.queueCount !== undefined ? stats.queueCount : '--';
-    if (activeEl) activeEl.textContent = stats.activeCount !== undefined ? stats.activeCount : '--';
-    if (todayEl) todayEl.textContent = stats.todayCount !== undefined ? stats.todayCount : '--';
+    var cards = [
+        { label: '当前排队', count: s.waiting || 0, icon: 'queue', color: 'var(--accent-gold)', bg: 'var(--accent-gold-dim)' },
+        { label: '通话中', count: s.connected || 0, icon: 'phone_in_talk', color: 'var(--accent-teal)', bg: 'var(--accent-teal-dim)' },
+        { label: '今日来电', count: s.today_total || 0, icon: 'call_received', color: 'var(--accent-violet)', bg: 'var(--accent-violet-dim)' },
+        { label: '今日接听', count: s.today_answered || 0, icon: 'check_circle', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+        { label: '接通率', count: (s.answer_rate || 0) + '%', icon: 'trending_up', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
+        { label: '平均通话', count: formatDuration(s.avg_talk), icon: 'timer', color: '#fb923c', bg: 'rgba(251,146,60,0.12)' }
+    ];
+
+    var html = '';
+    cards.forEach(function(c) {
+        html += '<div class="chart-card" style="padding:14px;display:flex;align-items:center;gap:10px">' +
+            '<div style="width:36px;height:36px;border-radius:var(--radius-md);background:' + c.bg + ';display:flex;align-items:center;justify-content:center"><span class="material-icons-round" style="font-size:18px;color:' + c.color + '">' + c.icon + '</span></div>' +
+            '<div><div style="font-size:18px;font-weight:700;color:var(--text-primary)">' + c.count + '</div><div style="font-size:10px;color:var(--text-muted)">' + c.label + '</div></div></div>';
+    });
+    container.innerHTML = html;
 }
 
-function renderCallCenterRecords(records) {
-    var tbody = document.getElementById('callcenter-tbody');
-    if (!tbody) return;
+function renderCallActiveList(records) {
+    var container = document.getElementById('call-active-list');
+    if (!container) return;
 
     if (!records || records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:40px">暂无来电记录</td></tr>';
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;grid-column:1/-1">当前无活跃通话</div>';
         return;
     }
 
     var html = '';
     records.forEach(function(r) {
-        var statusClass = r.statusClass || 'pending';
-        var statusText = r.statusText || r.status || '';
-        var waitColor = r.waitDurationColor ? 'var(--accent-' + r.waitDurationColor + ')' : '';
-        var actionBtn = '';
-        if (r.status === 'waiting' || r.status === 'pending') {
-            actionBtn = '<button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="answerCall(\'' + (r.id || r._id || '') + '\')">接听</button>';
-        } else if (r.status === 'active' || r.status === 'talking') {
-            actionBtn = '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="endCall(\'' + (r.id || r._id || '') + '\')">结束</button>';
-        } else {
-            actionBtn = '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px">查看</button>';
-        }
+        var isWaiting = r.status === 'waiting';
+        var bg = isWaiting ? 'var(--accent-gold-dim)' : 'var(--accent-teal-dim)';
+        var border = isWaiting ? 'rgba(201,168,76,0.3)' : 'rgba(45,212,191,0.3)';
+        var icon = isWaiting ? 'phone_callback' : 'phone_in_talk';
+        var iconColor = isWaiting ? 'var(--accent-gold)' : 'var(--accent-teal)';
+        var statusLabel = callStatusLabels[r.status] || r.status;
+        var catLabel = callCategoryLabels[r.category] || r.category || '';
+        var catIcon = callCategoryIcons[r.category] || 'more_horiz';
+        var waitStr = r.wait_duration ? formatDuration(r.wait_duration) : '—';
 
-        html += '<tr>' +
-            '<td>' + escapeHtml(r.phone || r.caller || '') + '</td>' +
-            '<td>' + escapeHtml(r.time || r.callTime || '') + '</td>' +
-            '<td' + (waitColor ? ' style="color:' + waitColor + '"' : '') + '>' + escapeHtml(r.waitDuration || r.waitTime || '—') + '</td>' +
-            '<td>' + escapeHtml(r.category || r.type || '') + '</td>' +
-            '<td><span class="status-tag ' + statusClass + '">' + escapeHtml(statusText) + '</span></td>' +
-            '<td>' + actionBtn + '</td>' +
-            '</tr>';
+        html += '<div style="padding:12px;background:' + bg + ';border:1px solid ' + border + ';border-radius:var(--radius-lg);display:flex;align-items:center;gap:12px">' +
+            '<div style="width:40px;height:40px;border-radius:50%;background:var(--bg-card);display:flex;align-items:center;justify-content:center">' +
+            '<span class="material-icons-round" style="font-size:20px;color:' + iconColor + ';animation:' + (isWaiting ? 'pulse 2s infinite' : 'none') + '">' + icon + '</span></div>' +
+            '<div style="flex:1;min-width:0">' +
+            '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">' +
+            '<span style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(r.caller_number || '') + '</span>' +
+            (r.caller_name ? '<span style="font-size:11px;color:var(--text-muted)">' + escapeHtml(r.caller_name) + '</span>' : '') +
+            '</div>' +
+            '<div style="display:flex;gap:8px;font-size:10px;color:var(--text-muted)">' +
+            '<span><span class="material-icons-round" style="font-size:10px;vertical-align:middle">' + catIcon + '</span> ' + catLabel + '</span>' +
+            '<span>等待: ' + waitStr + '</span>' +
+            (r.callee_name ? '<span>接听: ' + escapeHtml(r.callee_name) + '</span>' : '') +
+            '</div></div>' +
+            '<div style="display:flex;flex-direction:column;gap:4px">' +
+            '<span class="status-tag ' + (callStatusClasses[r.status] || 'pending') + '">' + statusLabel + '</span>' +
+            (isWaiting ? '<button class="btn btn-primary" style="padding:2px 8px;font-size:10px;white-space:nowrap" onclick="answerCall(' + r.id + ')">接听</button>' :
+             '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px;white-space:nowrap" onclick="showEndCallModal(' + r.id + ')">结束</button>') +
+            '</div></div>';
     });
-    tbody.innerHTML = html;
+    container.innerHTML = html;
 }
 
-async function answerCall(id) {
-    try {
-        await api.put('/callcenter/records/' + id + '/answer');
-        showToast('已接听来电', 'success');
-        await loadCallCenter();
-    } catch (err) {
-        showToast('接听失败: ' + err.message);
+function renderCallCategoryChart(byCategory) {
+    var container = document.getElementById('call-category-chart');
+    if (!container) return;
+
+    if (!byCategory || byCategory.length === 0) {
+        container.innerHTML = '<span style="color:var(--text-muted);font-size:12px">暂无数据</span>';
+        return;
     }
+
+    var html = '';
+    byCategory.forEach(function(c) {
+        var color = callCategoryColors[c.category] || 'var(--text-muted)';
+        var icon = callCategoryIcons[c.category] || 'more_horiz';
+        var label = callCategoryLabels[c.category] || c.category;
+        html += '<div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">' +
+            '<span class="material-icons-round" style="font-size:16px;color:' + color + '">' + icon + '</span>' +
+            '<span style="font-size:12px;color:var(--text-primary)">' + label + '</span>' +
+            '<span style="font-size:12px;font-weight:600;color:' + color + '">' + c.cnt + '</span></div>';
+    });
+    container.innerHTML = html;
 }
 
-async function endCall(id) {
-    try {
-        await api.put('/callcenter/records/' + id + '/end');
-        showToast('通话已结束', 'success');
-        await loadCallCenter();
-    } catch (err) {
-        showToast('操作失败: ' + err.message);
-    }
-}
-
-function initCallChart(stats) {
+function renderCallHourlyChart(hourlyStats) {
     var ctx = document.getElementById('callChart');
     if (!ctx) return;
 
     if (callChartInstance) callChartInstance.destroy();
 
-    var labels = (stats && stats.chartLabels) || ['8:00','9:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00'];
-    var inbound = (stats && stats.chartInbound) || [];
-    var connected = (stats && stats.chartConnected) || [];
+    var labels = hourlyStats.map(function(h) { return h.hour; });
+    var totalData = hourlyStats.map(function(h) { return h.total; });
+    var answeredData = hourlyStats.map(function(h) { return h.answered; });
 
     callChartInstance = new Chart(ctx.getContext('2d'), {
         type: 'bar',
@@ -7551,12 +7627,12 @@ function initCallChart(stats) {
             labels: labels,
             datasets: [{
                 label: '呼入量',
-                data: inbound,
+                data: totalData,
                 backgroundColor: 'rgba(201, 168, 76, 0.6)',
                 borderRadius: 4
             }, {
                 label: '接通量',
-                data: connected,
+                data: answeredData,
                 backgroundColor: 'rgba(45, 212, 191, 0.6)',
                 borderRadius: 4
             }]
@@ -7584,6 +7660,439 @@ function initCallChart(stats) {
             }
         }
     });
+}
+
+async function loadCallRecords(page) {
+    if (page !== undefined) callCurrentPage = page;
+
+    var search = document.getElementById('call-search-input') ? document.getElementById('call-search-input').value.trim() : '';
+    var callType = document.getElementById('call-type-filter') ? document.getElementById('call-type-filter').value : '';
+    var category = document.getElementById('call-category-filter') ? document.getElementById('call-category-filter').value : '';
+    var status = document.getElementById('call-status-filter') ? document.getElementById('call-status-filter').value : '';
+
+    var params = { page: callCurrentPage, pageSize: 15 };
+    if (search) params.search = search;
+    if (callType) params.call_type = callType;
+    if (category) params.category = category;
+    if (status) params.status = status;
+
+    try {
+        var res = await api.get('/callcenter/records' + buildQueryString(params));
+        var data = res.data || res;
+        if (!Array.isArray(data)) data = data.data || [];
+        renderCallRecords(data);
+        var pagination = res.pagination || (res.data && res.data.pagination) || {};
+        renderCallPagination(pagination.totalPages || 1, callCurrentPage);
+    } catch (err) {
+        showToast('加载通话记录失败: ' + err.message);
+    }
+}
+
+function renderCallRecords(records) {
+    var tbody = document.getElementById('callcenter-tbody');
+    if (!tbody) return;
+
+    if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:40px">暂无通话记录</td></tr>';
+        return;
+    }
+
+    var html = '';
+    records.forEach(function(r) {
+        var typeLabel = callTypeLabels[r.call_type] || r.call_type;
+        var typeIcon = callTypeIcons[r.call_type] || 'call';
+        var typeColor = callTypeColors[r.call_type] || 'var(--text-muted)';
+        var catLabel = callCategoryLabels[r.category] || r.category || '—';
+        var statusLabel = callStatusLabels[r.status] || r.status;
+        var statusClass = callStatusClasses[r.status] || 'pending';
+        var waitStr = r.wait_duration ? formatDuration(r.wait_duration) : '—';
+        var talkStr = r.talk_duration ? formatDuration(r.talk_duration) : '—';
+        var timeStr = r.started_at ? new Date(r.started_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+
+        var nameStr = escapeHtml(r.caller_number || '');
+        if (r.caller_name) nameStr += '<br><span style="font-size:10px;color:var(--text-muted)">' + escapeHtml(r.caller_name) + '</span>';
+
+        var caseStr = '—';
+        if (r.case_number) caseStr = '<span style="color:var(--accent-gold)">' + escapeHtml(r.case_number) + '</span>';
+
+        var actions = '';
+        if (r.status === 'waiting') {
+            actions = '<button class="btn btn-primary" style="padding:4px 10px;font-size:11px" onclick="answerCall(' + r.id + ')">接听</button>';
+        } else if (r.status === 'connected') {
+            actions = '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="showEndCallModal(' + r.id + ')">结束</button> ' +
+                '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="showTransferModal(' + r.id + ')">转接</button>';
+        } else {
+            actions = '<button class="btn btn-outline" style="padding:4px 10px;font-size:11px" onclick="showCallDetail(' + r.id + ')">详情</button> ' +
+                '<span class="material-icons-round" style="font-size:14px;color:var(--accent-rose);cursor:pointer" onclick="deleteCallRecord(' + r.id + ')" title="删除">close</span>';
+        }
+
+        html += '<tr>' +
+            '<td style="min-width:100px">' + nameStr + '</td>' +
+            '<td><span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:' + typeColor + '"><span class="material-icons-round" style="font-size:14px">' + typeIcon + '</span>' + typeLabel + '</span></td>' +
+            '<td>' + catLabel + '</td>' +
+            '<td>' + caseStr + '</td>' +
+            '<td style="font-size:11px">' + timeStr + '</td>' +
+            '<td style="font-size:11px">' + waitStr + '</td>' +
+            '<td style="font-size:11px">' + talkStr + '</td>' +
+            '<td><span class="status-tag ' + statusClass + '">' + statusLabel + '</span></td>' +
+            '<td style="white-space:nowrap">' + actions + '</td>' +
+            '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function renderCallPagination(totalPages, current) {
+    var container = document.getElementById('call-pagination');
+    if (!container) return;
+
+    var html = '<button style="padding:4px 10px;font-size:11px" ' + (current <= 1 ? 'disabled' : '') + ' onclick="loadCallRecords(' + (current - 1) + ')">上一页</button>';
+    for (var i = 1; i <= totalPages; i++) {
+        html += '<button style="padding:4px 10px;font-size:11px" class="' + (i === current ? 'btn btn-primary' : '') + '" onclick="loadCallRecords(' + i + ')">' + i + '</button>';
+    }
+    html += '<button style="padding:4px 10px;font-size:11px" ' + (current >= totalPages ? 'disabled' : '') + ' onclick="loadCallRecords(' + (current + 1) + ')">下一页</button>';
+    container.innerHTML = html;
+}
+
+async function answerCall(id) {
+    try {
+        await api.put('/callcenter/records/' + id + '/answer');
+        showToast('已接听来电', 'success');
+        await loadCallCenter();
+    } catch (err) {
+        showToast('接听失败: ' + err.message);
+    }
+}
+
+function showEndCallModal(id) {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '460px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div class="modal-field"><label>通话备注</label><textarea id="end-call-note" rows="3" placeholder="记录通话内容..."></textarea></div>' +
+        '<div class="modal-field"><label>满意度评价</label>' +
+        '<div id="end-call-satisfaction" style="display:flex;gap:8px">' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="1" onclick="setCallSatisfaction(1)">star_border</span>' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="2" onclick="setCallSatisfaction(2)">star_border</span>' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="3" onclick="setCallSatisfaction(3)">star_border</span>' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="4" onclick="setCallSatisfaction(4)">star_border</span>' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="5" onclick="setCallSatisfaction(5)">star_border</span>' +
+        '</div></div>' +
+        '<input type="hidden" id="end-call-id" value="' + id + '">' +
+        '<input type="hidden" id="end-call-sat-val" value="0">' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitEndCall()"><span class="material-icons-round" style="font-size:16px">call_end</span> 结束通话</button>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '结束通话 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+}
+
+var currentCallSatisfaction = 0;
+function setCallSatisfaction(value) {
+    currentCallSatisfaction = value;
+    document.getElementById('end-call-sat-val').value = value;
+    var stars = document.querySelectorAll('#end-call-satisfaction .material-icons-round');
+    stars.forEach(function(s) {
+        var v = parseInt(s.getAttribute('data-value'));
+        if (v <= value) {
+            s.textContent = 'star';
+            s.style.color = 'var(--accent-gold)';
+        } else {
+            s.textContent = 'star_border';
+            s.style.color = 'var(--text-muted)';
+        }
+    });
+}
+
+async function submitEndCall() {
+    var id = document.getElementById('end-call-id').value;
+    var note = document.getElementById('end-call-note').value.trim();
+    var satisfaction = parseInt(document.getElementById('end-call-sat-val').value) || 0;
+
+    try {
+        var data = {};
+        if (note) data.note = note;
+        if (satisfaction > 0) data.satisfaction = satisfaction;
+        await api.put('/callcenter/records/' + id + '/end', data);
+        showToast('通话已结束', 'success');
+        closeModal('modal-generic');
+        await loadCallCenter();
+    } catch (err) {
+        showToast('操作失败: ' + err.message);
+    }
+}
+
+function showTransferModal(id) {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '420px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div class="modal-field"><label>转接目标 *</label>' +
+        '<select id="transfer-target">' +
+        '<option value="">请选择转接目标</option>' +
+        '<option value="调解部">调解部</option>' +
+        '<option value="法律咨询部">法律咨询部</option>' +
+        '<option value="投诉处理部">投诉处理部</option>' +
+        '<option value="主管">主管</option>' +
+        '</select></div>' +
+        '<div class="modal-field"><label>转接备注</label><textarea id="transfer-note" rows="2" placeholder="转接原因..."></textarea></div>' +
+        '<input type="hidden" id="transfer-call-id" value="' + id + '">' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitTransfer()"><span class="material-icons-round" style="font-size:16px">swap_calls</span> 确认转接</button>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '转接通话 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+}
+
+async function submitTransfer() {
+    var id = document.getElementById('transfer-call-id').value;
+    var transferTo = document.getElementById('transfer-target').value;
+    var note = document.getElementById('transfer-note').value.trim();
+
+    if (!transferTo) { showToast('请选择转接目标', 'warning'); return; }
+
+    try {
+        await api.put('/callcenter/records/' + id + '/transfer', { transfer_to: transferTo, note: note });
+        showToast('通话已转接至' + transferTo, 'success');
+        closeModal('modal-generic');
+        await loadCallCenter();
+    } catch (err) {
+        showToast('转接失败: ' + err.message);
+    }
+}
+
+function showNewCallModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '500px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<div class="modal-field"><label>来电号码 *</label><input type="text" id="new-call-number" placeholder="来电号码"></div>' +
+        '<div class="modal-field"><label>来电人姓名</label><input type="text" id="new-call-name" placeholder="来电人姓名"></div>' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<div class="modal-field"><label>呼叫类型 *</label>' +
+        '<select id="new-call-type"><option value="inbound">呼入</option><option value="outbound">呼出</option></select></div>' +
+        '<div class="modal-field"><label>来电类别</label>' +
+        '<select id="new-call-category">' +
+        '<option value="consultation">咨询</option><option value="appointment">预约</option>' +
+        '<option value="query">查询</option><option value="complaint">投诉</option>' +
+        '<option value="mediation">调解</option><option value="followup">回访</option>' +
+        '<option value="other">其他</option></select></div></div>' +
+        '<div class="modal-field"><label>关联案件</label>' +
+        '<div style="position:relative"><input type="text" id="call-case-search" placeholder="搜索案件编号或标题..." oninput="searchCallCases(this.value)" autocomplete="off">' +
+        '<div id="call-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
+        '<input type="hidden" id="call-case-id" value=""></div>' +
+        '<div id="call-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div class="modal-field"><label>备注</label><textarea id="new-call-note" rows="3" placeholder="通话备注..."></textarea></div>' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitNewCall()"><span class="material-icons-round" style="font-size:16px">call</span> 登记来电</button>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '来电登记 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+}
+
+async function searchCallCases(keyword) {
+    var dropdown = document.getElementById('call-case-dropdown');
+    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
+    try {
+        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=6');
+        var cases = data.data || data;
+        if (!Array.isArray(cases)) cases = cases.data || [];
+        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
+        var html = '';
+        cases.forEach(function(c) {
+            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectCallCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
+                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
+        });
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } catch (err) { }
+}
+
+function selectCallCase(id, caseNumber, title) {
+    document.getElementById('call-case-id').value = id;
+    document.getElementById('call-case-search').value = caseNumber;
+    document.getElementById('call-case-dropdown').style.display = 'none';
+    var selEl = document.getElementById('call-case-selected');
+    selEl.style.display = 'block';
+    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+}
+
+async function submitNewCall() {
+    var number = document.getElementById('new-call-number').value.trim();
+    var callType = document.getElementById('new-call-type').value;
+    if (!number) { showToast('请输入来电号码', 'warning'); return; }
+
+    var data = {
+        caller_number: number,
+        caller_name: document.getElementById('new-call-name').value.trim() || null,
+        call_type: callType,
+        category: document.getElementById('new-call-category').value,
+        case_id: document.getElementById('call-case-id').value ? parseInt(document.getElementById('call-case-id').value) : null,
+        note: document.getElementById('new-call-note').value.trim() || null
+    };
+
+    try {
+        await api.post('/callcenter/records', data);
+        showToast('来电登记成功', 'success');
+        closeModal('modal-generic');
+        await loadCallCenter();
+    } catch (err) {
+        showToast('登记失败: ' + err.message);
+    }
+}
+
+function showOutboundModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '480px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<div class="modal-field"><label>呼叫号码 *</label><input type="text" id="outbound-number" placeholder="对方号码"></div>' +
+        '<div class="modal-field"><label>对方姓名</label><input type="text" id="outbound-name" placeholder="对方姓名"></div>' +
+        '</div>' +
+        '<div class="modal-field"><label>呼叫类别</label>' +
+        '<select id="outbound-category">' +
+        '<option value="consultation">咨询</option><option value="appointment">预约</option>' +
+        '<option value="mediation">调解</option><option value="followup">回访</option>' +
+        '<option value="other">其他</option></select></div>' +
+        '<div class="modal-field"><label>关联案件</label>' +
+        '<div style="position:relative"><input type="text" id="outbound-case-search" placeholder="搜索案件编号或标题..." oninput="searchOutboundCases(this.value)" autocomplete="off">' +
+        '<div id="outbound-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
+        '<input type="hidden" id="outbound-case-id" value=""></div>' +
+        '<div id="outbound-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div class="modal-field"><label>呼叫备注</label><textarea id="outbound-note" rows="2" placeholder="外呼目的..."></textarea></div>' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitOutbound()"><span class="material-icons-round" style="font-size:16px">call_made</span> 发起外呼</button>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '发起外呼 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+}
+
+async function searchOutboundCases(keyword) {
+    var dropdown = document.getElementById('outbound-case-dropdown');
+    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
+    try {
+        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=6');
+        var cases = data.data || data;
+        if (!Array.isArray(cases)) cases = cases.data || [];
+        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
+        var html = '';
+        cases.forEach(function(c) {
+            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectOutboundCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
+                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
+        });
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } catch (err) { }
+}
+
+function selectOutboundCase(id, caseNumber, title) {
+    document.getElementById('outbound-case-id').value = id;
+    document.getElementById('outbound-case-search').value = caseNumber;
+    document.getElementById('outbound-case-dropdown').style.display = 'none';
+    var selEl = document.getElementById('outbound-case-selected');
+    selEl.style.display = 'block';
+    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+}
+
+async function submitOutbound() {
+    var number = document.getElementById('outbound-number').value.trim();
+    if (!number) { showToast('请输入呼叫号码', 'warning'); return; }
+
+    var data = {
+        callee_number: number,
+        callee_name: document.getElementById('outbound-name').value.trim() || null,
+        category: document.getElementById('outbound-category').value,
+        case_id: document.getElementById('outbound-case-id').value ? parseInt(document.getElementById('outbound-case-id').value) : null,
+        note: document.getElementById('outbound-note').value.trim() || null
+    };
+
+    try {
+        await api.post('/callcenter/outbound', data);
+        showToast('外呼已发起', 'success');
+        closeModal('modal-generic');
+        await loadCallCenter();
+    } catch (err) {
+        showToast('外呼失败: ' + err.message);
+    }
+}
+
+async function showCallDetail(id) {
+    try {
+        var record = await api.get('/callcenter/records/' + id);
+        var modal = document.getElementById('modal-generic');
+        if (!modal) return;
+        var modalContent = modal.querySelector('.modal-content');
+        modalContent.style.width = '520px';
+
+        var typeLabel = callTypeLabels[record.call_type] || record.call_type;
+        var catLabel = callCategoryLabels[record.category] || record.category || '—';
+        var statusLabel = callStatusLabels[record.status] || record.status;
+        var statusClass = callStatusClasses[record.status] || 'pending';
+        var waitStr = record.wait_duration ? formatDuration(record.wait_duration) : '—';
+        var talkStr = record.talk_duration ? formatDuration(record.talk_duration) : '—';
+        var startTime = record.started_at ? new Date(record.started_at).toLocaleString('zh-CN') : '—';
+        var answerTime = record.answered_at ? new Date(record.answered_at).toLocaleString('zh-CN') : '—';
+        var endTime = record.ended_at ? new Date(record.ended_at).toLocaleString('zh-CN') : '—';
+
+        var satHtml = '—';
+        if (record.satisfaction) {
+            satHtml = '';
+            for (var i = 1; i <= 5; i++) {
+                satHtml += '<span class="material-icons-round" style="font-size:16px;color:' + (i <= record.satisfaction ? 'var(--accent-gold)' : 'var(--text-muted)') + '">' + (i <= record.satisfaction ? 'star' : 'star_border') + '</span>';
+            }
+        }
+
+        var html = '<div style="padding:4px 0">' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;font-size:13px">' +
+            '<div><span style="color:var(--text-muted)">号码:</span> <strong>' + escapeHtml(record.caller_number || '') + '</strong></div>' +
+            '<div><span style="color:var(--text-muted)">姓名:</span> ' + escapeHtml(record.caller_name || '—') + '</div>' +
+            '<div><span style="color:var(--text-muted)">类型:</span> ' + typeLabel + '</div>' +
+            '<div><span style="color:var(--text-muted)">类别:</span> ' + catLabel + '</div>' +
+            '<div><span style="color:var(--text-muted)">状态:</span> <span class="status-tag ' + statusClass + '">' + statusLabel + '</span></div>' +
+            '<div><span style="color:var(--text-muted)">接听人:</span> ' + escapeHtml(record.callee_name || '—') + '</div>' +
+            '<div><span style="color:var(--text-muted)">开始时间:</span> ' + startTime + '</div>' +
+            '<div><span style="color:var(--text-muted)">接听时间:</span> ' + answerTime + '</div>' +
+            '<div><span style="color:var(--text-muted)">结束时间:</span> ' + endTime + '</div>' +
+            '<div><span style="color:var(--text-muted)">等待时长:</span> ' + waitStr + '</div>' +
+            '<div><span style="color:var(--text-muted)">通话时长:</span> ' + talkStr + '</div>' +
+            '<div><span style="color:var(--text-muted)">满意度:</span> ' + satHtml + '</div>' +
+            (record.case_number ? '<div style="grid-column:1/-1"><span style="color:var(--text-muted)">关联案件:</span> <span style="color:var(--accent-gold)">' + escapeHtml(record.case_number) + '</span> ' + escapeHtml(record.case_title || '') + '</div>' : '') +
+            (record.transfer_to ? '<div style="grid-column:1/-1"><span style="color:var(--text-muted)">转接至:</span> ' + escapeHtml(record.transfer_to) + '</div>' : '') +
+            '</div>' +
+            (record.note ? '<div style="margin-top:12px;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary)"><span style="color:var(--text-muted)">备注:</span> ' + escapeHtml(record.note) + '</div>' : '') +
+            '</div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '通话详情 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载详情失败: ' + err.message);
+    }
+}
+
+async function deleteCallRecord(id) {
+    if (!confirm('确定要删除该通话记录吗？')) return;
+    try {
+        await api.delete('/callcenter/records/' + id);
+        showToast('记录已删除', 'success');
+        await loadCallRecords();
+    } catch (err) {
+        showToast('删除失败: ' + err.message);
+    }
 }
 
 // ==================== SYSTEM DESIGN ====================
@@ -9011,7 +9520,7 @@ async function initApp() {
 }
 
 var spinStyle = document.createElement('style');
-spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+spinStyle.textContent = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }';
 document.head.appendChild(spinStyle);
 
 initApp();

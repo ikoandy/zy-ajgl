@@ -313,20 +313,25 @@ function initDatabase() {
     CREATE TABLE IF NOT EXISTS call_records (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       caller_number TEXT NOT NULL,
+      caller_name TEXT,
       callee_id INTEGER,
       call_type TEXT NOT NULL CHECK(call_type IN ('inbound', 'outbound')),
-      category TEXT CHECK(category IN ('consultation', 'appointment', 'query', 'complaint', 'other')),
-      status TEXT DEFAULT 'waiting' CHECK(status IN ('waiting', 'connected', 'completed', 'missed', 'abandoned')),
+      category TEXT CHECK(category IN ('consultation', 'appointment', 'query', 'complaint', 'mediation', 'followup', 'other')),
+      status TEXT DEFAULT 'waiting' CHECK(status IN ('waiting', 'connected', 'completed', 'missed', 'abandoned', 'transferred')),
+      case_id INTEGER,
       queue_position INTEGER,
       wait_duration INTEGER,
       talk_duration INTEGER,
       recording_path TEXT,
+      satisfaction INTEGER CHECK(satisfaction BETWEEN 1 AND 5),
+      transfer_to TEXT,
       note TEXT,
       started_at DATETIME,
       answered_at DATETIME,
       ended_at DATETIME,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (callee_id) REFERENCES users(id)
+      FOREIGN KEY (callee_id) REFERENCES users(id),
+      FOREIGN KEY (case_id) REFERENCES cases(id)
     );
 
     CREATE TABLE IF NOT EXISTS settings (
