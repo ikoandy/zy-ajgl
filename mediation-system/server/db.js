@@ -290,6 +290,26 @@ function initDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS party_push_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL,
+      party_id INTEGER NOT NULL,
+      push_type TEXT NOT NULL CHECK(push_type IN ('acceptance', 'schedule', 'mediation_notice', 'agreement', 'termination', 'document', 'hearing', 'reminder', 'other')),
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      channel TEXT DEFAULT 'sms' CHECK(channel IN ('sms', 'email', 'in_app', 'mail')),
+      status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'sent', 'delivered', 'read', 'failed')),
+      document_id INTEGER,
+      sent_by INTEGER,
+      sent_at DATETIME,
+      read_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (case_id) REFERENCES cases(id) ON DELETE CASCADE,
+      FOREIGN KEY (party_id) REFERENCES case_parties(id) ON DELETE CASCADE,
+      FOREIGN KEY (document_id) REFERENCES document_records(id),
+      FOREIGN KEY (sent_by) REFERENCES users(id)
+    );
+
     CREATE TABLE IF NOT EXISTS call_records (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       caller_number TEXT NOT NULL,

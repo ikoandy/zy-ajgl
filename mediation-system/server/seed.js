@@ -157,6 +157,24 @@ function seed() {
   });
   nInsert(notifications);
 
+  const insertPartyPush = db.prepare(
+    `INSERT INTO party_push_records (case_id, party_id, push_type, title, content, channel, status, sent_by, sent_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const partyPushes = [
+    [1, 1, 'acceptance', '案件受理通知', '您与李某关于房屋租赁押金退还纠纷的调解申请已受理，案件编号2024-1092，调解员李明华。', 'sms', 'delivered', 2, '2024-12-08 09:00:00'],
+    [1, 2, 'acceptance', '案件受理通知', '张某某已就房屋租赁押金退还纠纷向本委员会申请调解，案件编号2024-1092，请按时参加。', 'sms', 'delivered', 2, '2024-12-08 09:01:00'],
+    [1, 1, 'schedule', '调解安排通知', '您与李某的调解已安排于2024年12月9日14:00在调解室A进行，请携带相关证据材料。', 'sms', 'delivered', 2, '2024-12-08 15:00:00'],
+    [1, 2, 'schedule', '调解安排通知', '您与张某某的调解已安排于2024年12月9日14:00在调解室A进行，请携带相关证据材料。', 'sms', 'sent', 2, '2024-12-08 15:01:00'],
+    [2, 3, 'mediation_notice', '调解通知书', '您与某科技公司的劳动争议调解已安排，请于2024年12月10日10:00到调解室B参加调解。', 'email', 'delivered', 3, '2024-12-09 10:00:00'],
+    [3, 5, 'acceptance', '案件受理通知', '某贸易公司与贵公司的合同纠纷调解申请已受理，案件编号2024-1090。', 'sms', 'delivered', 4, '2024-12-07 14:00:00'],
+    [4, 7, 'agreement', '调解协议送达', '您与赵某的借款合同纠纷已达成调解协议，协议书已生成，请及时查阅确认。', 'email', 'read', 5, '2024-12-06 16:00:00'],
+    [5, 9, 'reminder', '调解提醒', '您与某银行的金融借款合同纠纷调解将于明日14:00进行，请准时参加。', 'sms', 'pending', 5, '2024-12-09 18:00:00']
+  ];
+  const ppInsert = db.transaction((rows) => {
+    for (const p of rows) insertPartyPush.run(...p);
+  });
+  ppInsert(partyPushes);
+
   const insertCall = db.prepare(
     `INSERT INTO call_records (caller_number, callee_id, call_type, category, status, wait_duration, talk_duration, note, started_at, answered_at, ended_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   );

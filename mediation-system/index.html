@@ -2578,32 +2578,60 @@
                 <div class="page-header">
                     <h2>信息推送</h2>
                     <div class="page-header-actions">
-                        <button class="btn btn-outline" onclick="markAllRead()"><span class="material-icons-round" style="font-size:16px">done_all</span> 全部已读</button>
-                        <button class="btn btn-primary" onclick="showSendNotificationModal()"><span class="material-icons-round" style="font-size:16px">campaign</span> 发送通知</button>
+                        <button class="btn btn-outline" onclick="loadPartyPushList()"><span class="material-icons-round" style="font-size:16px">refresh</span> 刷新</button>
+                        <button class="btn btn-primary" onclick="showPushToPartyModal()"><span class="material-icons-round" style="font-size:16px">send</span> 推送通知</button>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="notif-stats-cards"></div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="push-stats-cards"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">pie_chart</span>
+                            <span style="font-size:13px;font-weight:600">推送渠道分布</span>
+                        </div>
+                        <div id="push-channel-chart" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+                    </div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">category</span>
+                            <span style="font-size:13px;font-weight:600">推送类型分布</span>
+                        </div>
+                        <div id="push-type-chart" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+                    </div>
+                </div>
                 <div class="chart-card">
                     <div class="chart-card-header">
-                        <h3>通知列表</h3>
+                        <h3>推送记录</h3>
                         <div style="display:flex;gap:8px;align-items:center">
-                            <select id="notif-type-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadNotifications()">
+                            <select id="push-type-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadPartyPushList()">
                                 <option value="">全部类型</option>
-                                <option value="case">案件</option>
-                                <option value="document">文书</option>
-                                <option value="video">视频</option>
-                                <option value="system">系统</option>
-                                <option value="training">培训</option>
-                                <option value="urgent">紧急</option>
+                                <option value="acceptance">受理通知</option>
+                                <option value="schedule">调解安排</option>
+                                <option value="mediation_notice">调解通知书</option>
+                                <option value="agreement">协议送达</option>
+                                <option value="termination">终止通知</option>
+                                <option value="document">文书送达</option>
+                                <option value="hearing">听证通知</option>
+                                <option value="reminder">调解提醒</option>
                             </select>
-                            <select id="notif-read-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadNotifications()">
+                            <select id="push-channel-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadPartyPushList()">
+                                <option value="">全部渠道</option>
+                                <option value="sms">短信</option>
+                                <option value="email">邮件</option>
+                                <option value="in_app">站内信</option>
+                                <option value="mail">邮寄</option>
+                            </select>
+                            <select id="push-status-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadPartyPushList()">
                                 <option value="">全部状态</option>
-                                <option value="0">未读</option>
-                                <option value="1">已读</option>
+                                <option value="pending">待发送</option>
+                                <option value="sent">已发送</option>
+                                <option value="delivered">已送达</option>
+                                <option value="read">已读</option>
+                                <option value="failed">发送失败</option>
                             </select>
                         </div>
                     </div>
-                    <div class="push-list" id="push-list">
+                    <div id="push-records-list">
                         <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
                     </div>
                 </div>
@@ -7083,45 +7111,41 @@ var notifTypeConfig = {
     urgent: { icon: 'priority_high', label: '紧急', color: 'var(--accent-rose)', bg: 'var(--accent-rose-dim)' }
 };
 
+var pushTypeConfig = {
+    acceptance: { icon: 'check_circle', label: '受理通知', color: 'var(--accent-gold)', bg: 'var(--accent-gold-dim)' },
+    schedule: { icon: 'event', label: '调解安排', color: 'var(--accent-teal)', bg: 'var(--accent-teal-dim)' },
+    mediation_notice: { icon: 'campaign', label: '调解通知书', color: 'var(--accent-violet)', bg: 'var(--accent-violet-dim)' },
+    agreement: { icon: 'assignment_turned_in', label: '协议送达', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+    termination: { icon: 'cancel', label: '终止通知', color: 'var(--accent-rose)', bg: 'var(--accent-rose-dim)' },
+    document: { icon: 'mail', label: '文书送达', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
+    hearing: { icon: 'record_voice_over', label: '听证通知', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
+    reminder: { icon: 'notifications_active', label: '调解提醒', color: '#fb923c', bg: 'rgba(251,146,60,0.12)' },
+    other: { icon: 'info', label: '其他', color: 'var(--text-muted)', bg: 'var(--bg-tertiary)' }
+};
+
+var channelLabels = { sms: '短信', email: '邮件', in_app: '站内信', mail: '邮寄' };
+var channelIcons = { sms: 'sms', email: 'email', in_app: 'inbox', mail: 'local_post_office' };
+var pushStatusLabels = { pending: '待发送', sent: '已发送', delivered: '已送达', read: '已读', failed: '发送失败' };
+var pushStatusClasses = { pending: 'pending', sent: 'mediating', delivered: 'agreed', read: 'closed', failed: 'urgent' };
+
 async function loadNotifications() {
-    var typeFilter = document.getElementById('notif-type-filter') ? document.getElementById('notif-type-filter').value : '';
-    var readFilter = document.getElementById('notif-read-filter') ? document.getElementById('notif-read-filter').value : '';
-
-    var params = { pageSize: 50 };
-    if (typeFilter) params.type = typeFilter;
-    if (readFilter !== '') params.is_read = readFilter;
-
-    try {
-        var res = await api.get('/notifications' + buildQueryString(params));
-        var data = res.data || res;
-        if (!Array.isArray(data)) data = data.data || [];
-        renderNotifications(data);
-        await loadNotifStats();
-    } catch (err) {
-        showToast('加载通知失败: ' + err.message);
-    }
+    await loadPartyPushList();
+    await loadPartyPushStats();
 }
 
-async function loadNotifStats() {
+async function loadPartyPushStats() {
     try {
-        var allRes = await api.get('/notifications?pageSize=100');
-        var all = allRes.data || allRes;
-        if (!Array.isArray(all)) all = all.data || [];
+        var stats = await api.get('/notifications/party/stats');
+        var data = stats.data || stats;
 
-        var stats = { total: all.length, unread: 0, case: 0, document: 0, video: 0, system: 0, training: 0, urgent: 0 };
-        all.forEach(function(n) {
-            if (!n.is_read) stats.unread++;
-            if (stats[n.type] !== undefined) stats[n.type]++;
-        });
-
-        var container = document.getElementById('notif-stats-cards');
+        var container = document.getElementById('push-stats-cards');
         if (!container) return;
 
         var cards = [
-            { label: '全部通知', count: stats.total, icon: 'notifications', color: 'var(--accent-gold)', bg: 'var(--accent-gold-dim)' },
-            { label: '未读通知', count: stats.unread, icon: 'mark_email_unread', color: 'var(--accent-rose)', bg: 'var(--accent-rose-dim)' },
-            { label: '案件通知', count: stats.case, icon: 'gavel', color: 'var(--accent-teal)', bg: 'var(--accent-teal-dim)' },
-            { label: '紧急通知', count: stats.urgent, icon: 'priority_high', color: 'var(--accent-violet)', bg: 'var(--accent-violet-dim)' }
+            { label: '推送总数', count: data.total || 0, icon: 'send', color: 'var(--accent-gold)', bg: 'var(--accent-gold-dim)' },
+            { label: '已送达', count: data.sent || 0, icon: 'check_circle', color: 'var(--accent-teal)', bg: 'var(--accent-teal-dim)' },
+            { label: '待发送', count: data.pending || 0, icon: 'schedule', color: '#fbbf24', bg: 'rgba(251,191,36,0.12)' },
+            { label: '发送失败', count: data.failed || 0, icon: 'error', color: 'var(--accent-rose)', bg: 'var(--accent-rose-dim)' }
         ];
 
         var html = '';
@@ -7131,87 +7155,275 @@ async function loadNotifStats() {
                 '<div><div style="font-size:18px;font-weight:700;color:var(--text-primary)">' + c.count + '</div><div style="font-size:10px;color:var(--text-muted)">' + c.label + '</div></div></div>';
         });
         container.innerHTML = html;
+
+        var channelChart = document.getElementById('push-channel-chart');
+        if (channelChart && data.byChannel) {
+            var chHtml = '';
+            data.byChannel.forEach(function(ch) {
+                chHtml += '<div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">' +
+                    '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">' + (channelIcons[ch.channel] || 'send') + '</span>' +
+                    '<span style="font-size:12px;color:var(--text-primary)">' + (channelLabels[ch.channel] || ch.channel) + '</span>' +
+                    '<span style="font-size:12px;font-weight:600;color:var(--accent-gold)">' + ch.cnt + '</span></div>';
+            });
+            channelChart.innerHTML = chHtml || '<span style="color:var(--text-muted);font-size:12px">暂无数据</span>';
+        }
+
+        var typeChart = document.getElementById('push-type-chart');
+        if (typeChart && data.byType) {
+            var tHtml = '';
+            data.byType.forEach(function(t) {
+                var cfg = pushTypeConfig[t.push_type] || pushTypeConfig.other;
+                tHtml += '<div style="display:flex;align-items:center;gap:6px;padding:6px 12px;background:' + cfg.bg + ';border-radius:var(--radius-sm)">' +
+                    '<span class="material-icons-round" style="font-size:16px;color:' + cfg.color + '">' + cfg.icon + '</span>' +
+                    '<span style="font-size:12px;color:var(--text-primary)">' + cfg.label + '</span>' +
+                    '<span style="font-size:12px;font-weight:600;color:' + cfg.color + '">' + t.cnt + '</span></div>';
+            });
+            typeChart.innerHTML = tHtml || '<span style="color:var(--text-muted);font-size:12px">暂无数据</span>';
+        }
     } catch (err) { }
 }
 
-function renderNotifications(notifications) {
-    var container = document.getElementById('push-list');
+async function loadPartyPushList() {
+    var pushType = document.getElementById('push-type-filter') ? document.getElementById('push-type-filter').value : '';
+    var channel = document.getElementById('push-channel-filter') ? document.getElementById('push-channel-filter').value : '';
+    var status = document.getElementById('push-status-filter') ? document.getElementById('push-status-filter').value : '';
+
+    var params = { pageSize: 50 };
+    if (pushType) params.push_type = pushType;
+    if (channel) params.channel = channel;
+    if (status) params.status = status;
+
+    try {
+        var res = await api.get('/notifications/party' + buildQueryString(params));
+        var data = res.data || res;
+        if (!Array.isArray(data)) data = data.data || [];
+        renderPartyPushList(data);
+    } catch (err) {
+        showToast('加载推送记录失败: ' + err.message);
+    }
+}
+
+function renderPartyPushList(records) {
+    var container = document.getElementById('push-records-list');
     if (!container) return;
 
-    if (!notifications || notifications.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无通知</div>';
+    if (!records || records.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无推送记录</div>';
         return;
     }
 
-    var html = '';
-    notifications.forEach(function(n) {
-        var cfg = notifTypeConfig[n.type] || notifTypeConfig.system;
-        var isUnread = !n.is_read;
-        var timeStr = formatNotifTime(n.created_at);
+    var partyTypeLabels = { plaintiff: '甲方/原告', defendant: '乙方/被告', witness: '证人', other: '其他' };
 
-        html += '<div class="push-item" style="' + (isUnread ? 'border-left:3px solid ' + cfg.color : 'opacity:0.75') + '" onclick="handleNotifClick(' + n.id + ',' + (isUnread ? 'true' : 'false') + ',\'' + escapeHtml(n.link || '') + '\')">' +
-            '<div class="push-icon" style="background:' + cfg.bg + ';color:' + cfg.color + ';position:relative"><span class="material-icons-round">' + cfg.icon + '</span>' +
-            (isUnread ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--accent-rose)"></span>' : '') +
-            '</div>' +
+    var html = '';
+    records.forEach(function(r) {
+        var cfg = pushTypeConfig[r.push_type] || pushTypeConfig.other;
+        var sl = pushStatusLabels[r.status] || r.status;
+        var sc = pushStatusClasses[r.status] || 'pending';
+        var chLabel = channelLabels[r.channel] || r.channel;
+        var chIcon = channelIcons[r.channel] || 'send';
+        var ptLabel = partyTypeLabels[r.party_type] || '';
+        var timeStr = r.sent_at ? new Date(r.sent_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+
+        html += '<div class="push-item" style="cursor:default">' +
+            '<div class="push-icon" style="background:' + cfg.bg + ';color:' + cfg.color + '"><span class="material-icons-round">' + cfg.icon + '</span></div>' +
             '<div class="push-content">' +
-            '<h4 style="' + (isUnread ? 'color:var(--text-primary)' : 'color:var(--text-secondary)') + '">' + escapeHtml(n.title || '') + '</h4>' +
-            '<p>' + escapeHtml(n.content || '') + '</p>' +
-            '</div>' +
+            '<h4>' + escapeHtml(r.title || '') + '</h4>' +
+            '<p>' + escapeHtml(r.content || '') + '</p>' +
+            '<div style="display:flex;gap:8px;margin-top:4px;font-size:10px;color:var(--text-muted)">' +
+            '<span style="color:var(--accent-gold)">#' + escapeHtml(r.case_number || '') + '</span>' +
+            '<span>' + escapeHtml(r.party_name || '') + (ptLabel ? '(' + ptLabel + ')' : '') + '</span>' +
+            (r.party_phone ? '<span>' + escapeHtml(r.party_phone) + '</span>' : '') +
+            (r.document_title ? '<span style="color:var(--accent-teal)">附件: ' + escapeHtml(r.document_title) + '</span>' : '') +
+            '</div></div>' +
             '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">' +
-            '<div class="push-time">' + timeStr + '</div>' +
-            '<div style="display:flex;gap:4px">' +
-            (isUnread ? '<span class="material-icons-round" style="font-size:14px;color:var(--accent-teal);cursor:pointer" onclick="event.stopPropagation();markNotifRead(' + n.id + ')" title="标记已读">check</span>' : '') +
-            '<span class="material-icons-round" style="font-size:14px;color:var(--accent-rose);cursor:pointer" onclick="event.stopPropagation();deleteNotif(' + n.id + ')" title="删除">close</span>' +
+            '<div style="display:flex;align-items:center;gap:4px">' +
+            '<span class="material-icons-round" style="font-size:12px;color:var(--text-muted)">' + chIcon + '</span>' +
+            '<span style="font-size:10px;color:var(--text-muted)">' + chLabel + '</span>' +
+            '</div>' +
+            '<span class="status-tag ' + sc + '">' + sl + '</span>' +
+            '<span style="font-size:10px;color:var(--text-muted)">' + timeStr + '</span>' +
+            '<div style="display:flex;gap:4px;margin-top:2px">' +
+            (r.status === 'sent' ? '<span class="material-icons-round" style="font-size:14px;color:var(--accent-teal);cursor:pointer" onclick="updatePushStatus(' + r.id + ',\'delivered\')" title="标记已送达">check</span>' : '') +
+            (r.status === 'delivered' ? '<span class="material-icons-round" style="font-size:14px;color:var(--accent-teal);cursor:pointer" onclick="updatePushStatus(' + r.id + ',\'read\')" title="标记已读">done_all</span>' : '') +
+            (r.status === 'failed' ? '<span class="material-icons-round" style="font-size:14px;color:var(--accent-gold);cursor:pointer" onclick="updatePushStatus(' + r.id + ',\'sent\')" title="重试">refresh</span>' : '') +
+            '<span class="material-icons-round" style="font-size:14px;color:var(--accent-rose);cursor:pointer" onclick="deletePushRecord(' + r.id + ')" title="删除">close</span>' +
             '</div></div></div>';
     });
     container.innerHTML = html;
 }
 
-function formatNotifTime(isoStr) {
-    if (!isoStr) return '';
-    var d = new Date(isoStr);
-    var now = new Date();
-    var diff = now - d;
-    if (diff < 60000) return '刚刚';
-    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
-    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
-    if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
-    return d.toLocaleDateString('zh-CN');
-}
-
-async function handleNotifClick(id, isUnread, link) {
-    if (isUnread) {
-        try { await api.put('/notifications/' + id + '/read'); } catch (err) { }
-    }
-    if (link) {
-        var page = link.replace(/^\//, '').split('/')[0];
-        if (page && page !== 'push') {
-            var navItem = document.querySelector('[data-page="' + page + '"]');
-            if (navItem) switchPage(page, navItem);
-        }
-    }
-    await loadNotifications();
-    await loadUnreadCount();
-}
-
-async function markNotifRead(id) {
+async function updatePushStatus(id, status) {
     try {
-        await api.put('/notifications/' + id + '/read');
-        await loadNotifications();
-        await loadUnreadCount();
+        await api.put('/notifications/party/' + id + '/status', { status: status });
+        showToast('状态已更新', 'success');
+        await loadPartyPushList();
+        await loadPartyPushStats();
     } catch (err) {
-        showToast('操作失败: ' + err.message);
+        showToast('更新失败: ' + err.message);
     }
 }
 
-async function deleteNotif(id) {
+async function deletePushRecord(id) {
+    if (!confirm('确定要删除该推送记录吗？')) return;
     try {
-        await api.delete('/notifications/' + id);
-        showToast('通知已删除', 'success');
-        await loadNotifications();
-        await loadUnreadCount();
+        await api.delete('/notifications/party/' + id);
+        showToast('记录已删除', 'success');
+        await loadPartyPushList();
+        await loadPartyPushStats();
     } catch (err) {
         showToast('删除失败: ' + err.message);
+    }
+}
+
+function showPushToPartyModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '600px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div class="modal-field"><label>关联案件 *</label>' +
+        '<div style="position:relative"><input type="text" id="push-case-search" placeholder="搜索案件编号或标题..." oninput="searchPushCases(this.value)" autocomplete="off">' +
+        '<div id="push-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
+        '<input type="hidden" id="push-case-id" value=""></div>' +
+        '<div id="push-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+
+        '<div class="modal-field"><label>推送当事人 *</label>' +
+        '<div id="push-party-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-sm);min-height:40px">' +
+        '<span style="color:var(--text-muted);font-size:12px">请先选择案件</span></div></div>' +
+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">' +
+        '<div class="modal-field"><label>推送类型 *</label>' +
+        '<select id="push-type-select">' +
+        '<option value="acceptance">受理通知</option><option value="schedule">调解安排</option>' +
+        '<option value="mediation_notice">调解通知书</option><option value="agreement">协议送达</option>' +
+        '<option value="termination">终止通知</option><option value="document">文书送达</option>' +
+        '<option value="hearing">听证通知</option><option value="reminder">调解提醒</option>' +
+        '</select></div>' +
+        '<div class="modal-field"><label>推送渠道 *</label>' +
+        '<select id="push-channel-select">' +
+        '<option value="sms">短信</option><option value="email">邮件</option>' +
+        '<option value="in_app">站内信</option><option value="mail">邮寄</option>' +
+        '</select></div></div>' +
+
+        '<div class="modal-field"><label>推送标题 *</label><input type="text" id="push-title" placeholder="如：案件受理通知"></div>' +
+        '<div class="modal-field"><label>推送内容 *</label><textarea id="push-content" placeholder="推送给当事人的通知内容" rows="4"></textarea></div>' +
+
+        '<div class="modal-field"><label>关联文书</label>' +
+        '<select id="push-document-id"><option value="">无关联文书</option></select></div>' +
+
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitPartyPush()"><span class="material-icons-round" style="font-size:16px">send</span> 推送通知</button>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '推送通知给当事人 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+}
+
+async function searchPushCases(keyword) {
+    var dropdown = document.getElementById('push-case-dropdown');
+    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
+    try {
+        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=8');
+        var cases = data.data || data;
+        if (!Array.isArray(cases)) cases = cases.data || [];
+        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
+        var html = '';
+        cases.forEach(function(c) {
+            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectPushCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
+                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
+        });
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } catch (err) { }
+}
+
+async function selectPushCase(id, caseNumber, title) {
+    document.getElementById('push-case-id').value = id;
+    document.getElementById('push-case-search').value = caseNumber;
+    document.getElementById('push-case-dropdown').style.display = 'none';
+    var selEl = document.getElementById('push-case-selected');
+    selEl.style.display = 'block';
+    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+
+    try {
+        var caseDetail = await api.get('/cases/' + id);
+        var parties = caseDetail.parties || [];
+        var partyList = document.getElementById('push-party-list');
+        if (parties.length === 0) {
+            partyList.innerHTML = '<span style="color:var(--text-muted);font-size:12px;grid-column:1/-1">该案件暂无当事人</span>';
+            return;
+        }
+        var ptLabels = { plaintiff: '原告', defendant: '被告', witness: '证人', other: '其他' };
+        var phtml = '';
+        parties.forEach(function(p) {
+            phtml += '<label style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);cursor:pointer;font-size:12px">' +
+                '<input type="checkbox" class="push-party-check" value="' + p.id + '" checked>' +
+                '<span style="font-weight:500;color:var(--text-primary)">' + escapeHtml(p.name) + '</span>' +
+                '<span style="font-size:10px;color:var(--text-muted)">' + (ptLabels[p.party_type] || '') + '</span>' +
+                (p.phone ? '<span style="font-size:10px;color:var(--text-muted)">' + escapeHtml(p.phone) + '</span>' : '') +
+                '</label>';
+        });
+        partyList.innerHTML = phtml;
+
+        var docs = await api.get('/documents/records?case_id=' + id + '&pageSize=20');
+        var docData = docs.data || docs;
+        if (!Array.isArray(docData)) docData = docData.data || [];
+        var docSelect = document.getElementById('push-document-id');
+        var dhtml = '<option value="">无关联文书</option>';
+        docData.forEach(function(d) {
+            dhtml += '<option value="' + d.id + '">' + escapeHtml(d.title) + '</option>';
+        });
+        docSelect.innerHTML = dhtml;
+    } catch (err) {
+        showToast('加载案件信息失败: ' + err.message);
+    }
+}
+
+async function submitPartyPush() {
+    var caseId = document.getElementById('push-case-id').value;
+    var pushType = document.getElementById('push-type-select').value;
+    var channel = document.getElementById('push-channel-select').value;
+    var title = document.getElementById('push-title').value.trim();
+    var content = document.getElementById('push-content').value.trim();
+    var documentId = document.getElementById('push-document-id').value;
+
+    if (!caseId) { showToast('请选择关联案件', 'warning'); return; }
+    if (!title) { showToast('请输入推送标题', 'warning'); return; }
+    if (!content) { showToast('请输入推送内容', 'warning'); return; }
+
+    var checkedBoxes = document.querySelectorAll('.push-party-check:checked');
+    var partyIds = [];
+    checkedBoxes.forEach(function(cb) { partyIds.push(parseInt(cb.value)); });
+    if (partyIds.length === 0) { showToast('请选择至少一位当事人', 'warning'); return; }
+
+    try {
+        if (partyIds.length === 1) {
+            await api.post('/notifications/party', {
+                case_id: parseInt(caseId),
+                party_id: partyIds[0],
+                push_type: pushType,
+                title: title,
+                content: content,
+                channel: channel,
+                document_id: documentId ? parseInt(documentId) : null
+            });
+        } else {
+            await api.post('/notifications/party/batch', {
+                case_id: parseInt(caseId),
+                push_type: pushType,
+                title: title,
+                content: content,
+                channel: channel,
+                document_id: documentId ? parseInt(documentId) : null,
+                party_ids: partyIds
+            });
+        }
+        showToast('推送成功，已发送给 ' + partyIds.length + ' 位当事人', 'success');
+        closeModal('modal-generic');
+        await loadNotifications();
+    } catch (err) {
+        showToast('推送失败: ' + err.message);
     }
 }
 
@@ -7223,11 +7435,8 @@ async function loadUnreadCount() {
         var badge = document.getElementById('unread-badge');
         if (badge) {
             badge.textContent = count;
-            if (count > 0) {
-                badge.classList.add('visible');
-            } else {
-                badge.classList.remove('visible');
-            }
+            if (count > 0) badge.classList.add('visible');
+            else badge.classList.remove('visible');
         }
     } catch (err) { }
 }
@@ -7236,161 +7445,9 @@ async function markAllRead() {
     try {
         await api.put('/notifications/read-all');
         showToast('已全部标记为已读', 'success');
-        await loadNotifications();
         await loadUnreadCount();
     } catch (err) {
         showToast('操作失败: ' + err.message);
-    }
-}
-
-function showSendNotificationModal() {
-    var modal = document.getElementById('modal-generic');
-    if (!modal) return;
-    var modalContent = modal.querySelector('.modal-content');
-    modalContent.style.width = '560px';
-
-    var html = '<div style="padding:4px 0">' +
-        '<div style="display:flex;gap:8px;margin-bottom:16px">' +
-        '<button class="btn btn-primary" style="flex:1;justify-content:center;font-size:12px" id="notif-tab-single" onclick="switchNotifTab(\'single\')">发送通知</button>' +
-        '<button class="btn btn-outline" style="flex:1;justify-content:center;font-size:12px" id="notif-tab-broadcast" onclick="switchNotifTab(\'broadcast\')">群发通知</button>' +
-        '</div>' +
-
-        '<div id="notif-single-form">' +
-        '<div class="modal-field"><label>接收用户 *</label>' +
-        '<select id="notif-user"><option value="">请选择用户</option></select></div>' +
-        '<div class="modal-field"><label>通知类型 *</label>' +
-        '<select id="notif-type">' +
-        '<option value="case">案件</option><option value="document">文书</option><option value="video">视频</option>' +
-        '<option value="system">系统</option><option value="training">培训</option><option value="urgent">紧急</option>' +
-        '</select></div>' +
-        '<div class="modal-field"><label>标题 *</label><input type="text" id="notif-title" placeholder="通知标题"></div>' +
-        '<div class="modal-field"><label>内容 *</label><textarea id="notif-content" placeholder="通知内容" rows="3"></textarea></div>' +
-        '<div class="modal-field"><label>关联链接</label><input type="text" id="notif-link" placeholder="如: /cases/1"></div>' +
-        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="sendSingleNotif()">发送通知</button>' +
-        '</div>' +
-
-        '<div id="notif-broadcast-form" style="display:none">' +
-        '<div class="modal-field"><label>发送范围 *</label>' +
-        '<select id="notif-role">' +
-        '<option value="">全员</option>' +
-        '</select></div>' +
-        '<div class="modal-field"><label>通知类型 *</label>' +
-        '<select id="notif-bc-type">' +
-        '<option value="system">系统</option><option value="training">培训</option><option value="urgent">紧急</option>' +
-        '</select></div>' +
-        '<div class="modal-field"><label>标题 *</label><input type="text" id="notif-bc-title" placeholder="通知标题"></div>' +
-        '<div class="modal-field"><label>内容 *</label><textarea id="notif-bc-content" placeholder="通知内容" rows="3"></textarea></div>' +
-        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="sendBroadcastNotif()">群发通知</button>' +
-        '</div>' +
-        '</div>';
-
-    modal.querySelector('.modal-body').innerHTML = html;
-    modal.querySelector('.modal-title').innerHTML = '发送通知 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
-    modal.style.display = 'flex';
-
-    loadNotifUserOptions();
-    loadNotifRoleOptions();
-}
-
-function switchNotifTab(tab) {
-    var singleBtn = document.getElementById('notif-tab-single');
-    var broadcastBtn = document.getElementById('notif-tab-broadcast');
-    var singleForm = document.getElementById('notif-single-form');
-    var broadcastForm = document.getElementById('notif-broadcast-form');
-
-    if (tab === 'single') {
-        singleBtn.className = 'btn btn-primary';
-        broadcastBtn.className = 'btn btn-outline';
-        singleForm.style.display = 'block';
-        broadcastForm.style.display = 'none';
-    } else {
-        singleBtn.className = 'btn btn-outline';
-        broadcastBtn.className = 'btn btn-primary';
-        singleForm.style.display = 'none';
-        broadcastForm.style.display = 'block';
-    }
-}
-
-async function loadNotifUserOptions() {
-    try {
-        var users = await api.get('/users?pageSize=100');
-        var data = users.data || users;
-        if (!Array.isArray(data)) data = data.data || [];
-        var selectEl = document.getElementById('notif-user');
-        if (selectEl) {
-            var html = '<option value="">请选择用户</option>';
-            data.forEach(function(u) {
-                html += '<option value="' + u.id + '">' + escapeHtml(u.real_name || u.username) + '</option>';
-            });
-            selectEl.innerHTML = html;
-        }
-    } catch (err) { }
-}
-
-async function loadNotifRoleOptions() {
-    try {
-        var db = require !== undefined ? null : null;
-        var roles = await api.get('/roles');
-        var data = roles.data || roles;
-        if (!Array.isArray(data)) data = data.data || [];
-        var selectEl = document.getElementById('notif-role');
-        if (selectEl) {
-            var html = '<option value="">全员</option>';
-            data.forEach(function(r) {
-                html += '<option value="' + r.id + '">' + escapeHtml(r.name) + '</option>';
-            });
-            selectEl.innerHTML = html;
-        }
-    } catch (err) {
-        var selectEl = document.getElementById('notif-role');
-        if (selectEl) {
-            selectEl.innerHTML = '<option value="">全员</option><option value="1">管理员</option><option value="2">调解员</option><option value="3">助理</option>';
-        }
-    }
-}
-
-async function sendSingleNotif() {
-    var userId = document.getElementById('notif-user').value;
-    var type = document.getElementById('notif-type').value;
-    var title = document.getElementById('notif-title').value.trim();
-    var content = document.getElementById('notif-content').value.trim();
-    var link = document.getElementById('notif-link').value.trim();
-
-    if (!userId) { showToast('请选择接收用户', 'warning'); return; }
-    if (!title) { showToast('请输入通知标题', 'warning'); return; }
-    if (!content) { showToast('请输入通知内容', 'warning'); return; }
-
-    try {
-        await api.post('/notifications', { user_id: parseInt(userId), type: type, title: title, content: content, link: link || null });
-        showToast('通知发送成功', 'success');
-        closeModal('modal-generic');
-        await loadNotifications();
-        await loadUnreadCount();
-    } catch (err) {
-        showToast('发送失败: ' + err.message);
-    }
-}
-
-async function sendBroadcastNotif() {
-    var roleId = document.getElementById('notif-role').value;
-    var type = document.getElementById('notif-bc-type').value;
-    var title = document.getElementById('notif-bc-title').value.trim();
-    var content = document.getElementById('notif-bc-content').value.trim();
-
-    if (!title) { showToast('请输入通知标题', 'warning'); return; }
-    if (!content) { showToast('请输入通知内容', 'warning'); return; }
-
-    try {
-        var result = await api.post('/notifications/broadcast', {
-            type: type, title: title, content: content, role_id: roleId || undefined
-        });
-        var sentCount = (result.data || {}).sent_count || 0;
-        showToast('群发通知成功，已发送 ' + sentCount + ' 人', 'success');
-        closeModal('modal-generic');
-        await loadNotifications();
-        await loadUnreadCount();
-    } catch (err) {
-        showToast('群发失败: ' + err.message);
     }
 }
 
