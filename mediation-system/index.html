@@ -2579,17 +2579,32 @@
                     <h2>信息推送</h2>
                     <div class="page-header-actions">
                         <button class="btn btn-outline" onclick="markAllRead()"><span class="material-icons-round" style="font-size:16px">done_all</span> 全部已读</button>
-                        <button class="btn btn-primary" onclick="showBroadcastDialog()"><span class="material-icons-round" style="font-size:16px">campaign</span> 发送通知</button>
+                        <button class="btn btn-primary" onclick="showSendNotificationModal()"><span class="material-icons-round" style="font-size:16px">campaign</span> 发送通知</button>
                     </div>
                 </div>
-                <div class="push-list" id="push-list">
-                    <div class="push-item">
-                        <div class="push-icon" style="background:var(--bg-tertiary);color:var(--text-muted)"><span class="material-icons-round">hourglass_empty</span></div>
-                        <div class="push-content">
-                            <h4>加载中...</h4>
-                            <p>正在获取通知数据</p>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="notif-stats-cards"></div>
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <h3>通知列表</h3>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <select id="notif-type-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadNotifications()">
+                                <option value="">全部类型</option>
+                                <option value="case">案件</option>
+                                <option value="document">文书</option>
+                                <option value="video">视频</option>
+                                <option value="system">系统</option>
+                                <option value="training">培训</option>
+                                <option value="urgent">紧急</option>
+                            </select>
+                            <select id="notif-read-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadNotifications()">
+                                <option value="">全部状态</option>
+                                <option value="0">未读</option>
+                                <option value="1">已读</option>
+                            </select>
                         </div>
-                        <div class="push-time">--</div>
+                    </div>
+                    <div class="push-list" id="push-list">
+                        <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
                     </div>
                 </div>
             </div>
@@ -7059,13 +7074,64 @@ async function submitVideoSession() {
 }
 
 // ==================== NOTIFICATIONS ====================
+var notifTypeConfig = {
+    case: { icon: 'gavel', label: '案件', color: 'var(--accent-gold)', bg: 'var(--accent-gold-dim)' },
+    document: { icon: 'description', label: '文书', color: 'var(--accent-teal)', bg: 'var(--accent-teal-dim)' },
+    video: { icon: 'videocam', label: '视频', color: 'var(--accent-violet)', bg: 'var(--accent-violet-dim)' },
+    system: { icon: 'settings', label: '系统', color: 'var(--text-muted)', bg: 'var(--bg-tertiary)' },
+    training: { icon: 'school', label: '培训', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' },
+    urgent: { icon: 'priority_high', label: '紧急', color: 'var(--accent-rose)', bg: 'var(--accent-rose-dim)' }
+};
+
 async function loadNotifications() {
+    var typeFilter = document.getElementById('notif-type-filter') ? document.getElementById('notif-type-filter').value : '';
+    var readFilter = document.getElementById('notif-read-filter') ? document.getElementById('notif-read-filter').value : '';
+
+    var params = { pageSize: 50 };
+    if (typeFilter) params.type = typeFilter;
+    if (readFilter !== '') params.is_read = readFilter;
+
     try {
-        var res = await api.get('/notifications');
-        renderNotifications(Array.isArray(res) ? res : (Array.isArray(res.data) ? res.data : []));
+        var res = await api.get('/notifications' + buildQueryString(params));
+        var data = res.data || res;
+        if (!Array.isArray(data)) data = data.data || [];
+        renderNotifications(data);
+        await loadNotifStats();
     } catch (err) {
         showToast('加载通知失败: ' + err.message);
     }
+}
+
+async function loadNotifStats() {
+    try {
+        var allRes = await api.get('/notifications?pageSize=100');
+        var all = allRes.data || allRes;
+        if (!Array.isArray(all)) all = all.data || [];
+
+        var stats = { total: all.length, unread: 0, case: 0, document: 0, video: 0, system: 0, training: 0, urgent: 0 };
+        all.forEach(function(n) {
+            if (!n.is_read) stats.unread++;
+            if (stats[n.type] !== undefined) stats[n.type]++;
+        });
+
+        var container = document.getElementById('notif-stats-cards');
+        if (!container) return;
+
+        var cards = [
+            { label: '全部通知', count: stats.total, icon: 'notifications', color: 'var(--accent-gold)', bg: 'var(--accent-gold-dim)' },
+            { label: '未读通知', count: stats.unread, icon: 'mark_email_unread', color: 'var(--accent-rose)', bg: 'var(--accent-rose-dim)' },
+            { label: '案件通知', count: stats.case, icon: 'gavel', color: 'var(--accent-teal)', bg: 'var(--accent-teal-dim)' },
+            { label: '紧急通知', count: stats.urgent, icon: 'priority_high', color: 'var(--accent-violet)', bg: 'var(--accent-violet-dim)' }
+        ];
+
+        var html = '';
+        cards.forEach(function(c) {
+            html += '<div class="chart-card" style="padding:14px;display:flex;align-items:center;gap:10px">' +
+                '<div style="width:36px;height:36px;border-radius:var(--radius-md);background:' + c.bg + ';display:flex;align-items:center;justify-content:center"><span class="material-icons-round" style="font-size:18px;color:' + c.color + '">' + c.icon + '</span></div>' +
+                '<div><div style="font-size:18px;font-weight:700;color:var(--text-primary)">' + c.count + '</div><div style="font-size:10px;color:var(--text-muted)">' + c.label + '</div></div></div>';
+        });
+        container.innerHTML = html;
+    } catch (err) { }
 }
 
 function renderNotifications(notifications) {
@@ -7077,35 +7143,83 @@ function renderNotifications(notifications) {
         return;
     }
 
-    var colorSchemes = {
-        rose: { bg: 'var(--accent-rose-dim)', color: 'var(--accent-rose)' },
-        gold: { bg: 'var(--accent-gold-dim)', color: 'var(--accent-gold)' },
-        teal: { bg: 'var(--accent-teal-dim)', color: 'var(--accent-teal)' },
-        violet: { bg: 'var(--accent-violet-dim)', color: 'var(--accent-violet)' },
-        yellow: { bg: 'rgba(251,191,36,0.12)', color: '#fbbf24' },
-        blue: { bg: 'rgba(96,165,250,0.12)', color: '#60a5fa' }
-    };
-
     var html = '';
     notifications.forEach(function(n) {
-        var scheme = colorSchemes[n.colorScheme || n.color] || colorSchemes.gold;
-        var icon = n.icon || 'notifications';
-        html += '<div class="push-item">' +
-            '<div class="push-icon" style="background:' + scheme.bg + ';color:' + scheme.color + '"><span class="material-icons-round">' + icon + '</span></div>' +
-            '<div class="push-content">' +
-            '<h4>' + escapeHtml(n.title || '') + '</h4>' +
-            '<p>' + escapeHtml(n.content || n.body || n.message || '') + '</p>' +
+        var cfg = notifTypeConfig[n.type] || notifTypeConfig.system;
+        var isUnread = !n.is_read;
+        var timeStr = formatNotifTime(n.created_at);
+
+        html += '<div class="push-item" style="' + (isUnread ? 'border-left:3px solid ' + cfg.color : 'opacity:0.75') + '" onclick="handleNotifClick(' + n.id + ',' + (isUnread ? 'true' : 'false') + ',\'' + escapeHtml(n.link || '') + '\')">' +
+            '<div class="push-icon" style="background:' + cfg.bg + ';color:' + cfg.color + ';position:relative"><span class="material-icons-round">' + cfg.icon + '</span>' +
+            (isUnread ? '<span style="position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--accent-rose)"></span>' : '') +
             '</div>' +
-            '<div class="push-time">' + escapeHtml(n.time || n.createdAt || '') + '</div>' +
-            '</div>';
+            '<div class="push-content">' +
+            '<h4 style="' + (isUnread ? 'color:var(--text-primary)' : 'color:var(--text-secondary)') + '">' + escapeHtml(n.title || '') + '</h4>' +
+            '<p>' + escapeHtml(n.content || '') + '</p>' +
+            '</div>' +
+            '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">' +
+            '<div class="push-time">' + timeStr + '</div>' +
+            '<div style="display:flex;gap:4px">' +
+            (isUnread ? '<span class="material-icons-round" style="font-size:14px;color:var(--accent-teal);cursor:pointer" onclick="event.stopPropagation();markNotifRead(' + n.id + ')" title="标记已读">check</span>' : '') +
+            '<span class="material-icons-round" style="font-size:14px;color:var(--accent-rose);cursor:pointer" onclick="event.stopPropagation();deleteNotif(' + n.id + ')" title="删除">close</span>' +
+            '</div></div></div>';
     });
     container.innerHTML = html;
+}
+
+function formatNotifTime(isoStr) {
+    if (!isoStr) return '';
+    var d = new Date(isoStr);
+    var now = new Date();
+    var diff = now - d;
+    if (diff < 60000) return '刚刚';
+    if (diff < 3600000) return Math.floor(diff / 60000) + '分钟前';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + '小时前';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + '天前';
+    return d.toLocaleDateString('zh-CN');
+}
+
+async function handleNotifClick(id, isUnread, link) {
+    if (isUnread) {
+        try { await api.put('/notifications/' + id + '/read'); } catch (err) { }
+    }
+    if (link) {
+        var page = link.replace(/^\//, '').split('/')[0];
+        if (page && page !== 'push') {
+            var navItem = document.querySelector('[data-page="' + page + '"]');
+            if (navItem) switchPage(page, navItem);
+        }
+    }
+    await loadNotifications();
+    await loadUnreadCount();
+}
+
+async function markNotifRead(id) {
+    try {
+        await api.put('/notifications/' + id + '/read');
+        await loadNotifications();
+        await loadUnreadCount();
+    } catch (err) {
+        showToast('操作失败: ' + err.message);
+    }
+}
+
+async function deleteNotif(id) {
+    try {
+        await api.delete('/notifications/' + id);
+        showToast('通知已删除', 'success');
+        await loadNotifications();
+        await loadUnreadCount();
+    } catch (err) {
+        showToast('删除失败: ' + err.message);
+    }
 }
 
 async function loadUnreadCount() {
     try {
         var res = await api.get('/notifications/unread-count');
-        var count = res.count !== undefined ? res.count : (typeof res === 'number' ? res : 0);
+        var data = res.data || res;
+        var count = data.count !== undefined ? data.count : (typeof data === 'number' ? data : 0);
         var badge = document.getElementById('unread-badge');
         if (badge) {
             badge.textContent = count;
@@ -7115,9 +7229,7 @@ async function loadUnreadCount() {
                 badge.classList.remove('visible');
             }
         }
-    } catch (err) {
-        // silently fail for unread count
-    }
+    } catch (err) { }
 }
 
 async function markAllRead() {
@@ -7131,15 +7243,155 @@ async function markAllRead() {
     }
 }
 
-function showBroadcastDialog() {
-    var msg = prompt('请输入群发通知内容:');
-    if (!msg) return;
-    api.post('/notifications/broadcast', { message: msg }).then(function() {
-        showToast('群发通知已发送', 'success');
-        loadNotifications();
-    }).catch(function(err) {
+function showSendNotificationModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '560px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div style="display:flex;gap:8px;margin-bottom:16px">' +
+        '<button class="btn btn-primary" style="flex:1;justify-content:center;font-size:12px" id="notif-tab-single" onclick="switchNotifTab(\'single\')">发送通知</button>' +
+        '<button class="btn btn-outline" style="flex:1;justify-content:center;font-size:12px" id="notif-tab-broadcast" onclick="switchNotifTab(\'broadcast\')">群发通知</button>' +
+        '</div>' +
+
+        '<div id="notif-single-form">' +
+        '<div class="modal-field"><label>接收用户 *</label>' +
+        '<select id="notif-user"><option value="">请选择用户</option></select></div>' +
+        '<div class="modal-field"><label>通知类型 *</label>' +
+        '<select id="notif-type">' +
+        '<option value="case">案件</option><option value="document">文书</option><option value="video">视频</option>' +
+        '<option value="system">系统</option><option value="training">培训</option><option value="urgent">紧急</option>' +
+        '</select></div>' +
+        '<div class="modal-field"><label>标题 *</label><input type="text" id="notif-title" placeholder="通知标题"></div>' +
+        '<div class="modal-field"><label>内容 *</label><textarea id="notif-content" placeholder="通知内容" rows="3"></textarea></div>' +
+        '<div class="modal-field"><label>关联链接</label><input type="text" id="notif-link" placeholder="如: /cases/1"></div>' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="sendSingleNotif()">发送通知</button>' +
+        '</div>' +
+
+        '<div id="notif-broadcast-form" style="display:none">' +
+        '<div class="modal-field"><label>发送范围 *</label>' +
+        '<select id="notif-role">' +
+        '<option value="">全员</option>' +
+        '</select></div>' +
+        '<div class="modal-field"><label>通知类型 *</label>' +
+        '<select id="notif-bc-type">' +
+        '<option value="system">系统</option><option value="training">培训</option><option value="urgent">紧急</option>' +
+        '</select></div>' +
+        '<div class="modal-field"><label>标题 *</label><input type="text" id="notif-bc-title" placeholder="通知标题"></div>' +
+        '<div class="modal-field"><label>内容 *</label><textarea id="notif-bc-content" placeholder="通知内容" rows="3"></textarea></div>' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="sendBroadcastNotif()">群发通知</button>' +
+        '</div>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '发送通知 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+
+    loadNotifUserOptions();
+    loadNotifRoleOptions();
+}
+
+function switchNotifTab(tab) {
+    var singleBtn = document.getElementById('notif-tab-single');
+    var broadcastBtn = document.getElementById('notif-tab-broadcast');
+    var singleForm = document.getElementById('notif-single-form');
+    var broadcastForm = document.getElementById('notif-broadcast-form');
+
+    if (tab === 'single') {
+        singleBtn.className = 'btn btn-primary';
+        broadcastBtn.className = 'btn btn-outline';
+        singleForm.style.display = 'block';
+        broadcastForm.style.display = 'none';
+    } else {
+        singleBtn.className = 'btn btn-outline';
+        broadcastBtn.className = 'btn btn-primary';
+        singleForm.style.display = 'none';
+        broadcastForm.style.display = 'block';
+    }
+}
+
+async function loadNotifUserOptions() {
+    try {
+        var users = await api.get('/users?pageSize=100');
+        var data = users.data || users;
+        if (!Array.isArray(data)) data = data.data || [];
+        var selectEl = document.getElementById('notif-user');
+        if (selectEl) {
+            var html = '<option value="">请选择用户</option>';
+            data.forEach(function(u) {
+                html += '<option value="' + u.id + '">' + escapeHtml(u.real_name || u.username) + '</option>';
+            });
+            selectEl.innerHTML = html;
+        }
+    } catch (err) { }
+}
+
+async function loadNotifRoleOptions() {
+    try {
+        var db = require !== undefined ? null : null;
+        var roles = await api.get('/roles');
+        var data = roles.data || roles;
+        if (!Array.isArray(data)) data = data.data || [];
+        var selectEl = document.getElementById('notif-role');
+        if (selectEl) {
+            var html = '<option value="">全员</option>';
+            data.forEach(function(r) {
+                html += '<option value="' + r.id + '">' + escapeHtml(r.name) + '</option>';
+            });
+            selectEl.innerHTML = html;
+        }
+    } catch (err) {
+        var selectEl = document.getElementById('notif-role');
+        if (selectEl) {
+            selectEl.innerHTML = '<option value="">全员</option><option value="1">管理员</option><option value="2">调解员</option><option value="3">助理</option>';
+        }
+    }
+}
+
+async function sendSingleNotif() {
+    var userId = document.getElementById('notif-user').value;
+    var type = document.getElementById('notif-type').value;
+    var title = document.getElementById('notif-title').value.trim();
+    var content = document.getElementById('notif-content').value.trim();
+    var link = document.getElementById('notif-link').value.trim();
+
+    if (!userId) { showToast('请选择接收用户', 'warning'); return; }
+    if (!title) { showToast('请输入通知标题', 'warning'); return; }
+    if (!content) { showToast('请输入通知内容', 'warning'); return; }
+
+    try {
+        await api.post('/notifications', { user_id: parseInt(userId), type: type, title: title, content: content, link: link || null });
+        showToast('通知发送成功', 'success');
+        closeModal('modal-generic');
+        await loadNotifications();
+        await loadUnreadCount();
+    } catch (err) {
         showToast('发送失败: ' + err.message);
-    });
+    }
+}
+
+async function sendBroadcastNotif() {
+    var roleId = document.getElementById('notif-role').value;
+    var type = document.getElementById('notif-bc-type').value;
+    var title = document.getElementById('notif-bc-title').value.trim();
+    var content = document.getElementById('notif-bc-content').value.trim();
+
+    if (!title) { showToast('请输入通知标题', 'warning'); return; }
+    if (!content) { showToast('请输入通知内容', 'warning'); return; }
+
+    try {
+        var result = await api.post('/notifications/broadcast', {
+            type: type, title: title, content: content, role_id: roleId || undefined
+        });
+        var sentCount = (result.data || {}).sent_count || 0;
+        showToast('群发通知成功，已发送 ' + sentCount + ' 人', 'success');
+        closeModal('modal-generic');
+        await loadNotifications();
+        await loadUnreadCount();
+    } catch (err) {
+        showToast('群发失败: ' + err.message);
+    }
 }
 
 // ==================== CALL CENTER ====================
