@@ -7,7 +7,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.get('/', (req, res) => {
-  const { mediator_id, schedule_type, status, start_date, end_date, page = 1, pageSize = 50 } = req.query;
+  const { mediator_id, schedule_type, status, start_date, end_date, search, page = 1, pageSize = 50 } = req.query;
   const db = getDb();
 
   let where = [];
@@ -17,10 +17,12 @@ router.get('/', (req, res) => {
   if (status) { where.push('s.status = @status'); params.status = status; }
   if (start_date) { where.push('s.start_time >= @start_date'); params.start_date = start_date; }
   if (end_date) { where.push('s.end_time <= @end_date'); params.end_date = end_date; }
+  if (search) { where.push('(s.title LIKE @search OR s.description LIKE @search OR s.location LIKE @search)'); params.search = '%' + search + '%'; }
 
   const whereClause = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
 
-  const schedules = db.prepare(`
+  const countQuery = db.prepare('SELECT COUNT(*) as count FROM schedules s ' + whereClause);
+  const dataQuery = db.prepare(`
     SELECT s.*, u.real_name as mediator_name, u.avatar_color,
            c.case_number, c.title as case_title
     FROM schedules s
@@ -28,9 +30,11 @@ router.get('/', (req, res) => {
     LEFT JOIN cases c ON s.case_id = c.id
     ${whereClause}
     ORDER BY s.start_time ASC
-  `).all(params);
+    LIMIT @limit OFFSET @offset
+  `);
 
-  res.json(formatResponse(schedules));
+  const result = paginate(dataQuery, countQuery, params, parseInt(page), parseInt(pageSize));
+  res.json(formatResponse({ data: result.data, pagination: result.pagination }));
 });
 
 router.get('/calendar', (req, res) => {
@@ -48,8 +52,8 @@ router.get('/calendar', (req, res) => {
   const whereClause = where.length > 0 ? 'WHERE ' + where.join(' AND ') : '';
 
   const schedules = db.prepare(`
-    SELECT s.id, s.title, s.schedule_type, s.status, s.start_time, s.end_time, s.location,
-           u.real_name as mediator_name, u.avatar_color, c.case_number
+    SELECT s.id, s.title, s.schedule_type, s.status, s.start_time, s.end_time, s.location, s.description,
+           u.real_name as mediator_name, u.avatar_color, c.case_number, c.title as case_title
     FROM schedules s
     LEFT JOIN users u ON s.mediator_id = u.id
     LEFT JOIN cases c ON s.case_id = c.id
@@ -86,6 +90,77 @@ router.get('/conflicts', (req, res) => {
   res.json(formatResponse({ has_conflict: conflicts.length > 0, conflicts }));
 });
 
+router.get('/mediators', (req, res) => {
+  const db = getDb();
+  try {
+    const mediators = db.prepare(`
+      SELECT u.id, u.real_name, u.avatar_color, u.role_id, r.name as role_name
+      FROM users u
+      LEFT JOIN roles r ON u.role_id = r.id
+      WHERE u.role_id IN (1, 2, 3, 4) AND u.status = 'active'
+      ORDER BY u.real_name
+    `).all();
+    const result = mediators.map(m => {
+      const upcoming = db.prepare('SELECT COUNT(*) as cnt FROM schedules WHERE mediator_id = ? AND status = ?').get(m.id, 'scheduled');
+      return { ...m, upcoming_count: upcoming ? upcoming.cnt : 0 };
+    });
+    res.json(formatResponse(result));
+  } catch (err) {
+    res.status(500).json(formatError('获取调解员列表失败'));
+  }
+});
+
+router.get('/today', (req, res) => {
+  const db = getDb();
+  const today = new Date().toISOString().split('T')[0];
+  const schedules = db.prepare(`
+    SELECT s.*, u.real_name as mediator_name, u.avatar_color,
+           c.case_number, c.title as case_title
+    FROM schedules s
+    LEFT JOIN users u ON s.mediator_id = u.id
+    LEFT JOIN cases c ON s.case_id = c.id
+    WHERE DATE(s.start_time) = ? AND s.status != 'cancelled'
+    ORDER BY s.start_time ASC
+  `).all(today);
+  res.json(formatResponse(schedules));
+});
+
+router.get('/upcoming', (req, res) => {
+  const db = getDb();
+  const { days = 7 } = req.query;
+  const now = new Date();
+  const future = new Date(now.getTime() + parseInt(days) * 24 * 60 * 60 * 1000);
+  const schedules = db.prepare(`
+    SELECT s.*, u.real_name as mediator_name, u.avatar_color,
+           c.case_number, c.title as case_title
+    FROM schedules s
+    LEFT JOIN users u ON s.mediator_id = u.id
+    LEFT JOIN cases c ON s.case_id = c.id
+    WHERE s.start_time >= ? AND s.start_time <= ? AND s.status != 'cancelled'
+    ORDER BY s.start_time ASC
+  `).all(now.toISOString(), future.toISOString());
+  res.json(formatResponse(schedules));
+});
+
+router.get('/:id', (req, res) => {
+  const db = getDb();
+  const schedule = db.prepare(`
+    SELECT s.*, u.real_name as mediator_name, u.avatar_color,
+           c.case_number, c.title as case_title,
+           creator.real_name as created_by_name
+    FROM schedules s
+    LEFT JOIN users u ON s.mediator_id = u.id
+    LEFT JOIN cases c ON s.case_id = c.id
+    LEFT JOIN users creator ON s.created_by = creator.id
+    WHERE s.id = ?
+  `).get(req.params.id);
+
+  if (!schedule) {
+    return res.status(404).json(formatError('日程不存在'));
+  }
+  res.json(formatResponse(schedule));
+});
+
 router.post('/', (req, res) => {
   const { title, case_id, mediator_id, schedule_type, start_time, end_time, location, description, reminder } = req.body;
   if (!title || !mediator_id || !start_time || !end_time) {
@@ -111,8 +186,8 @@ router.post('/', (req, res) => {
     const caseData = db.prepare('SELECT * FROM cases WHERE id = ?').get(case_id);
     if (caseData) {
       db.prepare('INSERT INTO notifications (user_id, type, title, content, link) VALUES (?, ?, ?, ?, ?)').run(
-        mediator_id, 'video', '新日程安排',
-        `案件 #${caseData.case_number} 调解已安排: ${start_time}`, `/video`
+        mediator_id, 'case', '新日程安排',
+        `案件 #${caseData.case_number} 调解已安排: ${start_time}`, `/schedules`
       );
     }
   }
@@ -122,18 +197,30 @@ router.post('/', (req, res) => {
 });
 
 router.put('/:id', (req, res) => {
-  const { title, schedule_type, status, start_time, end_time, location, description, reminder } = req.body;
+  const { title, case_id, mediator_id, schedule_type, status, start_time, end_time, location, description, reminder } = req.body;
   const db = getDb();
 
   const existing = db.prepare('SELECT * FROM schedules WHERE id = ?').get(req.params.id);
   if (!existing) return res.status(404).json(formatError('日程不存在'));
 
+  if (start_time && end_time && (mediator_id || existing.mediator_id)) {
+    const mid = mediator_id || existing.mediator_id;
+    const conflicts = db.prepare(
+      `SELECT * FROM schedules WHERE mediator_id = ? AND status != 'cancelled' AND id != ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?))`
+    ).all(mid, req.params.id, end_time, start_time, end_time, start_time);
+
+    if (conflicts.length > 0) {
+      return res.status(409).json(formatError('该调解员在指定时间段已有安排，存在时间冲突'));
+    }
+  }
+
   db.prepare(`
-    UPDATE schedules SET title = COALESCE(?, title), schedule_type = COALESCE(?, schedule_type),
+    UPDATE schedules SET title = COALESCE(?, title), case_id = COALESCE(?, case_id),
+    mediator_id = COALESCE(?, mediator_id), schedule_type = COALESCE(?, schedule_type),
     status = COALESCE(?, status), start_time = COALESCE(?, start_time), end_time = COALESCE(?, end_time),
     location = COALESCE(?, location), description = COALESCE(?, description),
     reminder = COALESCE(?, reminder), updated_at = CURRENT_TIMESTAMP WHERE id = ?
-  `).run(title, schedule_type, status, start_time, end_time, location, description, reminder, req.params.id);
+  `).run(title, case_id, mediator_id, schedule_type, status, start_time, end_time, location, description, reminder, req.params.id);
 
   logAudit(db, req.user.id, 'UPDATE', 'schedule', req.params.id, `更新日程: ${existing.title}`, req);
   res.json(formatResponse(null, '日程更新成功'));

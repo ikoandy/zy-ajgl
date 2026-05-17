@@ -2683,10 +2683,66 @@
                         <button class="btn btn-primary" onclick="showScheduleModal()"><span class="material-icons-round" style="font-size:16px">add</span> 新建日程</button>
                     </div>
                 </div>
-                <div id="schedule-calendar-container"></div>
+                <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+                            <div style="display:flex;align-items:center;gap:8px">
+                                <button class="btn btn-outline" style="padding:4px 8px;min-width:auto" onclick="changeScheduleMonth(-1)"><span class="material-icons-round" style="font-size:16px">chevron_left</span></button>
+                                <span id="schedule-month-label" style="font-size:14px;font-weight:600;color:var(--text-primary);min-width:100px;text-align:center"></span>
+                                <button class="btn btn-outline" style="padding:4px 8px;min-width:auto" onclick="changeScheduleMonth(1)"><span class="material-icons-round" style="font-size:16px">chevron_right</span></button>
+                                <button class="btn btn-outline" style="padding:4px 10px;font-size:11px;margin-left:4px" onclick="goToToday()">今天</button>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:6px">
+                                <select id="schedule-filter-type" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadSchedules()">
+                                    <option value="">全部类型</option>
+                                    <option value="mediation">调解</option>
+                                    <option value="consultation">咨询</option>
+                                    <option value="meeting">会议</option>
+                                    <option value="training">培训</option>
+                                    <option value="other">其他</option>
+                                </select>
+                                <select id="schedule-filter-mediator" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadSchedules()">
+                                    <option value="">全部调解员</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="schedule-calendar-container"></div>
+                    </div>
+                    <div>
+                        <div class="chart-card" style="padding:16px;margin-bottom:12px">
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                                <span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">today</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary)">今日日程</span>
+                                <span id="today-count" style="font-size:11px;color:var(--text-muted);margin-left:auto"></span>
+                            </div>
+                            <div id="today-schedule-list" style="max-height:200px;overflow-y:auto">
+                                <p style="text-align:center;color:var(--text-muted);font-size:12px;padding:16px">加载中...</p>
+                            </div>
+                        </div>
+                        <div class="chart-card" style="padding:16px">
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                                <span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">upcoming</span>
+                                <span style="font-size:13px;font-weight:600;color:var(--text-primary)">即将到来</span>
+                            </div>
+                            <div id="upcoming-schedule-list" style="max-height:300px;overflow-y:auto">
+                                <p style="text-align:center;color:var(--text-muted);font-size:12px;padding:16px">加载中...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="chart-card">
                     <div class="chart-card-header">
                         <h3>日程列表</h3>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <input type="text" id="schedule-search" placeholder="搜索日程..." style="padding:4px 10px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none;width:160px" oninput="loadScheduleList()">
+                            <select id="schedule-status-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadScheduleList()">
+                                <option value="">全部状态</option>
+                                <option value="scheduled">已安排</option>
+                                <option value="in_progress">进行中</option>
+                                <option value="completed">已完成</option>
+                                <option value="cancelled">已取消</option>
+                            </select>
+                        </div>
                     </div>
                     <div id="schedule-list">
                         <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
@@ -3257,37 +3313,57 @@
 <!-- Modal: Schedule -->
 <div class="modal-overlay" id="modal-schedule" style="display:none" onclick="if(event.target===this)closeModal('modal-schedule')">
     <div class="modal-content">
-        <h3>新建日程 <button class="modal-close" onclick="closeModal('modal-schedule')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <h3 class="modal-title" id="schedule-modal-title">新建日程 <button class="modal-close" onclick="closeModal('modal-schedule')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
+        <input type="hidden" id="schedule-edit-id" value="">
         <div class="modal-field">
-            <label>标题</label>
+            <label>标题 *</label>
             <input type="text" id="schedule-title" placeholder="请输入日程标题">
         </div>
         <div class="modal-field">
             <label>关联案件</label>
-            <input type="text" id="schedule-case" placeholder="输入案件编号">
+            <div style="position:relative">
+                <input type="text" id="schedule-case-search" placeholder="搜索案件编号或标题..." oninput="searchScheduleCases(this.value)" autocomplete="off">
+                <div id="schedule-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>
+                <input type="hidden" id="schedule-case-id" value="">
+            </div>
+            <div id="schedule-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;display:none"></div>
         </div>
         <div class="modal-field">
-            <label>调解员</label>
+            <label>调解员 *</label>
             <select id="schedule-mediator">
                 <option value="">请选择调解员</option>
             </select>
         </div>
-        <div class="modal-field">
-            <label>类型</label>
-            <select id="schedule-type">
-                <option value="mediation">调解</option>
-                <option value="meeting">会议</option>
-                <option value="hearing">听证</option>
-                <option value="followup">回访</option>
-            </select>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div class="modal-field">
+                <label>类型</label>
+                <select id="schedule-type">
+                    <option value="mediation">调解</option>
+                    <option value="consultation">咨询</option>
+                    <option value="meeting">会议</option>
+                    <option value="training">培训</option>
+                    <option value="other">其他</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>提醒</label>
+                <select id="schedule-reminder">
+                    <option value="0">不提醒</option>
+                    <option value="5">5分钟前</option>
+                    <option value="15" selected>15分钟前</option>
+                    <option value="30">30分钟前</option>
+                    <option value="60">1小时前</option>
+                    <option value="1440">1天前</option>
+                </select>
+            </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
             <div class="modal-field">
-                <label>开始时间</label>
+                <label>开始时间 *</label>
                 <input type="datetime-local" id="schedule-start">
             </div>
             <div class="modal-field">
-                <label>结束时间</label>
+                <label>结束时间 *</label>
                 <input type="datetime-local" id="schedule-end">
             </div>
         </div>
@@ -3297,11 +3373,12 @@
         </div>
         <div class="modal-field">
             <label>描述</label>
-            <textarea id="schedule-desc" placeholder="请输入描述"></textarea>
+            <textarea id="schedule-desc" placeholder="请输入描述" rows="3"></textarea>
         </div>
+        <div id="schedule-conflict-warning" style="display:none;padding:8px 12px;background:rgba(244,114,182,0.1);border:1px solid rgba(244,114,182,0.3);border-radius:var(--radius-sm);margin-bottom:12px;font-size:12px;color:var(--accent-rose)"></div>
         <div class="modal-actions">
             <button class="btn btn-outline" onclick="closeModal('modal-schedule')">取消</button>
-            <button class="btn btn-primary" onclick="submitSchedule()">创建日程</button>
+            <button class="btn btn-primary" onclick="submitSchedule()" id="btn-submit-schedule">创建日程</button>
         </div>
     </div>
 </div>
@@ -7150,23 +7227,176 @@ async function saveSettings() {
 }
 
 // ==================== SCHEDULE MANAGEMENT ====================
-var feedbackDistChartInstance = null;
+var scheduleCurrentMonth = new Date();
+var scheduleCalendarMap = {};
 
 async function loadSchedules() {
-    var now = new Date();
-    var month = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    var now = scheduleCurrentMonth;
+    var monthStr = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    var monthLabel = now.getFullYear() + '年' + (now.getMonth() + 1) + '月';
+    var labelEl = document.getElementById('schedule-month-label');
+    if (labelEl) labelEl.textContent = monthLabel;
+
+    var filterType = document.getElementById('schedule-filter-type') ? document.getElementById('schedule-filter-type').value : '';
+    var filterMediator = document.getElementById('schedule-filter-mediator') ? document.getElementById('schedule-filter-mediator').value : '';
+
     try {
-        var res = await api.get('/schedules/calendar', { month: month });
+        var params = { month: monthStr };
+        if (filterMediator) params.mediator_id = filterMediator;
+        var res = await api.get('/schedules/calendar' + buildQueryString(params));
         var calendarMap = res;
-        var allSchedules = [];
-        Object.keys(calendarMap).forEach(function(key) {
-            if (Array.isArray(calendarMap[key])) allSchedules = allSchedules.concat(calendarMap[key]);
-        });
+        scheduleCalendarMap = calendarMap;
+
+        if (filterType) {
+            var filteredMap = {};
+            for (var dk in calendarMap) {
+                var filtered = calendarMap[dk].filter(function(item) { return item.schedule_type === filterType; });
+                if (filtered.length > 0) filteredMap[dk] = filtered;
+            }
+            calendarMap = filteredMap;
+        }
+
         renderScheduleCalendar(calendarMap, now);
-        renderScheduleList(allSchedules);
+        await loadScheduleList();
+        await loadTodaySchedules();
+        await loadUpcomingSchedules();
+        await loadMediatorOptions();
     } catch (err) {
         showToast('加载日程数据失败: ' + err.message);
     }
+}
+
+function buildQueryString(params) {
+    var parts = [];
+    for (var k in params) {
+        if (params[k] !== '' && params[k] !== undefined && params[k] !== null) {
+            parts.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+        }
+    }
+    return parts.length > 0 ? '?' + parts.join('&') : '';
+}
+
+function changeScheduleMonth(delta) {
+    scheduleCurrentMonth = new Date(scheduleCurrentMonth.getFullYear(), scheduleCurrentMonth.getMonth() + delta, 1);
+    loadSchedules();
+}
+
+function goToToday() {
+    scheduleCurrentMonth = new Date();
+    loadSchedules();
+}
+
+async function loadMediatorOptions() {
+    try {
+        var mediators = await api.get('/schedules/mediators');
+        var data = Array.isArray(mediators) ? mediators : (mediators.data || []);
+        var selectEl = document.getElementById('schedule-filter-mediator');
+        var modalSelect = document.getElementById('schedule-mediator');
+        if (selectEl) {
+            var currentVal = selectEl.value;
+            var html = '<option value="">全部调解员</option>';
+            data.forEach(function(m) {
+                html += '<option value="' + m.id + '">' + escapeHtml(m.real_name) + (m.upcoming_count > 0 ? ' (' + m.upcoming_count + '项)' : '') + '</option>';
+            });
+            selectEl.innerHTML = html;
+            selectEl.value = currentVal;
+        }
+        if (modalSelect) {
+            var currentModal = modalSelect.value;
+            var mhtml = '<option value="">请选择调解员</option>';
+            data.forEach(function(m) {
+                mhtml += '<option value="' + m.id + '">' + escapeHtml(m.real_name) + '</option>';
+            });
+            modalSelect.innerHTML = mhtml;
+            modalSelect.value = currentModal;
+        }
+    } catch (err) { }
+}
+
+async function loadTodaySchedules() {
+    try {
+        var schedules = await api.get('/schedules/today');
+        var data = Array.isArray(schedules) ? schedules : (schedules.data || []);
+        var container = document.getElementById('today-schedule-list');
+        var countEl = document.getElementById('today-count');
+        if (!container) return;
+        if (countEl) countEl.textContent = data.length + '项';
+        if (data.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:12px">今日无日程安排</p>';
+            return;
+        }
+        var html = '';
+        data.forEach(function(s) {
+            var time = formatScheduleTime(s.start_time);
+            var typeClass = s.schedule_type || 'mediation';
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-subtle);cursor:pointer" onclick="viewScheduleDetail(' + s.id + ')">' +
+                '<div class="schedule-tag ' + typeClass + '" style="min-width:40px;text-align:center">' + time + '</div>' +
+                '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(s.title) + '</div>' +
+                '<div style="font-size:10px;color:var(--text-muted)">' + escapeHtml(s.mediator_name || '') + (s.location ? ' · ' + escapeHtml(s.location) : '') + '</div></div></div>';
+        });
+        container.innerHTML = html;
+    } catch (err) { }
+}
+
+async function loadUpcomingSchedules() {
+    try {
+        var schedules = await api.get('/schedules/upcoming?days=7');
+        var data = Array.isArray(schedules) ? schedules : (schedules.data || []);
+        var container = document.getElementById('upcoming-schedule-list');
+        if (!container) return;
+        if (data.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:12px">近7天无日程安排</p>';
+            return;
+        }
+        var html = '';
+        data.slice(0, 8).forEach(function(s) {
+            var d = new Date(s.start_time);
+            var dateStr = (d.getMonth() + 1) + '/' + d.getDate();
+            var timeStr = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            var typeClass = s.schedule_type || 'mediation';
+            var typeLabels = { mediation: '调解', consultation: '咨询', meeting: '会议', training: '培训', other: '其他' };
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-subtle);cursor:pointer" onclick="viewScheduleDetail(' + s.id + ')">' +
+                '<div class="schedule-tag ' + typeClass + '" style="min-width:40px;text-align:center">' + dateStr + '</div>' +
+                '<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(s.title) + '</div>' +
+                '<div style="font-size:10px;color:var(--text-muted)">' + timeStr + ' · ' + escapeHtml(s.mediator_name || '') + '</div></div>' +
+                '<span style="font-size:10px;color:var(--text-muted)">' + (typeLabels[s.schedule_type] || '') + '</span></div>';
+        });
+        container.innerHTML = html;
+    } catch (err) { }
+}
+
+async function loadScheduleList() {
+    var search = document.getElementById('schedule-search') ? document.getElementById('schedule-search').value.trim() : '';
+    var statusFilter = document.getElementById('schedule-status-filter') ? document.getElementById('schedule-status-filter').value : '';
+    var filterType = document.getElementById('schedule-filter-type') ? document.getElementById('schedule-filter-type').value : '';
+    var filterMediator = document.getElementById('schedule-filter-mediator') ? document.getElementById('schedule-filter-mediator').value : '';
+
+    var params = { pageSize: 50 };
+    if (search) params.search = search;
+    if (statusFilter) params.status = statusFilter;
+    if (filterType) params.schedule_type = filterType;
+    if (filterMediator) params.mediator_id = filterMediator;
+
+    try {
+        var res = await api.get('/schedules' + buildQueryString(params));
+        var data = res.data || res;
+        if (!Array.isArray(data)) data = data.data || [];
+        renderScheduleList(data);
+    } catch (err) {
+        showToast('加载日程列表失败: ' + err.message);
+    }
+}
+
+function formatScheduleTime(isoStr) {
+    if (!isoStr) return '';
+    var d = new Date(isoStr);
+    return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+}
+
+function formatScheduleDateTime(isoStr) {
+    if (!isoStr) return '';
+    var d = new Date(isoStr);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' ' + formatScheduleTime(isoStr);
 }
 
 function renderScheduleCalendar(calendarMap, now) {
@@ -7179,12 +7409,11 @@ function renderScheduleCalendar(calendarMap, now) {
     var lastDay = new Date(year, month + 1, 0);
     var startDow = firstDay.getDay();
     var daysInMonth = lastDay.getDate();
-
     var prevMonthLast = new Date(year, month, 0).getDate();
     var dayNames = ['日', '一', '二', '三', '四', '五', '六'];
+    var today = new Date();
 
     var html = '<div class="calendar-grid">';
-
     dayNames.forEach(function(d) {
         html += '<div class="calendar-header-cell">' + d + '</div>';
     });
@@ -7205,7 +7434,7 @@ function renderScheduleCalendar(calendarMap, now) {
             isOtherMonth = true;
         } else {
             dayNum = i - startDow + 1;
-            if (dayNum === now.getDate()) isToday = true;
+            if (dayNum === today.getDate() && month === today.getMonth() && year === today.getFullYear()) isToday = true;
             dateKey = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(dayNum).padStart(2, '0');
         }
 
@@ -7213,14 +7442,14 @@ function renderScheduleCalendar(calendarMap, now) {
         if (isOtherMonth) classes += ' other-month';
         if (isToday) classes += ' today';
 
-        html += '<div class="' + classes + '">';
+        html += '<div class="' + classes + '" onclick="onCalendarDayClick(\'' + (dateKey || '') + '\')">';
         html += '<div class="day-number">' + dayNum + '</div>';
 
         if (dateKey && calendarMap[dateKey]) {
             var items = calendarMap[dateKey];
             items.slice(0, 3).forEach(function(item) {
-                var typeClass = item.type || 'mediation';
-                html += '<div class="schedule-tag ' + escapeHtml(typeClass) + '">' + escapeHtml(item.title || '') + '</div>';
+                var typeClass = item.schedule_type || 'mediation';
+                html += '<div class="schedule-tag ' + escapeHtml(typeClass) + '" onclick="event.stopPropagation();viewScheduleDetail(' + item.id + ')" title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title || '') + '</div>';
             });
             if (items.length > 3) {
                 html += '<div class="schedule-tag" style="background:var(--bg-tertiary);color:var(--text-muted)">+' + (items.length - 3) + ' 更多</div>';
@@ -7234,6 +7463,21 @@ function renderScheduleCalendar(calendarMap, now) {
     container.innerHTML = html;
 }
 
+function onCalendarDayClick(dateKey) {
+    if (!dateKey) return;
+    var parts = dateKey.split('-');
+    scheduleCurrentMonth = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    showScheduleModal();
+    var dateInput = document.getElementById('schedule-start');
+    if (dateInput) {
+        dateInput.value = dateKey + 'T09:00';
+    }
+    var endInput = document.getElementById('schedule-end');
+    if (endInput) {
+        endInput.value = dateKey + 'T10:00';
+    }
+}
+
 function renderScheduleList(schedules) {
     var container = document.getElementById('schedule-list');
     if (!container) return;
@@ -7243,62 +7487,302 @@ function renderScheduleList(schedules) {
         return;
     }
 
+    var typeLabels = { mediation: '调解', consultation: '咨询', meeting: '会议', training: '培训', other: '其他' };
+    var statusLabels = { scheduled: '已安排', in_progress: '进行中', completed: '已完成', cancelled: '已取消' };
+    var statusClasses = { scheduled: 'pending', in_progress: 'mediating', completed: 'closed', cancelled: 'urgent' };
+
     var html = '';
     schedules.forEach(function(s) {
-        var statusTag = '';
-        if (s.status === 'completed') {
-            statusTag = '<span class="status-tag closed">已完成</span>';
-        } else if (s.status === 'cancelled') {
-            statusTag = '<span class="status-tag urgent">已取消</span>';
-        } else {
-            statusTag = '<span class="status-tag active">待进行</span>';
-        }
+        var sc = statusClasses[s.status] || 'pending';
+        var sl = statusLabels[s.status] || s.status;
+        var tl = typeLabels[s.schedule_type] || s.schedule_type;
+        var typeClass = s.schedule_type || 'mediation';
+        var startStr = formatScheduleDateTime(s.start_time);
+        var endStr = formatScheduleTime(s.end_time);
 
-        html += '<div class="schedule-card">' +
-            '<div class="sc-time">' + escapeHtml(s.startTime || s.time || '') + '</div>' +
+        html += '<div class="schedule-card" onclick="viewScheduleDetail(' + s.id + ')">' +
+            '<div class="sc-time">' + startStr + '<br><span style="font-size:10px;color:var(--text-muted)">至 ' + endStr + '</span></div>' +
             '<div class="sc-content">' +
             '<h4>' + escapeHtml(s.title || '') + '</h4>' +
-            '<p>' + escapeHtml(s.mediator || '') + ' · ' + escapeHtml(s.location || '') + '</p>' +
+            '<p>' + escapeHtml(s.mediator_name || '') + (s.location ? ' · ' + escapeHtml(s.location) : '') + (s.case_number ? ' · #' + escapeHtml(s.case_number) : '') + '</p>' +
             '</div>' +
-            '<div class="sc-meta">' + statusTag + '</div>' +
+            '<div class="sc-meta"><span class="schedule-tag ' + typeClass + '" style="margin-right:6px">' + tl + '</span><span class="status-tag ' + sc + '">' + sl + '</span></div>' +
             '</div>';
     });
     container.innerHTML = html;
 }
 
-function showScheduleModal() {
-    document.getElementById('modal-schedule').style.display = 'flex';
+function showScheduleModal(editId) {
+    var modal = document.getElementById('modal-schedule');
+    if (!modal) return;
+
+    document.getElementById('schedule-edit-id').value = editId || '';
+    document.getElementById('schedule-title').value = '';
+    document.getElementById('schedule-case-search').value = '';
+    document.getElementById('schedule-case-id').value = '';
+    document.getElementById('schedule-case-selected').style.display = 'none';
+    document.getElementById('schedule-mediator').value = '';
+    document.getElementById('schedule-type').value = 'mediation';
+    document.getElementById('schedule-reminder').value = '15';
+    document.getElementById('schedule-start').value = '';
+    document.getElementById('schedule-end').value = '';
+    document.getElementById('schedule-location').value = '';
+    document.getElementById('schedule-desc').value = '';
+    document.getElementById('schedule-conflict-warning').style.display = 'none';
+
+    var titleEl = document.getElementById('schedule-modal-title');
+    var btnEl = document.getElementById('btn-submit-schedule');
+
+    if (editId) {
+        if (titleEl) titleEl.innerHTML = '编辑日程 <button class="modal-close" onclick="closeModal(\'modal-schedule\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        if (btnEl) btnEl.textContent = '保存修改';
+        loadScheduleForEdit(editId);
+    } else {
+        if (titleEl) titleEl.innerHTML = '新建日程 <button class="modal-close" onclick="closeModal(\'modal-schedule\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        if (btnEl) btnEl.textContent = '创建日程';
+    }
+
+    loadMediatorOptions();
+    modal.style.display = 'flex';
+}
+
+async function loadScheduleForEdit(id) {
+    try {
+        var s = await api.get('/schedules/' + id);
+        document.getElementById('schedule-title').value = s.title || '';
+        document.getElementById('schedule-mediator').value = s.mediator_id || '';
+        document.getElementById('schedule-type').value = s.schedule_type || 'mediation';
+        document.getElementById('schedule-reminder').value = String(s.reminder || 15);
+        document.getElementById('schedule-location').value = s.location || '';
+        document.getElementById('schedule-desc').value = s.description || '';
+
+        if (s.start_time) {
+            var sd = new Date(s.start_time);
+            document.getElementById('schedule-start').value = sd.toISOString().slice(0, 16);
+        }
+        if (s.end_time) {
+            var ed = new Date(s.end_time);
+            document.getElementById('schedule-end').value = ed.toISOString().slice(0, 16);
+        }
+
+        if (s.case_id) {
+            document.getElementById('schedule-case-id').value = s.case_id;
+            var selEl = document.getElementById('schedule-case-selected');
+            selEl.style.display = 'block';
+            selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(s.case_number || '') + '</span> ' + escapeHtml(s.case_title || '') +
+                ' <span class="material-icons-round" style="font-size:12px;cursor:pointer;vertical-align:middle" onclick="clearScheduleCase()">close</span>';
+        }
+    } catch (err) {
+        showToast('加载日程详情失败: ' + err.message);
+    }
+}
+
+async function searchScheduleCases(keyword) {
+    var dropdown = document.getElementById('schedule-case-dropdown');
+    if (!keyword || keyword.trim().length < 1) {
+        dropdown.style.display = 'none';
+        return;
+    }
+    try {
+        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=8');
+        var cases = data.data || data;
+        if (!Array.isArray(cases)) cases = cases.data || [];
+        if (cases.length === 0) {
+            dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>';
+            dropdown.style.display = 'block';
+            return;
+        }
+        var html = '';
+        cases.forEach(function(c) {
+            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectScheduleCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
+                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
+        });
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } catch (err) { }
+}
+
+function selectScheduleCase(id, caseNumber, title) {
+    document.getElementById('schedule-case-id').value = id;
+    document.getElementById('schedule-case-search').value = caseNumber;
+    document.getElementById('schedule-case-dropdown').style.display = 'none';
+    var selEl = document.getElementById('schedule-case-selected');
+    selEl.style.display = 'block';
+    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title) +
+        ' <span class="material-icons-round" style="font-size:12px;cursor:pointer;vertical-align:middle" onclick="clearScheduleCase()">close</span>';
+}
+
+function clearScheduleCase() {
+    document.getElementById('schedule-case-id').value = '';
+    document.getElementById('schedule-case-search').value = '';
+    document.getElementById('schedule-case-selected').style.display = 'none';
+}
+
+async function checkScheduleConflict() {
+    var mediatorId = document.getElementById('schedule-mediator').value;
+    var startTime = document.getElementById('schedule-start').value;
+    var endTime = document.getElementById('schedule-end').value;
+    var editId = document.getElementById('schedule-edit-id').value;
+    var warningEl = document.getElementById('schedule-conflict-warning');
+
+    if (!mediatorId || !startTime || !endTime) {
+        warningEl.style.display = 'none';
+        return;
+    }
+
+    try {
+        var params = 'mediator_id=' + mediatorId + '&start_time=' + encodeURIComponent(new Date(startTime).toISOString()) + '&end_time=' + encodeURIComponent(new Date(endTime).toISOString());
+        if (editId) params += '&exclude_id=' + editId;
+        var result = await api.get('/schedules/conflicts?' + params);
+        if (result.has_conflict) {
+            warningEl.style.display = 'block';
+            warningEl.innerHTML = '<span class="material-icons-round" style="font-size:14px;vertical-align:middle">warning</span> 该调解员在此时段已有安排，存在时间冲突';
+        } else {
+            warningEl.style.display = 'none';
+        }
+    } catch (err) { }
 }
 
 async function submitSchedule() {
     var title = document.getElementById('schedule-title').value.trim();
-    if (!title) {
-        showToast('请输入日程标题', 'info');
-        return;
-    }
+    var mediatorId = document.getElementById('schedule-mediator').value;
+    var startTime = document.getElementById('schedule-start').value;
+    var endTime = document.getElementById('schedule-end').value;
+
+    if (!title) { showToast('请输入日程标题', 'warning'); return; }
+    if (!mediatorId) { showToast('请选择调解员', 'warning'); return; }
+    if (!startTime || !endTime) { showToast('请选择开始和结束时间', 'warning'); return; }
 
     var data = {
         title: title,
-        caseNumber: document.getElementById('schedule-case').value.trim(),
-        mediator: document.getElementById('schedule-mediator').value,
-        type: document.getElementById('schedule-type').value,
-        startTime: document.getElementById('schedule-start').value,
-        endTime: document.getElementById('schedule-end').value,
-        location: document.getElementById('schedule-location').value.trim(),
-        description: document.getElementById('schedule-desc').value.trim()
+        case_id: document.getElementById('schedule-case-id').value || null,
+        mediator_id: parseInt(mediatorId),
+        schedule_type: document.getElementById('schedule-type').value,
+        start_time: new Date(startTime).toISOString(),
+        end_time: new Date(endTime).toISOString(),
+        location: document.getElementById('schedule-location').value.trim() || null,
+        description: document.getElementById('schedule-desc').value.trim() || null,
+        reminder: parseInt(document.getElementById('schedule-reminder').value)
     };
 
+    var editId = document.getElementById('schedule-edit-id').value;
+
     try {
-        await api.post('/schedules', data);
-        showToast('日程创建成功', 'success');
+        if (editId) {
+            await api.put('/schedules/' + editId, data);
+            showToast('日程更新成功', 'success');
+        } else {
+            await api.post('/schedules', data);
+            showToast('日程创建成功', 'success');
+        }
         closeModal('modal-schedule');
-        document.getElementById('schedule-title').value = '';
-        document.getElementById('schedule-case').value = '';
-        document.getElementById('schedule-location').value = '';
-        document.getElementById('schedule-desc').value = '';
         await loadSchedules();
     } catch (err) {
-        showToast('创建日程失败: ' + err.message);
+        if (err.message && err.message.includes('冲突')) {
+            document.getElementById('schedule-conflict-warning').style.display = 'block';
+            document.getElementById('schedule-conflict-warning').innerHTML = '<span class="material-icons-round" style="font-size:14px;vertical-align:middle">warning</span> ' + err.message;
+        } else {
+            showToast('操作失败: ' + err.message);
+        }
+    }
+}
+
+async function viewScheduleDetail(id) {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '560px';
+
+    try {
+        var s = await api.get('/schedules/' + id);
+        var typeLabels = { mediation: '调解', consultation: '咨询', meeting: '会议', training: '培训', other: '其他' };
+        var statusLabels = { scheduled: '已安排', in_progress: '进行中', completed: '已完成', cancelled: '已取消' };
+        var statusClasses = { scheduled: 'pending', in_progress: 'mediating', completed: 'closed', cancelled: 'urgent' };
+        var typeClass = s.schedule_type || 'mediation';
+        var sc = statusClasses[s.status] || 'pending';
+
+        var html = '<div style="padding:4px 0">' +
+            '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">' +
+            '<span class="schedule-tag ' + typeClass + '" style="font-size:12px;padding:4px 10px">' + (typeLabels[s.schedule_type] || '') + '</span>' +
+            '<span class="status-tag ' + sc + '">' + (statusLabels[s.status] || '') + '</span>' +
+            '</div>' +
+            '<h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px">' + escapeHtml(s.title) + '</h3>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">' +
+            '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">' +
+            '<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">开始时间</div>' +
+            '<div style="font-size:13px;color:var(--text-primary)">' + formatScheduleDateTime(s.start_time) + '</div></div>' +
+            '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">' +
+            '<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">结束时间</div>' +
+            '<div style="font-size:13px;color:var(--text-primary)">' + formatScheduleDateTime(s.end_time) + '</div></div></div>' +
+            '<div style="margin-bottom:12px;display:flex;align-items:center;gap:8px">' +
+            '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">person</span>' +
+            '<span style="font-size:13px;color:var(--text-primary)">调解员: ' + escapeHtml(s.mediator_name || '') + '</span></div>';
+
+        if (s.location) {
+            html += '<div style="margin-bottom:12px;display:flex;align-items:center;gap:8px">' +
+                '<span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">location_on</span>' +
+                '<span style="font-size:13px;color:var(--text-primary)">' + escapeHtml(s.location) + '</span></div>';
+        }
+
+        if (s.case_number) {
+            html += '<div style="margin-bottom:12px;display:flex;align-items:center;gap:8px">' +
+                '<span class="material-icons-round" style="font-size:16px;color:var(--accent-violet)">gavel</span>' +
+                '<span style="font-size:13px;color:var(--text-primary)">关联案件: ' + escapeHtml(s.case_number) + ' ' + escapeHtml(s.case_title || '') + '</span></div>';
+        }
+
+        if (s.description) {
+            html += '<div style="margin-bottom:12px;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">' +
+                '<div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">描述</div>' +
+                '<div style="font-size:12px;color:var(--text-secondary);line-height:1.6">' + escapeHtml(s.description) + '</div></div>';
+        }
+
+        html += '<div style="margin-bottom:12px;font-size:11px;color:var(--text-muted)">提醒: ' + (s.reminder > 0 ? s.reminder + '分钟前' : '不提醒') + ' · 创建人: ' + escapeHtml(s.created_by_name || '') + '</div>';
+
+        html += '<div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border-subtle)">';
+
+        if (s.status === 'scheduled') {
+            html += '<button class="btn btn-outline" style="flex:1;justify-content:center" onclick="updateScheduleStatus(' + s.id + ',\'in_progress\')"><span class="material-icons-round" style="font-size:14px">play_arrow</span> 开始</button>';
+        }
+        if (s.status === 'scheduled' || s.status === 'in_progress') {
+            html += '<button class="btn btn-outline" style="flex:1;justify-content:center" onclick="updateScheduleStatus(' + s.id + ',\'completed\')"><span class="material-icons-round" style="font-size:14px">check</span> 完成</button>';
+        }
+        if (s.status !== 'cancelled' && s.status !== 'completed') {
+            html += '<button class="btn btn-outline" style="flex:1;justify-content:center;color:var(--accent-rose);border-color:var(--accent-rose)" onclick="cancelSchedule(' + s.id + ')"><span class="material-icons-round" style="font-size:14px">cancel</span> 取消</button>';
+        }
+
+        html += '<button class="btn btn-primary" style="flex:1;justify-content:center" onclick="closeModal(\'modal-generic\');showScheduleModal(' + s.id + ')"><span class="material-icons-round" style="font-size:14px">edit</span> 编辑</button>';
+        html += '</div></div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '日程详情 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载日程详情失败: ' + err.message);
+    }
+}
+
+async function updateScheduleStatus(id, status) {
+    var statusLabels = { in_progress: '进行中', completed: '已完成' };
+    try {
+        await api.put('/schedules/' + id, { status: status });
+        showToast('日程状态已更新为: ' + (statusLabels[status] || status), 'success');
+        closeModal('modal-generic');
+        await loadSchedules();
+    } catch (err) {
+        showToast('状态更新失败: ' + err.message);
+    }
+}
+
+async function cancelSchedule(id) {
+    if (!confirm('确定要取消该日程吗？')) return;
+    try {
+        await api.delete('/schedules/' + id);
+        showToast('日程已取消', 'success');
+        closeModal('modal-generic');
+        await loadSchedules();
+    } catch (err) {
+        showToast('取消失败: ' + err.message);
     }
 }
 
