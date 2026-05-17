@@ -213,6 +213,19 @@ function seed() {
   });
   providerInsert(providers);
 
+  const insertPushProvider = db.prepare(
+    `INSERT INTO push_providers (name, provider_type, display_name, description, api_endpoint, app_id, secret_key, sign_name, template_code, region, status, balance, daily_limit, monthly_sent, last_sync_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const pushProviders = [
+    ['tencent_sms_prod', 'tencent_sms', '腾讯云短信', '生产环境腾讯云短信服务', 'https://sms.tencentcloudapi.com', '1400123456', 'sk-tencent-sms-secret-xxxxx', '和调平台', 'SMS_123456', 'ap-guangzhou', 'active', 500.00, 5000, 890, '2024-12-09 14:00:00'],
+    ['aliyun_sms_backup', 'aliyun_sms', '阿里云短信', '备用环境阿里云短信服务', 'https://dysmsapi.aliyuncs.com', 'LTAI5tSMSXXXX', 'aliyun-sms-secret-xxxxx', '和调平台', 'SMS_789012', 'cn-hangzhou', 'inactive', 380.00, 10000, 650, null],
+    ['tencent_email_prod', 'tencent_email', '腾讯云邮件推送', '生产环境腾讯云SES邮件', 'https://ses.tencentcloudapi.com', 'AKIDxxxxxxxx', 'ses-secret-xxxxx', 'notify@hetiao.com', null, 'ap-guangzhou', 'active', 200.00, 5000, 280, '2024-12-09 13:00:00']
+  ];
+  const pushProviderInsert = db.transaction((rows) => {
+    for (const p of rows) insertPushProvider.run(...p);
+  });
+  pushProviderInsert(pushProviders);
+
   const insertSetting = db.prepare(
     `INSERT INTO settings (category, key, value, value_type, description) VALUES (?, ?, ?, ?, ?)`
   );

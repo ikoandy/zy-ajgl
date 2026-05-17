@@ -2578,11 +2578,22 @@
                 <div class="page-header">
                     <h2>信息推送</h2>
                     <div class="page-header-actions">
+                        <button class="btn btn-outline" onclick="showPushProviderManageModal()"><span class="material-icons-round" style="font-size:16px">cloud</span> 云服务商</button>
                         <button class="btn btn-outline" onclick="loadPartyPushList()"><span class="material-icons-round" style="font-size:16px">refresh</span> 刷新</button>
                         <button class="btn btn-primary" onclick="showPushToPartyModal()"><span class="material-icons-round" style="font-size:16px">send</span> 推送通知</button>
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px" id="push-stats-cards"></div>
+                <div class="chart-card" style="margin-bottom:20px;padding:16px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-violet)">cloud_queue</span>
+                            <span style="font-size:13px;font-weight:600">推送云服务商</span>
+                        </div>
+                        <button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="showPushProviderManageModal()">管理</button>
+                    </div>
+                    <div id="push-provider-status" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+                </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
                     <div class="chart-card" style="padding:16px">
                         <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
@@ -7180,6 +7191,7 @@ var pushStatusClasses = { pending: 'pending', sent: 'mediating', delivered: 'agr
 async function loadNotifications() {
     await loadPartyPushList();
     await loadPartyPushStats();
+    await loadPushProviders();
 }
 
 async function loadPartyPushStats() {
@@ -7321,6 +7333,402 @@ async function deletePushRecord(id) {
         await loadPartyPushStats();
     } catch (err) {
         showToast('删除失败: ' + err.message);
+    }
+}
+
+// ==================== PUSH PROVIDERS ====================
+var pushProviderTypeLabels = { tencent_sms: '腾讯云短信', aliyun_sms: '阿里云短信', huawei_sms: '华为云短信', tencent_email: '腾讯云邮件', aliyun_email: '阿里云邮件', custom_sms: '自定义短信', custom_email: '自定义邮件' };
+var pushProviderTypeIcons = { tencent_sms: 'sms', aliyun_sms: 'sms', huawei_sms: 'sms', tencent_email: 'email', aliyun_email: 'email', custom_sms: 'sms_failed', custom_email: 'mark_email_unread' };
+var pushProviderTypeColors = { tencent_sms: '#006eff', aliyun_sms: '#ff6a00', huawei_sms: '#c7000b', tencent_email: '#006eff', aliyun_email: '#ff6a00', custom_sms: 'var(--accent-violet)', custom_email: 'var(--accent-violet)' };
+var pushProviderChannelLabels = { sms: '短信', email: '邮件' };
+var pushProviderStatusLabels = { active: '已启用', inactive: '未启用', testing: '测试中' };
+var pushProviderStatusClasses = { active: 'agreed', inactive: 'pending', testing: 'mediating' };
+
+async function loadPushProviders() {
+    try {
+        var providers = await api.get('/push-providers');
+        if (!Array.isArray(providers)) providers = [];
+        renderPushProviderStatus(providers);
+    } catch (err) { }
+}
+
+function renderPushProviderStatus(providers) {
+    var container = document.getElementById('push-provider-status');
+    if (!container) return;
+
+    if (!providers || providers.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1">尚未配置推送云服务商，<a href="javascript:void(0)" onclick="showPushProviderManageModal()" style="color:var(--accent-gold)">点击配置</a></div>';
+        return;
+    }
+
+    var html = '';
+    providers.forEach(function(p) {
+        var color = pushProviderTypeColors[p.provider_type] || 'var(--text-muted)';
+        var icon = pushProviderTypeIcons[p.provider_type] || 'cloud';
+        var typeLabel = pushProviderTypeLabels[p.provider_type] || p.provider_type;
+        var statusLabel = pushProviderStatusLabels[p.status] || p.status;
+        var statusClass = pushProviderStatusClasses[p.status] || 'pending';
+        var channelLabel = pushProviderChannelLabels[(p.provider_type || '').includes('email') ? 'email' : 'sms'] || '推送';
+        var features = [];
+        try { features = JSON.parse(p.features || '[]'); } catch(e) {}
+
+        html += '<div style="padding:12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);border-left:3px solid ' + color + '">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span class="material-icons-round" style="font-size:20px;color:' + color + '">' + icon + '</span>' +
+            '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(p.display_name) + '</div>' +
+            '<div style="font-size:10px;color:var(--text-muted)">' + typeLabel + ' · ' + channelLabel + '</div></div></div>' +
+            '<span class="status-tag ' + statusClass + '">' + statusLabel + '</span></div>' +
+            '<div style="display:flex;gap:12px;font-size:11px;color:var(--text-muted)">' +
+            (p.balance > 0 ? '<span>余额: <strong style="color:var(--accent-gold)">' + p.balance.toFixed(2) + '</strong></span>' : '') +
+            '<span>日限: ' + (p.daily_limit || 1000) + '</span>' +
+            '<span>本月: ' + (p.monthly_sent || 0) + '条</span>' +
+            (p.sign_name ? '<span>签名: ' + escapeHtml(p.sign_name) + '</span>' : '') +
+            '</div></div>';
+    });
+    container.innerHTML = html;
+}
+
+function showPushProviderManageModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '800px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+        '<span style="font-size:13px;color:var(--text-muted)">配置短信/邮件云服务商，实现调解通知的短信和邮件推送</span>' +
+        '<button class="btn btn-primary" style="padding:4px 12px;font-size:11px" onclick="showAddPushProviderModal()"><span class="material-icons-round" style="font-size:14px">add</span> 添加服务商</button>' +
+        '</div>' +
+        '<div id="push-provider-list-container" style="display:flex;flex-direction:column;gap:12px"></div>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '推送云服务商管理 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+
+    loadPushProviderList();
+}
+
+async function loadPushProviderList() {
+    var container = document.getElementById('push-provider-list-container');
+    if (!container) return;
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">加载中...</div>';
+
+    try {
+        var providers = await api.get('/push-providers');
+        if (!Array.isArray(providers)) providers = [];
+
+        if (providers.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)">尚未添加服务商，点击上方"添加服务商"按钮开始配置</div>';
+            return;
+        }
+
+        var html = '';
+        providers.forEach(function(p) {
+            var color = pushProviderTypeColors[p.provider_type] || 'var(--text-muted)';
+            var icon = pushProviderTypeIcons[p.provider_type] || 'cloud';
+            var typeLabel = pushProviderTypeLabels[p.provider_type] || p.provider_type;
+            var statusLabel = pushProviderStatusLabels[p.status] || p.status;
+            var statusClass = pushProviderStatusClasses[p.status] || 'pending';
+            var channelLabel = pushProviderChannelLabels[(p.provider_type || '').includes('email') ? 'email' : 'sms'] || '推送';
+
+            html += '<div style="padding:16px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);border-left:4px solid ' + color + '">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+                '<div style="display:flex;align-items:center;gap:10px">' +
+                '<div style="width:40px;height:40px;border-radius:var(--radius-md);background:' + color + '20;display:flex;align-items:center;justify-content:center">' +
+                '<span class="material-icons-round" style="font-size:22px;color:' + color + '">' + icon + '</span></div>' +
+                '<div><div style="font-size:14px;font-weight:600;color:var(--text-primary)">' + escapeHtml(p.display_name) + '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted)">' + typeLabel + ' · ' + channelLabel + ' · ' + escapeHtml(p.name) + '</div></div></div>' +
+                '<div style="display:flex;align-items:center;gap:8px">' +
+                '<span class="status-tag ' + statusClass + '">' + statusLabel + '</span>' +
+                (p.status === 'active' ?
+                    '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="deactivatePushProvider(' + p.id + ')">停用</button>' :
+                    '<button class="btn btn-primary" style="padding:2px 8px;font-size:10px" onclick="activatePushProvider(' + p.id + ')">启用</button>') +
+                '</div></div>' +
+                '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:11px;margin-bottom:10px">' +
+                '<div><span style="color:var(--text-muted)">签名:</span> ' + (p.sign_name ? escapeHtml(p.sign_name) : '<span style="color:var(--text-muted)">未配置</span>') + '</div>' +
+                '<div><span style="color:var(--text-muted)">日限额:</span> ' + (p.daily_limit || 1000) + '条</div>' +
+                '<div><span style="color:var(--text-muted)">本月发送:</span> ' + (p.monthly_sent || 0) + '条</div>' +
+                '</div>' +
+                (p.balance > 0 ? '<div style="font-size:11px;margin-bottom:8px"><span style="color:var(--text-muted)">账户余额:</span> <strong style="color:var(--accent-gold)">¥' + p.balance.toFixed(2) + '</strong></div>' : '') +
+                '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="testPushProvider(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">network_check</span> 测试</button>' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="syncPushProvider(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">sync</span> 同步</button>' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="showEditPushProviderModal(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">settings</span> 配置</button>' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="showPushProviderLogs(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">history</span> 日志</button>' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deletePushProvider(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">delete</span> 删除</button>' +
+                '</div></div>';
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--accent-rose)">加载失败: ' + escapeHtml(err.message) + '</div>';
+    }
+}
+
+async function showAddPushProviderModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '640px';
+
+    try {
+        var configs = await api.get('/push-providers/configs');
+        var configArr = Object.values(configs);
+        var smsProviders = configArr.filter(function(c) { return c.channel === 'sms'; });
+        var emailProviders = configArr.filter(function(c) { return c.channel === 'email'; });
+
+        var html = '<div style="padding:4px 0">' +
+            '<div class="modal-field"><label>选择服务商类型 *</label>';
+
+        html += '<div style="margin-bottom:8px;font-size:11px;color:var(--text-muted);font-weight:600">短信服务商</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">';
+        smsProviders.forEach(function(c) {
+            var color = pushProviderTypeColors[c.name] || 'var(--text-muted)';
+            var icon = pushProviderTypeIcons[c.name] || 'sms';
+            html += '<div onclick="selectPushProviderType(\'' + c.name + '\')" style="padding:10px;background:var(--bg-tertiary);border:2px solid var(--border-subtle);border-radius:var(--radius-md);cursor:pointer;transition:all 0.2s;text-align:center" class="push-provider-type-card" data-type="' + c.name + '">' +
+                '<span class="material-icons-round" style="font-size:20px;color:' + color + '">' + icon + '</span>' +
+                '<div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-top:4px">' + escapeHtml(c.display_name) + '</div></div>';
+        });
+        html += '</div>';
+
+        html += '<div style="margin-bottom:8px;font-size:11px;color:var(--text-muted);font-weight:600">邮件服务商</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">';
+        emailProviders.forEach(function(c) {
+            var color = pushProviderTypeColors[c.name] || 'var(--text-muted)';
+            var icon = pushProviderTypeIcons[c.name] || 'email';
+            html += '<div onclick="selectPushProviderType(\'' + c.name + '\')" style="padding:10px;background:var(--bg-tertiary);border:2px solid var(--border-subtle);border-radius:var(--radius-md);cursor:pointer;transition:all 0.2s;text-align:center" class="push-provider-type-card" data-type="' + c.name + '">' +
+                '<span class="material-icons-round" style="font-size:20px;color:' + color + '">' + icon + '</span>' +
+                '<div style="font-size:11px;font-weight:600;color:var(--text-primary);margin-top:4px">' + escapeHtml(c.display_name) + '</div></div>';
+        });
+        html += '</div>';
+
+        html += '<div id="push-provider-config-form" style="display:none"></div></div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '添加推送服务商 <button class="modal-close" onclick="closeModal(\'modal-generic\');showPushProviderManageModal()"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载服务商配置失败: ' + err.message);
+    }
+}
+
+var selectedPushProviderType = '';
+async function selectPushProviderType(type) {
+    selectedPushProviderType = type;
+    document.querySelectorAll('.push-provider-type-card').forEach(function(card) {
+        card.style.borderColor = card.getAttribute('data-type') === type ? pushProviderTypeColors[type] : 'var(--border-subtle)';
+        card.style.background = card.getAttribute('data-type') === type ? pushProviderTypeColors[type] + '15' : 'var(--bg-tertiary)';
+    });
+
+    try {
+        var config = await api.get('/push-providers/configs/' + type);
+        var formContainer = document.getElementById('push-provider-config-form');
+        if (!formContainer) return;
+
+        var html = '<div style="border-top:1px solid var(--border-subtle);padding-top:12px">' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">' + escapeHtml(config.description) + '</div>' +
+            '<div class="modal-field"><label>服务商标识 *</label><input type="text" id="push-provider-name" placeholder="如: tencent_sms_prod（唯一标识）"></div>' +
+            '<div class="modal-field"><label>显示名称 *</label><input type="text" id="push-provider-display-name" value="' + escapeHtml(config.display_name) + '"></div>';
+
+        config.fields.forEach(function(f) {
+            var inputType = f.type === 'password' ? 'password' : 'text';
+            html += '<div class="modal-field"><label>' + f.label + (f.required ? ' *' : '') + '</label>' +
+                '<input type="' + inputType + '" id="push-provider-field-' + f.key + '" placeholder="' + f.label + '"></div>';
+        });
+
+        if (config.packages && config.packages.length > 0) {
+            html += '<div class="modal-field"><label>选择套餐</label><div style="display:grid;grid-template-columns:repeat(' + Math.min(config.packages.length, 3) + ',1fr);gap:8px">';
+            config.packages.forEach(function(pkg, idx) {
+                var color = pushProviderTypeColors[type] || 'var(--accent-gold)';
+                html += '<label style="display:flex;flex-direction:column;gap:4px;padding:10px;background:var(--bg-tertiary);border:2px solid ' + (idx === 0 ? color : 'var(--border-subtle)') + ';border-radius:var(--radius-md);cursor:pointer;font-size:11px">' +
+                    '<div style="display:flex;align-items:center;gap:4px"><input type="radio" name="push-provider-package" value="' + pkg.id + '" ' + (idx === 0 ? 'checked' : '') + ' style="accent-color:' + color + '">' +
+                    '<strong>' + escapeHtml(pkg.name) + '</strong></div>' +
+                    '<div style="color:var(--text-muted)">日限: ' + pkg.daily_limit + ' · ' + escapeHtml(pkg.price) + '</div></label>';
+            });
+            html += '</div></div>';
+        }
+
+        html += '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitAddPushProvider()"><span class="material-icons-round" style="font-size:16px">cloud_done</span> 添加服务商</button></div>';
+
+        formContainer.innerHTML = html;
+        formContainer.style.display = 'block';
+    } catch (err) {
+        showToast('加载配置失败: ' + err.message);
+    }
+}
+
+async function submitAddPushProvider() {
+    var name = document.getElementById('push-provider-name').value.trim();
+    var displayName = document.getElementById('push-provider-display-name').value.trim();
+    if (!name) { showToast('请输入服务商标识', 'warning'); return; }
+    if (!displayName) { showToast('请输入显示名称', 'warning'); return; }
+    if (!selectedPushProviderType) { showToast('请选择服务商类型', 'warning'); return; }
+
+    try {
+        var configs = await api.get('/push-providers/configs/' + selectedPushProviderType);
+        var data = { name: name, provider_type: selectedPushProviderType, display_name: displayName, api_endpoint: configs.api_endpoint_default };
+
+        configs.fields.forEach(function(f) {
+            var el = document.getElementById('push-provider-field-' + f.key);
+            if (el) data[f.key] = el.value.trim() || null;
+        });
+
+        var packageRadio = document.querySelector('input[name="push-provider-package"]:checked');
+        if (packageRadio) {
+            var pkg = configs.packages.find(function(p) { return p.id === packageRadio.value; });
+            if (pkg) data.daily_limit = pkg.daily_limit;
+        }
+
+        await api.post('/push-providers', data);
+        showToast('服务商添加成功', 'success');
+        closeModal('modal-generic');
+        showPushProviderManageModal();
+        await loadPushProviders();
+    } catch (err) {
+        showToast('添加失败: ' + err.message);
+    }
+}
+
+async function showEditPushProviderModal(id) {
+    try {
+        var provider = await api.get('/push-providers/' + id);
+        var configs = await api.get('/push-providers/configs/' + provider.provider_type);
+        var modal = document.getElementById('modal-generic');
+        if (!modal) return;
+        var modalContent = modal.querySelector('.modal-content');
+        modalContent.style.width = '520px';
+
+        var html = '<div style="padding:4px 0">' +
+            '<div class="modal-field"><label>显示名称</label><input type="text" id="edit-push-provider-name" value="' + escapeHtml(provider.display_name) + '"></div>';
+
+        configs.fields.forEach(function(f) {
+            var inputType = f.type === 'password' ? 'password' : 'text';
+            var val = provider[f.key] || '';
+            html += '<div class="modal-field"><label>' + f.label + '</label>' +
+                '<input type="' + inputType + '" id="edit-push-provider-field-' + f.key + '" value="' + escapeHtml(val) + '"></div>';
+        });
+
+        html += '<div class="modal-field"><label>日发送限额</label><input type="number" id="edit-push-provider-daily-limit" value="' + (provider.daily_limit || 1000) + '" min="1" max="100000"></div>' +
+            '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitEditPushProvider(' + id + ')"><span class="material-icons-round" style="font-size:16px">save</span> 保存配置</button></div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '配置 ' + escapeHtml(provider.display_name) + ' <button class="modal-close" onclick="closeModal(\'modal-generic\');showPushProviderManageModal()"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载配置失败: ' + err.message);
+    }
+}
+
+async function submitEditPushProvider(id) {
+    var data = {
+        display_name: document.getElementById('edit-push-provider-name').value.trim(),
+        daily_limit: parseInt(document.getElementById('edit-push-provider-daily-limit').value) || 1000
+    };
+
+    try {
+        var provider = await api.get('/push-providers/' + id);
+        var configs = await api.get('/push-providers/configs/' + provider.provider_type);
+        configs.fields.forEach(function(f) {
+            var el = document.getElementById('edit-push-provider-field-' + f.key);
+            if (el) data[f.key] = el.value.trim() || null;
+        });
+
+        await api.put('/push-providers/' + id, data);
+        showToast('配置已保存', 'success');
+        closeModal('modal-generic');
+        showPushProviderManageModal();
+        await loadPushProviders();
+    } catch (err) {
+        showToast('保存失败: ' + err.message);
+    }
+}
+
+async function testPushProvider(id) {
+    showToast('正在测试连接...', 'info');
+    try {
+        var result = await api.post('/push-providers/' + id + '/test');
+        if (result.success) { showToast(result.message, 'success'); }
+        else { showToast(result.message || '连接测试失败', 'warning'); }
+    } catch (err) { showToast('测试失败: ' + err.message); }
+    await loadPushProviderList();
+}
+
+async function syncPushProvider(id) {
+    showToast('正在同步状态...', 'info');
+    try {
+        await api.post('/push-providers/' + id + '/sync');
+        showToast('同步成功', 'success');
+    } catch (err) { showToast('同步失败: ' + err.message); }
+    await loadPushProviderList();
+    await loadPushProviders();
+}
+
+async function activatePushProvider(id) {
+    try {
+        await api.post('/push-providers/' + id + '/activate');
+        showToast('服务商已启用', 'success');
+        await loadPushProviderList();
+        await loadPushProviders();
+    } catch (err) { showToast('启用失败: ' + err.message); }
+}
+
+async function deactivatePushProvider(id) {
+    if (!confirm('确定要停用该服务商吗？停用后将无法通过该渠道推送。')) return;
+    try {
+        await api.post('/push-providers/' + id + '/deactivate');
+        showToast('服务商已停用', 'success');
+        await loadPushProviderList();
+        await loadPushProviders();
+    } catch (err) { showToast('停用失败: ' + err.message); }
+}
+
+async function deletePushProvider(id) {
+    if (!confirm('确定要删除该服务商配置吗？此操作不可恢复。')) return;
+    try {
+        await api.delete('/push-providers/' + id);
+        showToast('服务商已删除', 'success');
+        await loadPushProviderList();
+        await loadPushProviders();
+    } catch (err) { showToast('删除失败: ' + err.message); }
+}
+
+async function showPushProviderLogs(id) {
+    try {
+        var res = await api.get('/push-providers/' + id + '/logs?pageSize=20');
+        var logs = res.data || res;
+        if (!Array.isArray(logs)) logs = [];
+
+        var modal = document.getElementById('modal-generic');
+        if (!modal) return;
+        var modalContent = modal.querySelector('.modal-content');
+        modalContent.style.width = '700px';
+
+        var html = '<div style="padding:4px 0">';
+        if (logs.length === 0) {
+            html += '<div style="text-align:center;color:var(--text-muted);padding:30px">暂无操作日志</div>';
+        } else {
+            logs.forEach(function(log) {
+                var statusColor = log.status === 'success' ? 'var(--accent-teal)' : (log.status === 'failed' ? 'var(--accent-rose)' : '#fbbf24');
+                var statusIcon = log.status === 'success' ? 'check_circle' : (log.status === 'failed' ? 'error' : 'schedule');
+                html += '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:8px;font-size:11px">' +
+                    '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+                    '<div style="display:flex;align-items:center;gap:6px">' +
+                    '<span class="material-icons-round" style="font-size:14px;color:' + statusColor + '">' + statusIcon + '</span>' +
+                    '<strong style="color:var(--text-primary)">' + escapeHtml(log.action) + '</strong>' +
+                    '<span style="color:' + statusColor + '">' + log.status + '</span></div>' +
+                    '<span style="color:var(--text-muted)">' + (log.duration_ms || 0) + 'ms · ' + escapeHtml(log.created_at || '') + '</span></div>' +
+                    (log.error_message ? '<div style="color:var(--accent-rose);margin-top:4px">' + escapeHtml(log.error_message) + '</div>' : '') +
+                    '</div>';
+            });
+        }
+        html += '</div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '推送日志 <button class="modal-close" onclick="closeModal(\'modal-generic\');showPushProviderManageModal()"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载日志失败: ' + err.message);
     }
 }
 

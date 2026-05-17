@@ -369,6 +369,43 @@ function initDatabase() {
       FOREIGN KEY (provider_id) REFERENCES call_providers(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS push_providers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      provider_type TEXT NOT NULL CHECK(provider_type IN ('tencent_sms', 'aliyun_sms', 'huawei_sms', 'tencent_email', 'aliyun_email', 'custom_sms', 'custom_email')),
+      display_name TEXT NOT NULL,
+      description TEXT,
+      api_endpoint TEXT,
+      app_id TEXT,
+      secret_key TEXT,
+      sign_name TEXT,
+      template_code TEXT,
+      region TEXT,
+      config_json TEXT,
+      status TEXT DEFAULT 'inactive' CHECK(status IN ('active', 'inactive', 'testing')),
+      balance REAL DEFAULT 0,
+      package_info TEXT,
+      daily_limit INTEGER DEFAULT 1000,
+      monthly_sent INTEGER DEFAULT 0,
+      last_sync_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS push_provider_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider_id INTEGER NOT NULL,
+      push_record_id INTEGER,
+      action TEXT NOT NULL,
+      request_data TEXT,
+      response_data TEXT,
+      status TEXT DEFAULT 'success' CHECK(status IN ('success', 'failed', 'timeout')),
+      error_message TEXT,
+      duration_ms INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (provider_id) REFERENCES push_providers(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS settings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       category TEXT NOT NULL,
