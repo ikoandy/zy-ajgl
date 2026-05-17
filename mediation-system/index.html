@@ -2885,45 +2885,79 @@
                         <button class="btn btn-primary" onclick="showFeedbackModal()"><span class="material-icons-round" style="font-size:16px">rate_review</span> 提交评价</button>
                     </div>
                 </div>
-                <div class="feedback-stats" id="feedback-stats">
-                    <div class="feedback-stat-card">
-                        <div class="fsc-value" style="color:var(--accent-gold)">--</div>
-                        <div class="fsc-label">平均评分</div>
-                    </div>
-                    <div class="feedback-stat-card">
-                        <div class="fsc-value" style="color:var(--accent-teal)">--</div>
-                        <div class="fsc-label">评价数量</div>
-                    </div>
-                    <div class="feedback-stat-card">
-                        <div class="fsc-value" style="color:var(--accent-violet)">--</div>
-                        <div class="fsc-label">推荐率</div>
-                    </div>
-                </div>
-                <div class="chart-grid">
-                    <div class="chart-card">
-                        <div class="chart-card-header">
-                            <h3>评分分布</h3>
+                <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px" id="feedback-stats-cards"></div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">bar_chart</span>
+                            <span style="font-size:13px;font-weight:600">评分分布</span>
                         </div>
-                        <div class="chart-wrapper" style="height:200px">
+                        <div class="chart-wrapper" style="height:180px">
                             <canvas id="feedbackDistChart"></canvas>
                         </div>
                     </div>
-                    <div class="chart-card">
-                        <div class="chart-card-header">
-                            <h3>调解员评分排名</h3>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">leaderboard</span>
+                            <span style="font-size:13px;font-weight:600">调解员评分排名</span>
                         </div>
-                        <div id="feedback-mediator-ranking" style="max-height:200px;overflow-y:auto">
-                            <div style="text-align:center;color:var(--text-muted);padding:20px">加载中...</div>
+                        <div id="feedback-mediator-ranking" style="max-height:180px;overflow-y:auto"></div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-violet)">radar</span>
+                            <span style="font-size:13px;font-weight:600">分项评分</span>
+                        </div>
+                        <div id="feedback-category-scores"></div>
+                    </div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:#60a5fa">trending_up</span>
+                            <span style="font-size:13px;font-weight:600">评价趋势</span>
+                        </div>
+                        <div class="chart-wrapper" style="height:140px">
+                            <canvas id="feedbackTrendChart"></canvas>
                         </div>
                     </div>
                 </div>
                 <div class="chart-card">
                     <div class="chart-card-header">
                         <h3>评价列表</h3>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <input type="text" id="feedback-search-input" placeholder="搜索案件/当事人/评语..." style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none;width:160px" onkeydown="if(event.key==='Enter')loadFeedbackList()">
+                            <select id="feedback-rating-filter" style="padding:4px 8px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:11px;font-family:inherit;outline:none" onchange="loadFeedbackList()">
+                                <option value="">全部评分</option>
+                                <option value="5">5星</option>
+                                <option value="4">4星</option>
+                                <option value="3">3星</option>
+                                <option value="2">2星及以下</option>
+                            </select>
+                        </div>
                     </div>
-                    <div id="feedback-list">
-                        <div style="text-align:center;color:var(--text-muted);padding:40px">加载中...</div>
+                    <div class="data-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>案件</th>
+                                    <th>当事人</th>
+                                    <th>调解员</th>
+                                    <th>综合评分</th>
+                                    <th>态度</th>
+                                    <th>效率</th>
+                                    <th>公正</th>
+                                    <th>评语</th>
+                                    <th>时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="feedback-tbody">
+                                <tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:40px">加载中...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
+                    <div id="feedback-pagination" style="display:flex;gap:6px;justify-content:center;margin-top:12px"></div>
                 </div>
             </div>
 
@@ -3547,36 +3581,11 @@
     </div>
 </div>
 
-<!-- Modal: Feedback -->
+<!-- Modal: Feedback (kept for compatibility, but logic uses modal-generic) -->
 <div class="modal-overlay" id="modal-feedback" style="display:none" onclick="if(event.target===this)closeModal('modal-feedback')">
     <div class="modal-content">
         <h3>提交评价 <button class="modal-close" onclick="closeModal('modal-feedback')"><span class="material-icons-round" style="font-size:18px">close</span></button></h3>
-        <div class="modal-field">
-            <label>案件编号</label>
-            <input type="text" id="feedback-case" placeholder="请输入案件编号">
-        </div>
-        <div class="modal-field">
-            <label>当事人</label>
-            <input type="text" id="feedback-party" placeholder="请输入当事人姓名">
-        </div>
-        <div class="modal-field">
-            <label>评分</label>
-            <div class="star-rating" id="feedback-star-rating">
-                <span class="star material-icons-round" data-value="1" onclick="setFeedbackRating(1)">star_border</span>
-                <span class="star material-icons-round" data-value="2" onclick="setFeedbackRating(2)">star_border</span>
-                <span class="star material-icons-round" data-value="3" onclick="setFeedbackRating(3)">star_border</span>
-                <span class="star material-icons-round" data-value="4" onclick="setFeedbackRating(4)">star_border</span>
-                <span class="star material-icons-round" data-value="5" onclick="setFeedbackRating(5)">star_border</span>
-            </div>
-        </div>
-        <div class="modal-field">
-            <label>评语</label>
-            <textarea id="feedback-comment" placeholder="请输入评价内容"></textarea>
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-outline" onclick="closeModal('modal-feedback')">取消</button>
-            <button class="btn btn-primary" onclick="submitFeedback()">提交评价</button>
-        </div>
+        <div class="modal-body" id="modal-feedback-body"></div>
     </div>
 </div>
 
@@ -9755,65 +9764,46 @@ async function cancelSchedule(id) {
 }
 
 // ==================== FEEDBACK MANAGEMENT ====================
+var feedbackDistChartInstance = null;
+var feedbackTrendChartInstance = null;
+var feedbackCurrentPage = 1;
 var currentFeedbackRating = 0;
+var currentAttitudeScore = 0;
+var currentEfficiencyScore = 0;
+var currentFairnessScore = 0;
 
 async function loadFeedbacks() {
     try {
-        var results = await Promise.all([
-            api.get('/feedbacks', { page: 1, pageSize: 10 }),
-            api.get('/feedbacks/stats')
-        ]);
-
-        var listData = results[0].data || results[0];
-        var stats = results[1];
-
+        var stats = await api.get('/feedbacks/stats');
         renderFeedbackStats(stats);
-        renderFeedbackList(Array.isArray(listData) ? listData : []);
         renderFeedbackCharts(stats);
         renderFeedbackMediatorRanking(stats);
+        renderFeedbackCategoryScores(stats);
+        renderFeedbackTrendChart(stats);
+        await loadFeedbackList();
     } catch (err) {
         showToast('加载评价数据失败: ' + err.message);
     }
 }
 
 function renderFeedbackStats(stats) {
-    var container = document.getElementById('feedback-stats');
+    var container = document.getElementById('feedback-stats-cards');
     if (!container || !stats) return;
 
-    var cards = container.querySelectorAll('.feedback-stat-card');
-    if (cards.length >= 3) {
-        cards[0].querySelector('.fsc-value').textContent = stats.avgRating !== undefined ? stats.avgRating.toFixed(1) : '--';
-        cards[1].querySelector('.fsc-value').textContent = stats.totalCount !== undefined ? stats.totalCount : '--';
-        cards[2].querySelector('.fsc-value').textContent = stats.recommendRate !== undefined ? stats.recommendRate + '%' : '--';
-    }
-}
-
-function renderFeedbackList(items) {
-    var container = document.getElementById('feedback-list');
-    if (!container) return;
-
-    if (!items || items.length === 0) {
-        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:40px">暂无评价</div>';
-        return;
-    }
+    var o = stats.overall || {};
+    var cards = [
+        { label: '平均评分', count: (o.avg_rating || 0).toFixed(1), icon: 'star', color: 'var(--accent-gold)', bg: 'var(--accent-gold-dim)' },
+        { label: '评价数量', count: o.total_count || 0, icon: 'rate_review', color: 'var(--accent-teal)', bg: 'var(--accent-teal-dim)' },
+        { label: '满意率', count: (o.recommend_rate || 0) + '%', icon: 'thumb_up', color: '#34d399', bg: 'rgba(52,211,153,0.12)' },
+        { label: '服务态度', count: (o.avg_attitude || 0).toFixed(1), icon: 'sentiment_satisfied', color: 'var(--accent-violet)', bg: 'var(--accent-violet-dim)' },
+        { label: '调解效率', count: (o.avg_efficiency || 0).toFixed(1), icon: 'speed', color: '#60a5fa', bg: 'rgba(96,165,250,0.12)' }
+    ];
 
     var html = '';
-    items.forEach(function(item) {
-        var stars = '';
-        var rating = item.rating || item.score || 0;
-        for (var i = 1; i <= 5; i++) {
-            stars += '<span class="material-icons-round star ' + (i <= rating ? 'filled' : '') + '" style="font-size:14px;color:' + (i <= rating ? 'var(--accent-gold)' : 'var(--text-muted)') + '">star</span>';
-        }
-
-        html += '<div class="feedback-item">' +
-            '<div class="fi-header">' +
-            '<span class="fi-case">' + escapeHtml(item.caseNumber || item.caseId || '') + '</span>' +
-            '<div class="star-rating-display">' + stars + '</div>' +
-            '</div>' +
-            '<div class="fi-party">' + escapeHtml(item.party || item.partyName || '') + '</div>' +
-            (item.comment || item.content ? '<div class="fi-comment">' + escapeHtml(item.comment || item.content) + '</div>' : '') +
-            '<div class="fi-time">' + escapeHtml(item.createdAt || item.time || '') + '</div>' +
-            '</div>';
+    cards.forEach(function(c) {
+        html += '<div class="chart-card" style="padding:14px;display:flex;align-items:center;gap:10px">' +
+            '<div style="width:36px;height:36px;border-radius:var(--radius-md);background:' + c.bg + ';display:flex;align-items:center;justify-content:center"><span class="material-icons-round" style="font-size:18px;color:' + c.color + '">' + c.icon + '</span></div>' +
+            '<div><div style="font-size:18px;font-weight:700;color:var(--text-primary)">' + c.count + '</div><div style="font-size:10px;color:var(--text-muted)">' + c.label + '</div></div></div>';
     });
     container.innerHTML = html;
 }
@@ -9824,8 +9814,9 @@ function renderFeedbackCharts(stats) {
     var ctx = document.getElementById('feedbackDistChart');
     if (!ctx) return;
 
-    var labels = stats.distLabels || ['1星', '2星', '3星', '4星', '5星'];
-    var data = stats.distData || [0, 0, 0, 0, 0];
+    var dist = stats.distribution || {};
+    var labels = ['1星', '2星', '3星', '4星', '5星'];
+    var data = [dist[1] || 0, dist[2] || 0, dist[3] || 0, dist[4] || 0, dist[5] || 0];
 
     feedbackDistChartInstance = new Chart(ctx.getContext('2d'), {
         type: 'bar',
@@ -9834,19 +9825,12 @@ function renderFeedbackCharts(stats) {
             datasets: [{
                 label: '评价数量',
                 data: data,
-                backgroundColor: [
-                    'rgba(244, 114, 182, 0.6)',
-                    'rgba(251, 191, 36, 0.6)',
-                    'rgba(96, 165, 250, 0.6)',
-                    'rgba(167, 139, 250, 0.6)',
-                    'rgba(201, 168, 76, 0.6)'
-                ],
+                backgroundColor: ['rgba(244,114,182,0.6)', 'rgba(251,191,36,0.6)', 'rgba(96,165,250,0.6)', 'rgba(167,139,250,0.6)', 'rgba(201,168,76,0.6)'],
                 borderRadius: 6
             }]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
                 y: { beginAtZero: true, grid: { color: 'rgba(201,168,76,0.05)' }, ticks: { font: { size: 10 } } },
@@ -9860,7 +9844,7 @@ function renderFeedbackMediatorRanking(stats) {
     var container = document.getElementById('feedback-mediator-ranking');
     if (!container) return;
 
-    var ranking = stats.mediatorRanking || [];
+    var ranking = stats.mediator_stats || [];
     if (ranking.length === 0) {
         container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无排名数据</div>';
         return;
@@ -9869,75 +9853,361 @@ function renderFeedbackMediatorRanking(stats) {
     var medals = ['🥇', '🥈', '🥉'];
     var html = '';
     ranking.forEach(function(r, i) {
-        var rankDisplay = i < 3 ? medals[i] : (i + 1);
-        var rating = r.avgRating || r.rating || 0;
+        var rating = r.avg_rating || 0;
+        if (!rating) return;
         var stars = '';
         for (var j = 1; j <= 5; j++) {
             stars += '<span class="material-icons-round" style="font-size:12px;color:' + (j <= Math.round(rating) ? 'var(--accent-gold)' : 'var(--text-muted)') + '">star</span>';
         }
         html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle)">' +
-            '<span style="min-width:24px;text-align:center;font-weight:600">' + rankDisplay + '</span>' +
-            '<span style="flex:1;font-size:13px;color:var(--text-primary)">' + escapeHtml(r.name || '') + '</span>' +
-            '<div class="star-rating-display">' + stars + '</div>' +
+            '<span style="min-width:24px;text-align:center;font-weight:600">' + (i < 3 ? medals[i] : (i + 1)) + '</span>' +
+            '<span style="flex:1;font-size:13px;color:var(--text-primary)">' + escapeHtml(r.real_name || '') + '</span>' +
+            '<div>' + stars + '</div>' +
             '<span style="font-size:12px;color:var(--accent-gold);font-weight:600">' + rating.toFixed(1) + '</span>' +
+            '<span style="font-size:10px;color:var(--text-muted)">' + (r.feedback_count || 0) + '条</span>' +
             '</div>';
     });
+    container.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无排名数据</div>';
+}
+
+function renderFeedbackCategoryScores(stats) {
+    var container = document.getElementById('feedback-category-scores');
+    if (!container) return;
+
+    var scores = stats.category_scores || [];
+    if (scores.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
+        return;
+    }
+
+    var colors = { attitude: 'var(--accent-gold)', efficiency: 'var(--accent-teal)', fairness: 'var(--accent-violet)', overall: '#34d399' };
+    var html = '';
+    scores.forEach(function(s) {
+        var pct = (s.score / 5 * 100).toFixed(0);
+        var color = colors[s.key] || 'var(--accent-gold)';
+        html += '<div style="margin-bottom:12px">' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+            '<span style="font-size:12px;color:var(--text-primary)">' + s.name + '</span>' +
+            '<span style="font-size:12px;font-weight:600;color:' + color + '">' + s.score.toFixed(1) + '</span></div>' +
+            '<div style="height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden">' +
+            '<div style="height:100%;width:' + pct + '%;background:' + color + ';border-radius:3px;transition:width 0.5s"></div>' +
+            '</div></div>';
+    });
+    container.innerHTML = html;
+}
+
+function renderFeedbackTrendChart(stats) {
+    if (feedbackTrendChartInstance) feedbackTrendChartInstance.destroy();
+
+    var ctx = document.getElementById('feedbackTrendChart');
+    if (!ctx) return;
+
+    var trend = (stats.recent_trend || []).reverse();
+    var labels = trend.map(function(t) { return t.month; });
+    var countData = trend.map(function(t) { return t.count; });
+    var ratingData = trend.map(function(t) { return t.avg_rating; });
+
+    feedbackTrendChartInstance = new Chart(ctx.getContext('2d'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '评价数',
+                data: countData,
+                borderColor: 'rgba(45,212,191,0.8)',
+                backgroundColor: 'rgba(45,212,191,0.1)',
+                fill: true, tension: 0.4, yAxisID: 'y'
+            }, {
+                label: '平均分',
+                data: ratingData,
+                borderColor: 'rgba(201,168,76,0.8)',
+                fill: false, tension: 0.4, yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 10, font: { size: 10 } } } },
+            scales: {
+                y: { beginAtZero: true, position: 'left', grid: { color: 'rgba(201,168,76,0.05)' }, ticks: { font: { size: 10 } } },
+                y1: { beginAtZero: true, max: 5, position: 'right', grid: { display: false }, ticks: { font: { size: 10 } } },
+                x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+            }
+        }
+    });
+}
+
+async function loadFeedbackList(page) {
+    if (page !== undefined) feedbackCurrentPage = page;
+
+    var search = document.getElementById('feedback-search-input') ? document.getElementById('feedback-search-input').value.trim() : '';
+    var ratingFilter = document.getElementById('feedback-rating-filter') ? document.getElementById('feedback-rating-filter').value : '';
+
+    var params = { page: feedbackCurrentPage, pageSize: 15 };
+    if (search) params.search = search;
+    if (ratingFilter === '5') { params.min_rating = 5; params.max_rating = 5; }
+    else if (ratingFilter === '4') { params.min_rating = 4; params.max_rating = 4; }
+    else if (ratingFilter === '3') { params.min_rating = 3; params.max_rating = 3; }
+    else if (ratingFilter === '2') { params.min_rating = 1; params.max_rating = 2; }
+
+    try {
+        var res = await api.get('/feedbacks' + buildQueryString(params));
+        var data = res.data || res;
+        if (!Array.isArray(data)) data = data.data || [];
+        renderFeedbackTable(data);
+        var pagination = res.pagination || (res.data && res.data.pagination) || {};
+        renderFeedbackPagination(pagination.totalPages || 1, feedbackCurrentPage);
+    } catch (err) {
+        showToast('加载评价列表失败: ' + err.message);
+    }
+}
+
+function renderFeedbackTable(records) {
+    var tbody = document.getElementById('feedback-tbody');
+    if (!tbody) return;
+
+    if (!records || records.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:40px">暂无评价记录</td></tr>';
+        return;
+    }
+
+    var html = '';
+    records.forEach(function(r) {
+        var stars = '';
+        for (var i = 1; i <= 5; i++) {
+            stars += '<span class="material-icons-round" style="font-size:12px;color:' + (i <= r.rating ? 'var(--accent-gold)' : 'var(--text-muted)') + '">star</span>';
+        }
+        var caseStr = r.case_number ? '<span style="color:var(--accent-gold)">' + escapeHtml(r.case_number) + '</span>' : '—';
+        var partyStr = escapeHtml(r.party_name || '—');
+        if (r.is_anonymous) partyStr = '<span style="color:var(--text-muted)">匿名</span>';
+        var mediatorStr = escapeHtml(r.mediator_name || '—');
+        var commentStr = r.comment ? (r.comment.length > 20 ? escapeHtml(r.comment.substring(0, 20)) + '...' : escapeHtml(r.comment)) : '—';
+        var timeStr = r.created_at ? new Date(r.created_at).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '—';
+
+        html += '<tr>' +
+            '<td>' + caseStr + '</td>' +
+            '<td>' + partyStr + '</td>' +
+            '<td>' + mediatorStr + '</td>' +
+            '<td>' + stars + '</td>' +
+            '<td style="text-align:center">' + (r.attitude_score || '—') + '</td>' +
+            '<td style="text-align:center">' + (r.efficiency_score || '—') + '</td>' +
+            '<td style="text-align:center">' + (r.fairness_score || '—') + '</td>' +
+            '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + escapeHtml(r.comment || '') + '">' + commentStr + '</td>' +
+            '<td style="font-size:11px">' + timeStr + '</td>' +
+            '<td style="white-space:nowrap">' +
+            '<button class="btn btn-outline" style="padding:4px 8px;font-size:11px" onclick="showFeedbackDetail(' + r.id + ')">详情</button> ' +
+            '<span class="material-icons-round" style="font-size:14px;color:var(--accent-rose);cursor:pointer" onclick="deleteFeedback(' + r.id + ')" title="删除">close</span>' +
+            '</td></tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+function renderFeedbackPagination(totalPages, current) {
+    var container = document.getElementById('feedback-pagination');
+    if (!container) return;
+    var html = '<button style="padding:4px 10px;font-size:11px" ' + (current <= 1 ? 'disabled' : '') + ' onclick="loadFeedbackList(' + (current - 1) + ')">上一页</button>';
+    for (var i = 1; i <= totalPages; i++) {
+        html += '<button style="padding:4px 10px;font-size:11px" class="' + (i === current ? 'btn btn-primary' : '') + '" onclick="loadFeedbackList(' + i + ')">' + i + '</button>';
+    }
+    html += '<button style="padding:4px 10px;font-size:11px" ' + (current >= totalPages ? 'disabled' : '') + ' onclick="loadFeedbackList(' + (current + 1) + ')">下一页</button>';
     container.innerHTML = html;
 }
 
 function showFeedbackModal() {
     currentFeedbackRating = 0;
-    var stars = document.querySelectorAll('#feedback-star-rating .star');
-    stars.forEach(function(s) {
-        s.classList.remove('filled');
-        s.textContent = 'star_border';
-    });
-    document.getElementById('modal-feedback').style.display = 'flex';
+    currentAttitudeScore = 0;
+    currentEfficiencyScore = 0;
+    currentFairnessScore = 0;
+
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '560px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div class="modal-field"><label>关联案件 *</label>' +
+        '<div style="position:relative"><input type="text" id="fb-case-search" placeholder="搜索案件编号或标题..." oninput="searchFbCases(this.value)" autocomplete="off">' +
+        '<div id="fb-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
+        '<input type="hidden" id="fb-case-id" value=""></div>' +
+        '<div id="fb-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div class="modal-field"><label>评价当事人 *</label><div id="fb-party-select" style="color:var(--text-muted);font-size:12px">请先选择案件</div></div>' +
+        '<div class="modal-field"><label>综合评分 *</label>' +
+        '<div id="fb-rating-stars" style="display:flex;gap:4px">' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="1" onclick="setFbRating(1)">star_border</span>' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="2" onclick="setFbRating(2)">star_border</span>' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="3" onclick="setFbRating(3)">star_border</span>' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="4" onclick="setFbRating(4)">star_border</span>' +
+        '<span class="material-icons-round" style="font-size:28px;color:var(--text-muted);cursor:pointer" data-value="5" onclick="setFbRating(5)">star_border</span>' +
+        '</div></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">' +
+        '<div class="modal-field"><label>服务态度</label><div id="fb-attitude-stars" style="display:flex;gap:2px">' +
+        [1,2,3,4,5].map(function(v) { return '<span class="material-icons-round" style="font-size:20px;color:var(--text-muted);cursor:pointer" data-value="' + v + '" onclick="setFbSubRating(\'attitude\',' + v + ')">star_border</span>'; }).join('') +
+        '</div></div>' +
+        '<div class="modal-field"><label>调解效率</label><div id="fb-efficiency-stars" style="display:flex;gap:2px">' +
+        [1,2,3,4,5].map(function(v) { return '<span class="material-icons-round" style="font-size:20px;color:var(--text-muted);cursor:pointer" data-value="' + v + '" onclick="setFbSubRating(\'efficiency\',' + v + ')">star_border</span>'; }).join('') +
+        '</div></div>' +
+        '<div class="modal-field"><label>公正性</label><div id="fb-fairness-stars" style="display:flex;gap:2px">' +
+        [1,2,3,4,5].map(function(v) { return '<span class="material-icons-round" style="font-size:20px;color:var(--text-muted);cursor:pointer" data-value="' + v + '" onclick="setFbSubRating(\'fairness\',' + v + ')">star_border</span>'; }).join('') +
+        '</div></div></div>' +
+        '<div class="modal-field"><label>评语</label><textarea id="fb-comment" rows="3" placeholder="请输入评价内容..."></textarea></div>' +
+        '<div class="modal-field" style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="fb-anonymous" style="accent-color:var(--accent-gold)"><label for="fb-anonymous" style="font-size:12px;color:var(--text-secondary)">匿名评价</label></div>' +
+        '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitFeedback()"><span class="material-icons-round" style="font-size:16px">rate_review</span> 提交评价</button>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '提交评价 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
 }
 
-function setFeedbackRating(value) {
-    currentFeedbackRating = value;
-    var stars = document.querySelectorAll('#feedback-star-rating .star');
-    stars.forEach(function(s) {
-        var v = parseInt(s.getAttribute('data-value'));
-        if (v <= value) {
-            s.classList.add('filled');
-            s.textContent = 'star';
+async function searchFbCases(keyword) {
+    var dropdown = document.getElementById('fb-case-dropdown');
+    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
+    try {
+        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=6');
+        var cases = data.data || data;
+        if (!Array.isArray(cases)) cases = cases.data || [];
+        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
+        var html = '';
+        cases.forEach(function(c) {
+            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectFbCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
+                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
+        });
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } catch (err) { }
+}
+
+async function selectFbCase(id, caseNumber, title) {
+    document.getElementById('fb-case-id').value = id;
+    document.getElementById('fb-case-search').value = caseNumber;
+    document.getElementById('fb-case-dropdown').style.display = 'none';
+    var selEl = document.getElementById('fb-case-selected');
+    selEl.style.display = 'block';
+    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+
+    try {
+        var parties = await api.get('/cases/' + id + '/parties');
+        if (!Array.isArray(parties)) parties = [];
+        var container = document.getElementById('fb-party-select');
+        if (parties.length === 0) {
+            container.innerHTML = '<span style="color:var(--text-muted)">该案件无当事人</span>';
         } else {
-            s.classList.remove('filled');
-            s.textContent = 'star_border';
+            var html = '<div style="display:flex;flex-direction:column;gap:6px">';
+            parties.forEach(function(p) {
+                html += '<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg-tertiary);border-radius:var(--radius-sm);cursor:pointer;font-size:12px">' +
+                    '<input type="radio" name="fb-party" value="' + p.id + '" style="accent-color:var(--accent-gold)">' +
+                    '<span style="color:var(--text-primary)">' + escapeHtml(p.name) + '</span>' +
+                    '<span style="color:var(--text-muted);font-size:10px">' + (p.party_type === 'plaintiff' ? '申请人' : '被申请人') + '</span></label>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
         }
+    } catch (err) {
+        document.getElementById('fb-party-select').innerHTML = '<span style="color:var(--accent-rose)">加载当事人失败</span>';
+    }
+}
+
+function setFbRating(value) {
+    currentFeedbackRating = value;
+    document.querySelectorAll('#fb-rating-stars .material-icons-round').forEach(function(s) {
+        var v = parseInt(s.getAttribute('data-value'));
+        s.textContent = v <= value ? 'star' : 'star_border';
+        s.style.color = v <= value ? 'var(--accent-gold)' : 'var(--text-muted)';
+    });
+}
+
+function setFbSubRating(type, value) {
+    if (type === 'attitude') currentAttitudeScore = value;
+    else if (type === 'efficiency') currentEfficiencyScore = value;
+    else if (type === 'fairness') currentFairnessScore = value;
+
+    var containerId = '#fb-' + type + '-stars .material-icons-round';
+    document.querySelectorAll(containerId).forEach(function(s) {
+        var v = parseInt(s.getAttribute('data-value'));
+        s.textContent = v <= value ? 'star' : 'star_border';
+        s.style.color = v <= value ? 'var(--accent-gold)' : 'var(--text-muted)';
     });
 }
 
 async function submitFeedback() {
-    var caseNumber = document.getElementById('feedback-case').value.trim();
-    if (!caseNumber) {
-        showToast('请输入案件编号', 'info');
-        return;
-    }
-    if (currentFeedbackRating === 0) {
-        showToast('请选择评分', 'info');
-        return;
-    }
+    var caseId = document.getElementById('fb-case-id').value;
+    if (!caseId) { showToast('请选择案件', 'warning'); return; }
+
+    var partyRadio = document.querySelector('input[name="fb-party"]:checked');
+    if (!partyRadio) { showToast('请选择当事人', 'warning'); return; }
+    if (currentFeedbackRating === 0) { showToast('请选择综合评分', 'warning'); return; }
 
     var data = {
-        caseNumber: caseNumber,
-        party: document.getElementById('feedback-party').value.trim(),
+        case_id: parseInt(caseId),
+        party_id: parseInt(partyRadio.value),
         rating: currentFeedbackRating,
-        comment: document.getElementById('feedback-comment').value.trim()
+        attitude_score: currentAttitudeScore || null,
+        efficiency_score: currentEfficiencyScore || null,
+        fairness_score: currentFairnessScore || null,
+        comment: document.getElementById('fb-comment').value.trim() || null,
+        is_anonymous: document.getElementById('fb-anonymous').checked
     };
 
     try {
         await api.post('/feedbacks', data);
         showToast('评价提交成功', 'success');
-        closeModal('modal-feedback');
-        document.getElementById('feedback-case').value = '';
-        document.getElementById('feedback-party').value = '';
-        document.getElementById('feedback-comment').value = '';
+        closeModal('modal-generic');
         await loadFeedbacks();
     } catch (err) {
         showToast('提交评价失败: ' + err.message);
+    }
+}
+
+async function showFeedbackDetail(id) {
+    try {
+        var r = await api.get('/feedbacks/' + id);
+        var modal = document.getElementById('modal-generic');
+        if (!modal) return;
+        var modalContent = modal.querySelector('.modal-content');
+        modalContent.style.width = '520px';
+
+        var starsHtml = '';
+        for (var i = 1; i <= 5; i++) {
+            starsHtml += '<span class="material-icons-round" style="font-size:18px;color:' + (i <= r.rating ? 'var(--accent-gold)' : 'var(--text-muted)') + '">' + (i <= r.rating ? 'star' : 'star_border') + '</span>';
+        }
+
+        var html = '<div style="padding:4px 0">' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;font-size:13px">' +
+            '<div><span style="color:var(--text-muted)">案件:</span> <span style="color:var(--accent-gold)">' + escapeHtml(r.case_number || '') + '</span> ' + escapeHtml(r.case_title || '') + '</div>' +
+            '<div><span style="color:var(--text-muted)">当事人:</span> ' + (r.is_anonymous ? '<span style="color:var(--text-muted)">匿名</span>' : escapeHtml(r.party_name || '')) + '</div>' +
+            '<div><span style="color:var(--text-muted)">调解员:</span> ' + escapeHtml(r.mediator_name || '—') + '</div>' +
+            '<div><span style="color:var(--text-muted)">时间:</span> ' + (r.created_at ? new Date(r.created_at).toLocaleString('zh-CN') : '—') + '</div>' +
+            '</div>' +
+            '<div style="margin:16px 0;padding:12px;background:var(--bg-tertiary);border-radius:var(--radius-md);text-align:center">' +
+            '<div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">综合评分</div>' +
+            '<div style="display:flex;align-items:center;justify-content:center;gap:8px">' +
+            '<span style="font-size:28px;font-weight:700;color:var(--accent-gold)">' + r.rating + '</span>' + starsHtml + '</div></div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px">' +
+            '<div style="text-align:center;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">' +
+            '<div style="font-size:10px;color:var(--text-muted)">服务态度</div><div style="font-size:18px;font-weight:600;color:var(--accent-gold)">' + (r.attitude_score || '—') + '</div></div>' +
+            '<div style="text-align:center;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">' +
+            '<div style="font-size:10px;color:var(--text-muted)">调解效率</div><div style="font-size:18px;font-weight:600;color:var(--accent-teal)">' + (r.efficiency_score || '—') + '</div></div>' +
+            '<div style="text-align:center;padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm)">' +
+            '<div style="font-size:10px;color:var(--text-muted)">公正性</div><div style="font-size:18px;font-weight:600;color:var(--accent-violet)">' + (r.fairness_score || '—') + '</div></div>' +
+            '</div>' +
+            (r.comment ? '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm);font-size:12px;color:var(--text-secondary)"><span style="color:var(--text-muted)">评语:</span> ' + escapeHtml(r.comment) + '</div>' : '') +
+            '</div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '评价详情 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载详情失败: ' + err.message);
+    }
+}
+
+async function deleteFeedback(id) {
+    if (!confirm('确定要删除该评价吗？')) return;
+    try {
+        await api.delete('/feedbacks/' + id);
+        showToast('评价已删除', 'success');
+        await loadFeedbackList();
+    } catch (err) {
+        showToast('删除失败: ' + err.message);
     }
 }
 
