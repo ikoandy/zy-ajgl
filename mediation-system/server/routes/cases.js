@@ -304,11 +304,16 @@ router.get('/stats', (req, res) => {
   const db = getDb();
 
   const totalCases = db.prepare("SELECT COUNT(*) as count FROM cases WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')").get().count;
-  const closedCases = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status IN ('closed', 'agreed') AND strftime('%Y-%m', closed_at) = strftime('%Y-%m', 'now')").get().count;
+  const closedThisMonth = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status IN ('closed', 'agreed') AND strftime('%Y-%m', closed_at) = strftime('%Y-%m', 'now')").get().count;
   const allClosed = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status IN ('closed', 'agreed')").get().count;
   const allTotal = db.prepare("SELECT COUNT(*) as count FROM cases").get().count;
   const successRate = allTotal > 0 ? ((allClosed / allTotal) * 100).toFixed(1) : 0;
   const mediating = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status = 'mediating'").get().count;
+  const pending = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status = 'pending'").get().count;
+  const accepted = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status = 'accepted'").get().count;
+  const agreed = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status = 'agreed'").get().count;
+  const closed = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status = 'closed'").get().count;
+  const terminated = db.prepare("SELECT COUNT(*) as count FROM cases WHERE status = 'terminated'").get().count;
   const avgDuration = db.prepare("SELECT AVG(CAST(julianday(closed_at) - julianday(accepted_at) AS REAL)) as avg FROM cases WHERE status IN ('closed', 'agreed') AND closed_at IS NOT NULL AND accepted_at IS NOT NULL").get().avg || 0;
 
   const monthlyStats = db.prepare(`
@@ -320,6 +325,11 @@ router.get('/stats', (req, res) => {
     SELECT ct.name, ct.color, COUNT(c.id) as count
     FROM case_types ct LEFT JOIN cases c ON ct.id = c.type_id
     GROUP BY ct.id ORDER BY count DESC
+  `).all();
+
+  const priorityDistribution = db.prepare(`
+    SELECT priority, COUNT(*) as count FROM cases GROUP BY priority ORDER BY
+      CASE priority WHEN 'urgent' THEN 1 WHEN 'high' THEN 2 WHEN 'normal' THEN 3 WHEN 'low' THEN 4 ELSE 5 END
   `).all();
 
   const recentActivities = db.prepare(`
@@ -344,12 +354,20 @@ router.get('/stats', (req, res) => {
   res.json(formatResponse({
     summary: {
       total_cases: totalCases,
+      all_total: allTotal,
       success_rate: parseFloat(successRate),
       mediating,
+      pending,
+      accepted,
+      agreed,
+      closed,
+      terminated,
+      closed_this_month: closedThisMonth,
       avg_duration: parseFloat(avgDuration.toFixed(1))
     },
     monthly_stats: monthlyStats,
     type_distribution: typeDistribution,
+    priority_distribution: priorityDistribution,
     recent_activities: recentActivities,
     top_mediators: topMediators,
     unread_notifications: pendingCount

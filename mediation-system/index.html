@@ -2226,61 +2226,45 @@
 
             <!-- ===== DASHBOARD ===== -->
             <div class="page-section active" id="page-dashboard">
-                <div class="stat-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">本月案件总数</span>
-                            <div class="stat-icon"><span class="material-icons-round">gavel</span></div>
-                        </div>
-                        <div class="stat-value" id="stat-total">--</div>
-                        <div class="stat-change up" id="stat-change-1">
-                            <span class="material-icons-round" style="font-size:14px">trending_up</span>
-                            --
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">调解成功率</span>
-                            <div class="stat-icon"><span class="material-icons-round">verified</span></div>
-                        </div>
-                        <div class="stat-value" id="stat-rate">--</div>
-                        <div class="stat-change up" id="stat-change-2">
-                            <span class="material-icons-round" style="font-size:14px">trending_up</span>
-                            --
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">进行中调解</span>
-                            <div class="stat-icon"><span class="material-icons-round">people</span></div>
-                        </div>
-                        <div class="stat-value" id="stat-ongoing">--</div>
-                        <div class="stat-change down" id="stat-change-3">
-                            <span class="material-icons-round" style="font-size:14px">trending_down</span>
-                            --
-                        </div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <span class="stat-label">平均调解周期</span>
-                            <div class="stat-icon"><span class="material-icons-round">schedule</span></div>
-                        </div>
-                        <div class="stat-value" id="stat-cycle">--</div>
-                        <div class="stat-change up" id="stat-change-4">
-                            <span class="material-icons-round" style="font-size:14px">trending_up</span>
-                            --
-                        </div>
+                <div class="page-header">
+                    <h2>数据概览</h2>
+                    <div class="page-header-actions">
+                        <button class="btn btn-outline" onclick="loadDashboard()"><span class="material-icons-round" style="font-size:16px">refresh</span> 刷新</button>
                     </div>
                 </div>
-
-                <div class="chart-grid">
+                <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px" id="dashboard-stats-grid">
+                    <div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:var(--accent-gold)" id="stat-total">--</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">案件总数</div>
+                    </div>
+                    <div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:var(--accent-teal)" id="stat-rate">--</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">调解成功率</div>
+                    </div>
+                    <div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:var(--accent-violet)" id="stat-ongoing">--</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">调解中</div>
+                    </div>
+                    <div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:#fb923c" id="stat-pending">--</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">待受理</div>
+                    </div>
+                    <div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:#34d399" id="stat-closed-month">--</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">本月结案</div>
+                    </div>
+                    <div style="padding:16px;background:var(--bg-secondary);border-radius:var(--radius-md);border:1px solid var(--border-subtle);text-align:center">
+                        <div style="font-size:28px;font-weight:700;color:#60a5fa" id="stat-cycle">--</div>
+                        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">平均调解周期</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
                     <div class="chart-card">
                         <div class="chart-card-header">
                             <h3>案件趋势分析</h3>
-                            <div class="chart-tabs">
-                                <button class="chart-tab active">月度</button>
-                                <button class="chart-tab">季度</button>
-                                <button class="chart-tab">年度</button>
+                            <div class="chart-tabs" id="dashboard-trend-tabs">
+                                <button class="chart-tab active" onclick="switchDashboardTrend('monthly',this)">月度</button>
+                                <button class="chart-tab" onclick="switchDashboardTrend('weekly',this)">周度</button>
                             </div>
                         </div>
                         <div class="chart-wrapper">
@@ -2296,29 +2280,50 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="activity-grid">
-                    <div class="activity-card" id="dashboard-timeline">
-                        <h3>最近动态</h3>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--text-muted)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">加载中...</div>
-                                <div class="tl-desc">正在获取最新动态</div>
-                            </div>
-                            <div class="tl-time">--</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:16px;margin-bottom:20px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">pie_chart</span>
+                            <span style="font-size:13px;font-weight:600">案件状态分布</span>
                         </div>
+                        <div id="dashboard-status-dist"></div>
                     </div>
-                    <div class="activity-card" id="dashboard-performance">
-                        <h3>调解员绩效排名</h3>
-                        <div class="timeline-item">
-                            <div class="timeline-dot" style="background:var(--text-muted)"></div>
-                            <div class="tl-content">
-                                <div class="tl-title">加载中...</div>
-                                <div class="tl-desc">正在获取绩效数据</div>
-                            </div>
-                            <div class="tl-time">--</div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-violet)">flag</span>
+                            <span style="font-size:13px;font-weight:600">优先级分布</span>
                         </div>
+                        <div id="dashboard-priority-dist"></div>
+                    </div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-teal)">star</span>
+                            <span style="font-size:13px;font-weight:600">调解员绩效排名</span>
+                        </div>
+                        <div id="dashboard-performance"></div>
+                    </div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:#60a5fa">timeline</span>
+                            <span style="font-size:13px;font-weight:600">最近动态</span>
+                        </div>
+                        <div id="dashboard-timeline"></div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:#fb923c">schedule</span>
+                            <span style="font-size:13px;font-weight:600">今日日程</span>
+                        </div>
+                        <div id="dashboard-today-schedules"></div>
+                    </div>
+                    <div class="chart-card" style="padding:16px">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-rose)">notifications_active</span>
+                            <span style="font-size:13px;font-weight:600">待处理事项</span>
+                        </div>
+                        <div id="dashboard-pending-items"></div>
                     </div>
                 </div>
             </div>
@@ -4032,14 +4037,21 @@ async function loadPageData(pageId) {
 // ==================== DASHBOARD ====================
 var trendChartInstance = null;
 var typeChartInstance = null;
+var dashboardTrendMode = 'monthly';
+var dashboardStatsCache = null;
 
 async function loadDashboard() {
     try {
         var stats = await api.get('/cases/stats');
+        dashboardStatsCache = stats;
         renderDashboardStats(stats);
         renderDashboardCharts(stats);
+        renderDashboardStatusDist(stats);
+        renderDashboardPriorityDist(stats);
         renderDashboardTimeline(stats);
         renderDashboardPerformance(stats);
+        await loadDashboardTodaySchedules();
+        await loadDashboardPendingItems();
     } catch (err) {
         showToast('加载仪表盘数据失败: ' + err.message);
     }
@@ -4047,31 +4059,34 @@ async function loadDashboard() {
 
 function renderDashboardStats(stats) {
     var summary = stats.summary || {};
-    document.getElementById('stat-total').textContent = (summary.total_cases || 0).toLocaleString();
+    var el = function(id) { return document.getElementById(id); };
+
+    var totalEl = el('stat-total');
+    if (totalEl) totalEl.textContent = (summary.total_cases || 0).toLocaleString();
 
     var rate = summary.success_rate;
-    document.getElementById('stat-rate').textContent = (rate !== undefined ? rate : '--') + (typeof rate === 'number' ? '%' : '');
+    var rateEl = el('stat-rate');
+    if (rateEl) rateEl.textContent = rate !== undefined ? rate + '%' : '--';
 
-    document.getElementById('stat-ongoing').textContent = summary.mediating !== undefined ? summary.mediating : '--';
+    var ongoingEl = el('stat-ongoing');
+    if (ongoingEl) ongoingEl.textContent = summary.mediating !== undefined ? summary.mediating : '--';
 
-    var cycle = summary.avg_duration;
-    document.getElementById('stat-cycle').textContent = cycle !== undefined ? cycle + '天' : '--';
+    var pendingEl = el('stat-pending');
+    if (pendingEl) pendingEl.textContent = summary.pending !== undefined ? summary.pending : '--';
 
-    updateStatChange('stat-change-1', null, null);
-    updateStatChange('stat-change-2', null, null);
-    updateStatChange('stat-change-3', null, null);
-    updateStatChange('stat-change-4', null, null);
+    var closedMonthEl = el('stat-closed-month');
+    if (closedMonthEl) closedMonthEl.textContent = summary.closed_this_month !== undefined ? summary.closed_this_month : '--';
+
+    var cycleEl = el('stat-cycle');
+    if (cycleEl) cycleEl.textContent = summary.avg_duration !== undefined ? summary.avg_duration + '天' : '--';
 }
 
-function updateStatChange(elId, changeText, trend) {
-    var el = document.getElementById(elId);
-    if (!el) return;
-    var text = changeText || '--';
-    var isUp = trend === 'up' || (typeof text === 'string' && text.startsWith('+'));
-    var isDown = trend === 'down' || (typeof text === 'string' && text.startsWith('-'));
-    el.className = 'stat-change ' + (isDown && !isUp ? 'down' : 'up');
-    var icon = isDown && !isUp ? 'trending_down' : 'trending_up';
-    el.innerHTML = '<span class="material-icons-round" style="font-size:14px">' + icon + '</span> ' + text;
+function switchDashboardTrend(mode, btn) {
+    dashboardTrendMode = mode;
+    var tabs = document.querySelectorAll('#dashboard-trend-tabs .chart-tab');
+    tabs.forEach(function(t) { t.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    if (dashboardStatsCache) renderDashboardCharts(dashboardStatsCache);
 }
 
 function renderDashboardCharts(stats) {
@@ -4083,127 +4098,110 @@ function renderDashboardCharts(stats) {
     if (typeChartInstance) typeChartInstance.destroy();
 
     var monthly = stats.monthly_stats || [];
-    var trendLabels = monthly.map(function(m) {
-        var d = m.stat_date || '';
-        return d.substring(5, 7) + '/' + d.substring(8, 10);
-    }).slice(-12);
-    var trendNew = monthly.map(function(m) { return m.new_cases || 0; }).slice(-12);
-    var trendClosed = monthly.map(function(m) { return m.closed_cases || 0; }).slice(-12);
+    var trendLabels, trendNew, trendClosed;
 
-    var trendCtx = document.getElementById('trendChart').getContext('2d');
-    trendChartInstance = new Chart(trendCtx, {
-        type: 'line',
-        data: {
-            labels: trendLabels,
-            datasets: [
-                {
-                    label: '新增案件',
-                    data: trendNew,
-                    borderColor: '#c9a84c',
-                    backgroundColor: 'rgba(201, 168, 76, 0.08)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 2,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#c9a84c'
-                },
-                {
-                    label: '已结案件',
-                    data: trendClosed,
-                    borderColor: '#2dd4bf',
-                    backgroundColor: 'rgba(45, 212, 191, 0.05)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 2,
-                    pointRadius: 3,
-                    pointBackgroundColor: '#2dd4bf'
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    align: 'end',
-                    labels: { boxWidth: 12, padding: 16, font: { size: 11 } }
-                }
+    if (dashboardTrendMode === 'weekly' && monthly.length > 0) {
+        var last30 = monthly.slice(-30);
+        trendLabels = last30.map(function(m) { return (m.stat_date || '').substring(5, 10); });
+        trendNew = last30.map(function(m) { return m.new_cases || 0; });
+        trendClosed = last30.map(function(m) { return m.closed_cases || 0; });
+    } else {
+        trendLabels = monthly.map(function(m) { return (m.stat_date || '').substring(0, 7); }).slice(-12);
+        trendNew = monthly.map(function(m) { return m.new_cases || 0; }).slice(-12);
+        trendClosed = monthly.map(function(m) { return m.closed_cases || 0; }).slice(-12);
+    }
+
+    var trendCtx = document.getElementById('trendChart');
+    if (trendCtx) {
+        trendChartInstance = new Chart(trendCtx.getContext('2d'), {
+            type: 'line',
+            data: {
+                labels: trendLabels,
+                datasets: [
+                    { label: '新增案件', data: trendNew, borderColor: '#c9a84c', backgroundColor: 'rgba(201,168,76,0.08)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#c9a84c' },
+                    { label: '已结案件', data: trendClosed, borderColor: '#2dd4bf', backgroundColor: 'rgba(45,212,191,0.05)', fill: true, tension: 0.4, borderWidth: 2, pointRadius: 3, pointBackgroundColor: '#2dd4bf' }
+                ]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(201, 168, 76, 0.05)' },
-                    ticks: { font: { size: 10 } }
-                },
-                x: {
-                    grid: { display: false },
-                    ticks: { font: { size: 10 } }
-                }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top', align: 'end', labels: { boxWidth: 12, padding: 16, font: { size: 11 } } } },
+                scales: { y: { beginAtZero: true, grid: { color: 'rgba(201,168,76,0.05)' }, ticks: { font: { size: 10 } } }, x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } } }
             }
-        }
-    });
+        });
+    }
 
     var typeDist = stats.type_distribution || [];
     var typeLabels = typeDist.map(function(t) { return t.name || ''; });
     var typeData = typeDist.map(function(t) { return t.count || 0; });
-    var typeColors = typeDist.map(function(t) { return (t.color || '#c9a84c').replace(')', ', 0.8)').replace('rgb', 'rgba'); });
-
-    var typeCtx = document.getElementById('typeChart').getContext('2d');
-    typeChartInstance = new Chart(typeCtx, {
-        type: 'doughnut',
-        data: {
-            labels: typeLabels,
-            datasets: [{
-                data: typeData,
-                backgroundColor: typeColors.length > 0 ? typeColors : [
-                    'rgba(201, 168, 76, 0.8)',
-                    'rgba(45, 212, 191, 0.8)',
-                    'rgba(167, 139, 250, 0.8)',
-                    'rgba(244, 114, 182, 0.8)',
-                    'rgba(251, 191, 36, 0.8)',
-                    'rgba(96, 165, 250, 0.8)'
-                ],
-                borderColor: 'rgba(7, 11, 20, 0.5)',
-                borderWidth: 2
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '65%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { boxWidth: 10, padding: 12, font: { size: 10 } }
-                }
-            }
-        }
+    var defaultColors = ['rgba(201,168,76,0.8)', 'rgba(45,212,191,0.8)', 'rgba(167,139,250,0.8)', 'rgba(244,114,182,0.8)', 'rgba(251,191,36,0.8)', 'rgba(96,165,250,0.8)', 'rgba(52,211,153,0.8)', 'rgba(251,146,60,0.8)'];
+    var typeColors = typeDist.map(function(t, i) {
+        if (t.color) return t.color.startsWith('#') ? t.color + 'cc' : defaultColors[i % defaultColors.length];
+        return defaultColors[i % defaultColors.length];
     });
+
+    var typeCtx = document.getElementById('typeChart');
+    if (typeCtx) {
+        typeChartInstance = new Chart(typeCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: { labels: typeLabels, datasets: [{ data: typeData, backgroundColor: typeColors.length > 0 ? typeColors : defaultColors, borderColor: 'rgba(7,11,20,0.5)', borderWidth: 2 }] },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '65%', plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 12, font: { size: 10 } } } } }
+        });
+    }
+}
+
+function renderDashboardStatusDist(stats) {
+    var container = document.getElementById('dashboard-status-dist');
+    if (!container) return;
+    var summary = stats.summary || {};
+    var total = summary.all_total || summary.total_cases || 0;
+    var items = [
+        { label: '待受理', count: summary.pending || 0, color: '#fb923c' },
+        { label: '已受理', count: summary.accepted || 0, color: '#60a5fa' },
+        { label: '调解中', count: summary.mediating || 0, color: '#a78bfa' },
+        { label: '已达成', count: summary.agreed || 0, color: '#34d399' },
+        { label: '已结案', count: summary.closed || 0, color: '#c9a84c' },
+        { label: '已终止', count: summary.terminated || 0, color: '#f87171' }
+    ];
+    var html = '';
+    items.forEach(function(item) {
+        var pct = total > 0 ? ((item.count / total) * 100).toFixed(1) : 0;
+        html += '<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:12px;color:var(--text-primary)">' + item.label + '</span><span style="font-size:11px;color:var(--text-muted)">' + item.count + ' (' + pct + '%)</span></div><div style="height:6px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + item.color + ';border-radius:3px;transition:width .3s"></div></div></div>';
+    });
+    container.innerHTML = html;
+}
+
+function renderDashboardPriorityDist(stats) {
+    var container = document.getElementById('dashboard-priority-dist');
+    if (!container) return;
+    var items = [
+        { label: '紧急', key: 'urgent', color: '#f87171', icon: 'priority_high' },
+        { label: '高', key: 'high', color: '#fb923c', icon: 'arrow_upward' },
+        { label: '普通', key: 'normal', color: '#60a5fa', icon: 'remove' },
+        { label: '低', key: 'low', color: '#34d399', icon: 'arrow_downward' }
+    ];
+    var priorities = stats.priority_distribution || [];
+    var total = priorities.reduce(function(s, p) { return s + (p.count || 0); }, 0);
+    var html = '';
+    items.forEach(function(item) {
+        var found = priorities.find(function(p) { return p.priority === item.key; });
+        var count = found ? found.count : 0;
+        var pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+        html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border-subtle)"><span class="material-icons-round" style="font-size:16px;color:' + item.color + '">' + item.icon + '</span><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text-primary)">' + item.label + '</span><span style="font-size:11px;color:var(--text-muted)">' + count + '件</span></div><div style="height:4px;background:var(--bg-tertiary);border-radius:2px;margin-top:4px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:' + item.color + ';border-radius:2px"></div></div></div></div>';
+    });
+    container.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
 }
 
 function renderDashboardTimeline(stats) {
     var container = document.getElementById('dashboard-timeline');
     if (!container) return;
     var items = stats.recent_activities || [];
-    if (items.length === 0) {
-        container.innerHTML = '<h3>最近动态</h3><div style="text-align:center;color:var(--text-muted);padding:20px">暂无动态</div>';
-        return;
-    }
-
-    var statusColors = { pending: 'var(--accent-gold)', accepted: 'var(--accent-teal)', mediating: 'var(--accent-violet)', agreed: 'var(--accent-teal)', terminated: 'var(--accent-rose)', closed: 'var(--text-muted)' };
-    var statusLabels = { pending: '待受理', accepted: '已受理', mediating: '调解中', agreed: '已达成协议', terminated: '已终止', closed: '已结案' };
-    var html = '<h3>最近动态</h3>';
-    items.forEach(function(item, i) {
-        var color = statusColors[item.status] || 'var(--accent-gold)';
-        html += '<div class="timeline-item">' +
-            '<div class="timeline-dot" style="background:' + color + '"></div>' +
-            '<div class="tl-content">' +
-            '<div class="tl-title">' + escapeHtml(item.case_number || '') + ' ' + escapeHtml(item.title || '') + '</div>' +
-            '<div class="tl-desc">' + escapeHtml(item.mediator_name || '') + ' · ' + (statusLabels[item.status] || item.status || '') + '</div>' +
-            '</div>' +
-            '<div class="tl-time">' + escapeHtml(item.updated_at ? item.updated_at.substring(5, 10).replace('-', '/') : '') + '</div>' +
-            '</div>';
+    if (items.length === 0) { container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无动态</div>'; return; }
+    var statusColors = { pending: '#fb923c', accepted: '#60a5fa', mediating: '#a78bfa', agreed: '#34d399', terminated: '#f87171', closed: '#c9a84c' };
+    var statusLabels = { pending: '待受理', accepted: '已受理', mediating: '调解中', agreed: '已达成', terminated: '已终止', closed: '已结案' };
+    var html = '';
+    items.forEach(function(item) {
+        var color = statusColors[item.status] || '#c9a84c';
+        html += '<div style="display:flex;align-items:flex-start;gap:8px;padding:6px 0"><div style="width:6px;height:6px;border-radius:50%;background:' + color + ';margin-top:5px;flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(item.case_number || '') + ' ' + escapeHtml(item.title || '') + '</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px">' + escapeHtml(item.mediator_name || '未分配') + ' · <span style="color:' + color + '">' + (statusLabels[item.status] || item.status || '') + '</span></div></div></div>';
     });
     container.innerHTML = html;
 }
@@ -4212,26 +4210,57 @@ function renderDashboardPerformance(stats) {
     var container = document.getElementById('dashboard-performance');
     if (!container) return;
     var items = stats.top_mediators || [];
-    if (items.length === 0) {
-        container.innerHTML = '<h3>调解员绩效排名</h3><div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>';
-        return;
-    }
-
+    if (items.length === 0) { container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">暂无数据</div>'; return; }
     var medals = ['🥇', '🥈', '🥉'];
-    var html = '<h3>调解员绩效排名</h3>';
+    var html = '';
     items.forEach(function(item, i) {
-        var color = item.avatar_color || 'var(--accent-gold)';
-        var rankDisplay = i < 3 ? medals[i] : (i + 1);
-        html += '<div class="timeline-item">' +
-            '<div class="timeline-dot" style="background:' + color + '"></div>' +
-            '<div class="tl-content">' +
-            '<div class="tl-title">' + escapeHtml(item.real_name || '') + ' — 成功率 ' + ((item.success_rate || item.successRate) ? (item.success_rate || item.successRate).toFixed(1) : '--') + '%</div>' +
-            '<div class="tl-desc">调解案件 ' + (item.total_cases || 0) + ' 件 · 结案 ' + (item.closed_cases || 0) + ' 件</div>' +
-            '</div>' +
-            '<div class="tl-time">' + rankDisplay + '</div>' +
-            '</div>';
+        var rankDisplay = i < 3 ? medals[i] : '<span style="font-size:11px;color:var(--text-muted)">' + (i + 1) + '</span>';
+        var rate = item.success_rate || item.successRate || 0;
+        html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0"><span style="width:20px;text-align:center;flex-shrink:0">' + rankDisplay + '</span><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--text-primary)">' + escapeHtml(item.real_name || '') + '</span><span style="font-size:11px;color:var(--accent-teal);font-weight:600">' + (typeof rate === 'number' ? rate.toFixed(1) : rate) + '%</span></div><div style="font-size:10px;color:var(--text-muted);margin-top:2px">调解 ' + (item.total_cases || 0) + ' 件 · 结案 ' + (item.closed_cases || 0) + ' 件</div></div></div>';
     });
     container.innerHTML = html;
+}
+
+async function loadDashboardTodaySchedules() {
+    var container = document.getElementById('dashboard-today-schedules');
+    if (!container) return;
+    try {
+        var today = new Date().toISOString().split('T')[0];
+        var res = await api.get('/schedules/calendar', { month: today.substring(0, 7) });
+        var todayItems = res[today] || [];
+        if (todayItems.length === 0) { container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px">今日暂无日程安排</div>'; return; }
+        var typeIcons = { mediation: 'handshake', consultation: 'question_answer', meeting: 'groups', training: 'school', other: 'event' };
+        var typeLabels = { mediation: '调解', consultation: '咨询', meeting: '会议', training: '培训', other: '其他' };
+        var typeColors = { mediation: 'var(--accent-gold)', consultation: 'var(--accent-teal)', meeting: 'var(--accent-violet)', training: '#fb923c', other: '#60a5fa' };
+        var html = '';
+        todayItems.forEach(function(item) {
+            var color = typeColors[item.schedule_type] || '#c9a84c';
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-subtle)"><span class="material-icons-round" style="font-size:16px;color:' + color + '">' + (typeIcons[item.schedule_type] || 'event') + '</span><div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(item.title || '') + '</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px">' + escapeHtml(item.start_time || '') + ' · ' + (typeLabels[item.schedule_type] || '其他') + '</div></div></div>';
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px">加载失败</div>';
+    }
+}
+
+async function loadDashboardPendingItems() {
+    var container = document.getElementById('dashboard-pending-items');
+    if (!container) return;
+    try {
+        var pendingCases = await api.get('/cases', { status: 'pending', pageSize: 5 });
+        var items = (pendingCases.data || []).slice(0, 5);
+        if (items.length === 0) { container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px">暂无待处理事项</div>'; return; }
+        var priorityColors = { urgent: '#f87171', high: '#fb923c', normal: '#60a5fa', low: '#34d399' };
+        var priorityLabels = { urgent: '紧急', high: '高', normal: '普通', low: '低' };
+        var html = '';
+        items.forEach(function(item) {
+            var pColor = priorityColors[item.priority] || '#60a5fa';
+            html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-subtle)"><div style="width:6px;height:6px;border-radius:50%;background:' + pColor + ';flex-shrink:0"></div><div style="flex:1;min-width:0"><div style="font-size:12px;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(item.case_number || '') + ' ' + escapeHtml(item.title || '') + '</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px"><span style="color:' + pColor + '">' + (priorityLabels[item.priority] || '') + '</span> · ' + escapeHtml(item.type_name || '') + '</div></div></div>';
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:12px">加载失败</div>';
+    }
 }
 
 // ==================== CASES ====================
