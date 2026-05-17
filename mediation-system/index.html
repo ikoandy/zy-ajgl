@@ -2642,11 +2642,22 @@
                 <div class="page-header">
                     <h2>呼叫中心</h2>
                     <div class="page-header-actions">
+                        <button class="btn btn-outline" onclick="showProviderManageModal()"><span class="material-icons-round" style="font-size:16px">cloud</span> 云服务商</button>
                         <button class="btn btn-outline" onclick="showOutboundModal()"><span class="material-icons-round" style="font-size:16px">call_made</span> 外呼</button>
                         <button class="btn btn-primary" onclick="showNewCallModal()"><span class="material-icons-round" style="font-size:16px">call</span> 来电登记</button>
                     </div>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:20px" id="call-stats-cards"></div>
+                <div class="chart-card" style="margin-bottom:20px;padding:16px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                        <div style="display:flex;align-items:center;gap:6px">
+                            <span class="material-icons-round" style="font-size:16px;color:var(--accent-violet)">cloud_queue</span>
+                            <span style="font-size:13px;font-weight:600">云呼叫服务商</span>
+                        </div>
+                        <button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="showProviderManageModal()">管理</button>
+                    </div>
+                    <div id="call-provider-status" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+                </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
                     <div class="chart-card" style="padding:16px">
                         <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
@@ -7517,6 +7528,7 @@ async function loadCallCenter() {
         renderCallActiveList(stats.recent || []);
         renderCallCategoryChart(stats.by_category || []);
         renderCallHourlyChart(stats.hourly_stats || []);
+        await loadCallProviders();
         await loadCallRecords();
     } catch (err) {
         showToast('加载呼叫中心数据失败: ' + err.message);
@@ -8092,6 +8104,418 @@ async function deleteCallRecord(id) {
         await loadCallRecords();
     } catch (err) {
         showToast('删除失败: ' + err.message);
+    }
+}
+
+// ==================== CALL PROVIDERS ====================
+var providerTypeLabels = { tencent: '腾讯云', aliyun: '阿里云', huawei: '华为云', custom: '自定义' };
+var providerTypeIcons = { tencent: 'cloud', aliyun: 'cloud_circle', huawei: 'cloud_done', custom: 'dns' };
+var providerTypeColors = { tencent: '#006eff', aliyun: '#ff6a00', huawei: '#c7000b', custom: 'var(--accent-violet)' };
+var providerStatusLabels = { active: '已启用', inactive: '未启用', testing: '测试中' };
+var providerStatusClasses = { active: 'agreed', inactive: 'pending', testing: 'mediating' };
+
+async function loadCallProviders() {
+    try {
+        var providers = await api.get('/call-providers');
+        if (!Array.isArray(providers)) providers = [];
+        renderProviderStatus(providers);
+    } catch (err) { }
+}
+
+function renderProviderStatus(providers) {
+    var container = document.getElementById('call-provider-status');
+    if (!container) return;
+
+    if (!providers || providers.length === 0) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;grid-column:1/-1">尚未配置云呼叫服务商，<a href="javascript:void(0)" onclick="showProviderManageModal()" style="color:var(--accent-gold)">点击配置</a></div>';
+        return;
+    }
+
+    var html = '';
+    providers.forEach(function(p) {
+        var color = providerTypeColors[p.provider_type] || 'var(--text-muted)';
+        var icon = providerTypeIcons[p.provider_type] || 'cloud';
+        var typeLabel = providerTypeLabels[p.provider_type] || p.provider_type;
+        var statusLabel = providerStatusLabels[p.status] || p.status;
+        var statusClass = providerStatusClasses[p.status] || 'pending';
+        var features = [];
+        try { features = JSON.parse(p.features || '[]'); } catch(e) {}
+
+        html += '<div style="padding:12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);border-left:3px solid ' + color + '">' +
+            '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">' +
+            '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span class="material-icons-round" style="font-size:20px;color:' + color + '">' + icon + '</span>' +
+            '<div><div style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(p.display_name) + '</div>' +
+            '<div style="font-size:10px;color:var(--text-muted)">' + typeLabel + (p.call_package ? ' · ' + p.call_package : '') + '</div></div></div>' +
+            '<span class="status-tag ' + statusClass + '">' + statusLabel + '</span></div>' +
+            '<div style="display:flex;gap:12px;font-size:11px;color:var(--text-muted)">' +
+            (p.balance !== undefined && p.balance > 0 ? '<span>余额: <strong style="color:var(--accent-gold)">' + p.balance.toFixed(2) + '</strong></span>' : '') +
+            '<span>并发: ' + (p.max_concurrent || 10) + '</span>' +
+            (p.sip_number ? '<span>SIP: ' + escapeHtml(p.sip_number) + '</span>' : '') +
+            (p.last_sync_at ? '<span>同步: ' + new Date(p.last_sync_at).toLocaleString('zh-CN', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) + '</span>' : '') +
+            '</div>' +
+            (features.length > 0 ? '<div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">' +
+                features.slice(0, 5).map(function(f) { return '<span style="padding:1px 6px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);font-size:9px;color:var(--text-secondary)">' + f + '</span>'; }).join('') +
+                (features.length > 5 ? '<span style="font-size:9px;color:var(--text-muted)">+' + (features.length - 5) + '</span>' : '') +
+                '</div>' : '') +
+            '</div>';
+    });
+    container.innerHTML = html;
+}
+
+function showProviderManageModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '800px';
+
+    var html = '<div style="padding:4px 0">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+        '<span style="font-size:13px;color:var(--text-muted)">配置腾讯云、阿里云等云呼叫服务商，实现外呼、呼入、录音等能力</span>' +
+        '<button class="btn btn-primary" style="padding:4px 12px;font-size:11px" onclick="showAddProviderModal()"><span class="material-icons-round" style="font-size:14px">add</span> 添加服务商</button>' +
+        '</div>' +
+        '<div id="provider-list-container" style="display:flex;flex-direction:column;gap:12px"></div>' +
+        '</div>';
+
+    modal.querySelector('.modal-body').innerHTML = html;
+    modal.querySelector('.modal-title').innerHTML = '云呼叫服务商管理 <button class="modal-close" onclick="closeModal(\'modal-generic\')"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+    modal.style.display = 'flex';
+
+    loadProviderList();
+}
+
+async function loadProviderList() {
+    var container = document.getElementById('provider-list-container');
+    if (!container) return;
+    container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">加载中...</div>';
+
+    try {
+        var providers = await api.get('/call-providers');
+        if (!Array.isArray(providers)) providers = [];
+
+        if (providers.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)">尚未添加服务商，点击上方"添加服务商"按钮开始配置</div>';
+            return;
+        }
+
+        var html = '';
+        providers.forEach(function(p) {
+            var color = providerTypeColors[p.provider_type] || 'var(--text-muted)';
+            var icon = providerTypeIcons[p.provider_type] || 'cloud';
+            var typeLabel = providerTypeLabels[p.provider_type] || p.provider_type;
+            var statusLabel = providerStatusLabels[p.status] || p.status;
+            var statusClass = providerStatusClasses[p.status] || 'pending';
+
+            html += '<div style="padding:16px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-lg);border-left:4px solid ' + color + '">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">' +
+                '<div style="display:flex;align-items:center;gap:10px">' +
+                '<div style="width:40px;height:40px;border-radius:var(--radius-md);background:' + color + '20;display:flex;align-items:center;justify-content:center">' +
+                '<span class="material-icons-round" style="font-size:22px;color:' + color + '">' + icon + '</span></div>' +
+                '<div><div style="font-size:14px;font-weight:600;color:var(--text-primary)">' + escapeHtml(p.display_name) + '</div>' +
+                '<div style="font-size:11px;color:var(--text-muted)">' + typeLabel + ' · ' + escapeHtml(p.name) + (p.call_package ? ' · ' + escapeHtml(p.call_package) : '') + '</div></div></div>' +
+                '<div style="display:flex;align-items:center;gap:8px">' +
+                '<span class="status-tag ' + statusClass + '">' + statusLabel + '</span>' +
+                (p.status === 'active' ?
+                    '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="deactivateProvider(' + p.id + ')">停用</button>' :
+                    '<button class="btn btn-primary" style="padding:2px 8px;font-size:10px" onclick="activateProvider(' + p.id + ')">启用</button>') +
+                '</div></div>' +
+                '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;margin-bottom:10px">' +
+                '<div><span style="color:var(--text-muted)">API地址:</span> ' + (p.api_endpoint ? '<span style="color:var(--text-secondary);word-break:break-all">' + escapeHtml(p.api_endpoint) + '</span>' : '<span style="color:var(--text-muted)">未配置</span>') + '</div>' +
+                '<div><span style="color:var(--text-muted)">应用ID:</span> ' + (p.app_id ? '<span style="color:var(--accent-teal)">' + escapeHtml(p.app_id.substring(0, 8)) + '...</span>' : '<span style="color:var(--text-muted)">未配置</span>') + '</div>' +
+                '<div><span style="color:var(--text-muted)">实例ID:</span> ' + (p.instance_id ? escapeHtml(p.instance_id.substring(0, 10)) + '...' : '<span style="color:var(--text-muted)">未配置</span>') + '</div>' +
+                '<div><span style="color:var(--text-muted)">最大并发:</span> ' + (p.max_concurrent || 10) + '</div>' +
+                '</div>' +
+                (p.balance > 0 ? '<div style="font-size:11px;margin-bottom:8px"><span style="color:var(--text-muted)">账户余额:</span> <strong style="color:var(--accent-gold)">¥' + p.balance.toFixed(2) + '</strong></div>' : '') +
+                '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="testProvider(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">network_check</span> 测试连接</button>' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="syncProvider(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">sync</span> 同步状态</button>' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="showEditProviderModal(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">settings</span> 配置</button>' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px" onclick="showProviderLogs(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">history</span> 日志</button>' +
+                '<button class="btn btn-outline" style="padding:2px 8px;font-size:10px;color:var(--accent-rose);border-color:var(--accent-rose-dim)" onclick="deleteProvider(' + p.id + ')"><span class="material-icons-round" style="font-size:12px">delete</span> 删除</button>' +
+                '</div></div>';
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--accent-rose)">加载失败: ' + escapeHtml(err.message) + '</div>';
+    }
+}
+
+async function showAddProviderModal() {
+    var modal = document.getElementById('modal-generic');
+    if (!modal) return;
+    var modalContent = modal.querySelector('.modal-content');
+    modalContent.style.width = '600px';
+
+    try {
+        var configs = await api.get('/call-providers/configs');
+        var configArr = Object.values(configs);
+
+        var html = '<div style="padding:4px 0">' +
+            '<div class="modal-field"><label>选择服务商类型 *</label>' +
+            '<div id="provider-type-cards" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">';
+
+        configArr.forEach(function(c) {
+            var color = providerTypeColors[c.name] || 'var(--text-muted)';
+            var icon = providerTypeIcons[c.name] || 'cloud';
+            html += '<div onclick="selectProviderType(\'' + c.name + '\')" style="padding:12px;background:var(--bg-tertiary);border:2px solid var(--border-subtle);border-radius:var(--radius-lg);cursor:pointer;transition:all 0.2s" class="provider-type-card" data-type="' + c.name + '">' +
+                '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">' +
+                '<span class="material-icons-round" style="font-size:20px;color:' + color + '">' + icon + '</span>' +
+                '<span style="font-size:13px;font-weight:600;color:var(--text-primary)">' + escapeHtml(c.display_name) + '</span></div>' +
+                '<div style="font-size:10px;color:var(--text-muted);line-height:1.4">' + escapeHtml(c.description) + '</div></div>';
+        });
+
+        html += '</div></div>' +
+            '<div id="provider-config-form" style="display:none"></div>' +
+            '</div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '添加云呼叫服务商 <button class="modal-close" onclick="closeModal(\'modal-generic\');showProviderManageModal()"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载服务商配置失败: ' + err.message);
+    }
+}
+
+var selectedProviderType = '';
+async function selectProviderType(type) {
+    selectedProviderType = type;
+    document.querySelectorAll('.provider-type-card').forEach(function(card) {
+        card.style.borderColor = card.getAttribute('data-type') === type ? providerTypeColors[type] : 'var(--border-subtle)';
+        card.style.background = card.getAttribute('data-type') === type ? providerTypeColors[type] + '15' : 'var(--bg-tertiary)';
+    });
+
+    try {
+        var config = await api.get('/call-providers/configs/' + type);
+        var formContainer = document.getElementById('provider-config-form');
+        if (!formContainer) return;
+
+        var color = providerTypeColors[type] || 'var(--text-muted)';
+
+        var html = '<div style="border-top:1px solid var(--border-subtle);padding-top:12px">' +
+            '<div class="modal-field"><label>服务商标识 *</label><input type="text" id="provider-name" placeholder="如: tencent_prod（唯一标识）"></div>' +
+            '<div class="modal-field"><label>显示名称 *</label><input type="text" id="provider-display-name" value="' + escapeHtml(config.display_name) + '"></div>';
+
+        config.fields.forEach(function(f) {
+            var inputType = f.type === 'password' ? 'password' : 'text';
+            html += '<div class="modal-field"><label>' + f.label + (f.required ? ' *' : '') + '</label>' +
+                '<input type="' + inputType + '" id="provider-field-' + f.key + '" placeholder="' + f.label + '"></div>';
+        });
+
+        if (config.packages && config.packages.length > 0) {
+            html += '<div class="modal-field"><label>选择套餐</label>' +
+                '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">';
+            config.packages.forEach(function(pkg, idx) {
+                html += '<label style="display:flex;flex-direction:column;gap:4px;padding:10px;background:var(--bg-tertiary);border:2px solid ' + (idx === 0 ? color : 'var(--border-subtle)') + ';border-radius:var(--radius-md);cursor:pointer;font-size:11px">' +
+                    '<div style="display:flex;align-items:center;gap:4px"><input type="radio" name="provider-package" value="' + pkg.id + '" ' + (idx === 0 ? 'checked' : '') + ' style="accent-color:' + color + '">' +
+                    '<strong>' + escapeHtml(pkg.name) + '</strong></div>' +
+                    '<div style="color:var(--text-muted)">并发: ' + pkg.max_concurrent + ' · ' + escapeHtml(pkg.price) + '</div></label>';
+            });
+            html += '</div></div>';
+        }
+
+        html += '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitAddProvider()"><span class="material-icons-round" style="font-size:16px">cloud_done</span> 添加服务商</button>' +
+            '</div>';
+
+        formContainer.innerHTML = html;
+        formContainer.style.display = 'block';
+    } catch (err) {
+        showToast('加载配置失败: ' + err.message);
+    }
+}
+
+async function submitAddProvider() {
+    var name = document.getElementById('provider-name').value.trim();
+    var displayName = document.getElementById('provider-display-name').value.trim();
+    if (!name) { showToast('请输入服务商标识', 'warning'); return; }
+    if (!displayName) { showToast('请输入显示名称', 'warning'); return; }
+    if (!selectedProviderType) { showToast('请选择服务商类型', 'warning'); return; }
+
+    try {
+        var configs = await api.get('/call-providers/configs/' + selectedProviderType);
+        var data = {
+            name: name,
+            provider_type: selectedProviderType,
+            display_name: displayName,
+            api_endpoint: configs.api_endpoint_default
+        };
+
+        configs.fields.forEach(function(f) {
+            var el = document.getElementById('provider-field-' + f.key);
+            if (el) data[f.key] = el.value.trim() || null;
+        });
+
+        var packageRadio = document.querySelector('input[name="provider-package"]:checked');
+        if (packageRadio) {
+            data.call_package = packageRadio.value;
+            var pkg = configs.packages.find(function(p) { return p.id === packageRadio.value; });
+            if (pkg) data.max_concurrent = pkg.max_concurrent;
+        }
+
+        await api.post('/call-providers', data);
+        showToast('服务商添加成功', 'success');
+        closeModal('modal-generic');
+        showProviderManageModal();
+        await loadCallProviders();
+    } catch (err) {
+        showToast('添加失败: ' + err.message);
+    }
+}
+
+async function showEditProviderModal(id) {
+    try {
+        var provider = await api.get('/call-providers/' + id);
+        var configs = await api.get('/call-providers/configs/' + provider.provider_type);
+        var modal = document.getElementById('modal-generic');
+        if (!modal) return;
+        var modalContent = modal.querySelector('.modal-content');
+        modalContent.style.width = '560px';
+
+        var html = '<div style="padding:4px 0">' +
+            '<div class="modal-field"><label>显示名称</label><input type="text" id="edit-provider-name" value="' + escapeHtml(provider.display_name) + '"></div>';
+
+        configs.fields.forEach(function(f) {
+            var inputType = f.type === 'password' ? 'password' : 'text';
+            var val = provider[f.key] || '';
+            html += '<div class="modal-field"><label>' + f.label + '</label>' +
+                '<input type="' + inputType + '" id="edit-provider-field-' + f.key + '" value="' + escapeHtml(val) + '"></div>';
+        });
+
+        html += '<div class="modal-field"><label>最大并发数</label><input type="number" id="edit-provider-max-concurrent" value="' + (provider.max_concurrent || 10) + '" min="1" max="500"></div>' +
+            '<div class="modal-field"><label>SIP号码</label><input type="text" id="edit-provider-sip" value="' + escapeHtml(provider.sip_number || '') + '"></div>' +
+            '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitEditProvider(' + id + ')"><span class="material-icons-round" style="font-size:16px">save</span> 保存配置</button>' +
+            '</div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '配置 ' + escapeHtml(provider.display_name) + ' <button class="modal-close" onclick="closeModal(\'modal-generic\');showProviderManageModal()"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载配置失败: ' + err.message);
+    }
+}
+
+async function submitEditProvider(id) {
+    var data = {
+        display_name: document.getElementById('edit-provider-name').value.trim(),
+        max_concurrent: parseInt(document.getElementById('edit-provider-max-concurrent').value) || 10,
+        sip_number: document.getElementById('edit-provider-sip').value.trim() || null
+    };
+
+    try {
+        var provider = await api.get('/call-providers/' + id);
+        var configs = await api.get('/call-providers/configs/' + provider.provider_type);
+        configs.fields.forEach(function(f) {
+            var el = document.getElementById('edit-provider-field-' + f.key);
+            if (el) data[f.key] = el.value.trim() || null;
+        });
+
+        await api.put('/call-providers/' + id, data);
+        showToast('配置已保存', 'success');
+        closeModal('modal-generic');
+        showProviderManageModal();
+        await loadCallProviders();
+    } catch (err) {
+        showToast('保存失败: ' + err.message);
+    }
+}
+
+async function testProvider(id) {
+    showToast('正在测试连接...', 'info');
+    try {
+        var result = await api.post('/call-providers/' + id + '/test');
+        if (result.success) {
+            showToast(result.message, 'success');
+        } else {
+            showToast(result.message || '连接测试失败', 'warning');
+        }
+    } catch (err) {
+        showToast('测试失败: ' + err.message);
+    }
+    await loadProviderList();
+}
+
+async function syncProvider(id) {
+    showToast('正在同步状态...', 'info');
+    try {
+        await api.post('/call-providers/' + id + '/sync');
+        showToast('同步成功', 'success');
+    } catch (err) {
+        showToast('同步失败: ' + err.message);
+    }
+    await loadProviderList();
+    await loadCallProviders();
+}
+
+async function activateProvider(id) {
+    try {
+        await api.post('/call-providers/' + id + '/activate');
+        showToast('服务商已启用', 'success');
+        await loadProviderList();
+        await loadCallProviders();
+    } catch (err) {
+        showToast('启用失败: ' + err.message);
+    }
+}
+
+async function deactivateProvider(id) {
+    if (!confirm('确定要停用该服务商吗？停用后将无法使用云呼叫功能。')) return;
+    try {
+        await api.post('/call-providers/' + id + '/deactivate');
+        showToast('服务商已停用', 'success');
+        await loadProviderList();
+        await loadCallProviders();
+    } catch (err) {
+        showToast('停用失败: ' + err.message);
+    }
+}
+
+async function deleteProvider(id) {
+    if (!confirm('确定要删除该服务商配置吗？此操作不可恢复。')) return;
+    try {
+        await api.delete('/call-providers/' + id);
+        showToast('服务商已删除', 'success');
+        await loadProviderList();
+        await loadCallProviders();
+    } catch (err) {
+        showToast('删除失败: ' + err.message);
+    }
+}
+
+async function showProviderLogs(id) {
+    try {
+        var res = await api.get('/call-providers/' + id + '/logs?pageSize=20');
+        var logs = res.data || res;
+        if (!Array.isArray(logs)) logs = [];
+
+        var modal = document.getElementById('modal-generic');
+        if (!modal) return;
+        var modalContent = modal.querySelector('.modal-content');
+        modalContent.style.width = '700px';
+
+        var html = '<div style="padding:4px 0">';
+        if (logs.length === 0) {
+            html += '<div style="text-align:center;color:var(--text-muted);padding:30px">暂无操作日志</div>';
+        } else {
+            logs.forEach(function(log) {
+                var statusColor = log.status === 'success' ? 'var(--accent-teal)' : (log.status === 'failed' ? 'var(--accent-rose)' : '#fbbf24');
+                var statusIcon = log.status === 'success' ? 'check_circle' : (log.status === 'failed' ? 'error' : 'schedule');
+                html += '<div style="padding:10px;background:var(--bg-tertiary);border-radius:var(--radius-sm);margin-bottom:8px;font-size:11px">' +
+                    '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+                    '<div style="display:flex;align-items:center;gap:6px">' +
+                    '<span class="material-icons-round" style="font-size:14px;color:' + statusColor + '">' + statusIcon + '</span>' +
+                    '<strong style="color:var(--text-primary)">' + escapeHtml(log.action) + '</strong>' +
+                    '<span style="color:' + statusColor + '">' + log.status + '</span></div>' +
+                    '<span style="color:var(--text-muted)">' + (log.duration_ms || 0) + 'ms · ' + escapeHtml(log.created_at || '') + '</span></div>' +
+                    (log.error_message ? '<div style="color:var(--accent-rose);margin-top:4px">' + escapeHtml(log.error_message) + '</div>' : '') +
+                    '</div>';
+            });
+        }
+        html += '</div>';
+
+        modal.querySelector('.modal-body').innerHTML = html;
+        modal.querySelector('.modal-title').innerHTML = '操作日志 <button class="modal-close" onclick="closeModal(\'modal-generic\');showProviderManageModal()"><span class="material-icons-round" style="font-size:18px">close</span></button>';
+        modal.style.display = 'flex';
+    } catch (err) {
+        showToast('加载日志失败: ' + err.message);
     }
 }
 

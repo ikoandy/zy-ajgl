@@ -201,6 +201,18 @@ function seed() {
   });
   callInsert(calls);
 
+  const insertProvider = db.prepare(
+    `INSERT INTO call_providers (name, provider_type, display_name, description, api_endpoint, app_id, secret_key, instance_id, sip_number, status, balance, call_package, max_concurrent, features, last_sync_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  );
+  const providers = [
+    ['tencent_prod', 'tencent', '腾讯云呼叫中心', '生产环境腾讯云CCC融合通信', 'https://ccc.tencentcloudapi.com', '1400123456', 'sk-test-secret-key-xxxxx', 'ins-abc12345', '0755-88889999', 'active', 1250.50, 'standard', 15, JSON.stringify(['外呼', '呼入', 'IVR导航', '通话录音', '实时监控', '满意度评价', '智能路由', '技能组']), '2024-12-09 14:00:00'],
+    ['aliyun_backup', 'aliyun', '阿里云呼叫中心', '备用环境阿里云智能呼叫', 'https://ccc.aliyuncs.com', 'LTAI5tXXXXXXXX', 'aliyun-secret-key-xxxxx', 'ccc-xyz78901', '0755-66667777', 'inactive', 980.00, 'growth', 20, JSON.stringify(['外呼', '呼入', 'IVR导航', '通话录音', '智能外呼', '语音机器人', '全渠道接入', '报表分析']), null]
+  ];
+  const providerInsert = db.transaction((rows) => {
+    for (const p of rows) insertProvider.run(...p);
+  });
+  providerInsert(providers);
+
   const insertSetting = db.prepare(
     `INSERT INTO settings (category, key, value, value_type, description) VALUES (?, ?, ?, ?, ?)`
   );

@@ -334,6 +334,41 @@ function initDatabase() {
       FOREIGN KEY (case_id) REFERENCES cases(id)
     );
 
+    CREATE TABLE IF NOT EXISTS call_providers (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL UNIQUE,
+      provider_type TEXT NOT NULL CHECK(provider_type IN ('tencent', 'aliyun', 'huawei', 'custom')),
+      display_name TEXT NOT NULL,
+      description TEXT,
+      api_endpoint TEXT,
+      app_id TEXT,
+      secret_key TEXT,
+      instance_id TEXT,
+      sip_number TEXT,
+      config_json TEXT,
+      status TEXT DEFAULT 'inactive' CHECK(status IN ('active', 'inactive', 'testing')),
+      balance REAL DEFAULT 0,
+      call_package TEXT,
+      max_concurrent INTEGER DEFAULT 10,
+      features TEXT,
+      last_sync_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS call_provider_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      provider_id INTEGER NOT NULL,
+      action TEXT NOT NULL,
+      request_data TEXT,
+      response_data TEXT,
+      status TEXT DEFAULT 'success' CHECK(status IN ('success', 'failed', 'timeout')),
+      error_message TEXT,
+      duration_ms INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (provider_id) REFERENCES call_providers(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS settings (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       category TEXT NOT NULL,
