@@ -500,6 +500,9 @@ router.post('/', roleMiddleware('super_admin', 'org_admin', 'senior_mediator'), 
   if (!title || !type_id) {
     return res.status(400).json(formatError('案件标题和类型不能为空'));
   }
+  if (title.length > 200) {
+    return res.status(400).json(formatError('案件标题不能超过200个字符'));
+  }
 
   const db = getDb();
 

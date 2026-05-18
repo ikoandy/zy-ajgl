@@ -50,6 +50,12 @@ router.post('/', roleMiddleware('super_admin', 'org_admin'), (req, res) => {
   if (!username || !password || !real_name || !role_id) {
     return res.status(400).json(formatError('用户名、密码、姓名和角色不能为空'));
   }
+  if (password.length < 6) {
+    return res.status(400).json(formatError('密码长度不能少于6位'));
+  }
+  if (!/^[a-zA-Z0-9_]{2,20}$/.test(username)) {
+    return res.status(400).json(formatError('用户名只能包含字母、数字和下划线，长度2-20位'));
+  }
 
   const db = getDb();
   const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username);

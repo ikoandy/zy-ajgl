@@ -4407,11 +4407,21 @@ function getCasePartiesFromForm() {
         var row = rows[i];
         var name = row.querySelector('.party-name-input');
         if (name && name.value.trim()) {
+            var phone = (row.querySelector('.party-phone-input') || {}).value || '';
+            var idNumber = (row.querySelector('.party-id-input') || {}).value || '';
+            if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
+                showToast('当事人手机号格式不正确: ' + phone);
+                return null;
+            }
+            if (idNumber && !/^[1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]$/.test(idNumber)) {
+                showToast('身份证号格式不正确: ' + idNumber);
+                return null;
+            }
             parties.push({
                 party_type: row.querySelector('.party-type-select').value,
                 name: name.value.trim(),
-                id_number: (row.querySelector('.party-id-input') || {}).value || '',
-                phone: (row.querySelector('.party-phone-input') || {}).value || ''
+                id_number: idNumber,
+                phone: phone
             });
         }
     }
@@ -4517,28 +4527,50 @@ function getCaseFinanceFromForm() {
                   document.getElementById('case-fin-amount').value ||
                   document.getElementById('case-fin-institution').value.trim();
     if (!hasData) return null;
+
+    var loanAmount = parseFloat(document.getElementById('case-fin-amount').value);
+    var loanBalance = parseFloat(document.getElementById('case-fin-balance').value);
+    var loanRate = parseFloat(document.getElementById('case-fin-rate').value);
+    var penaltyRate = parseFloat(document.getElementById('case-fin-penalty-rate').value);
+    var overdueDays = parseInt(document.getElementById('case-fin-overdue-days').value);
+    var overduePrincipal = parseFloat(document.getElementById('case-fin-overdue-principal').value);
+    var overdueInterest = parseFloat(document.getElementById('case-fin-overdue-interest').value);
+    var totalClaim = parseFloat(document.getElementById('case-fin-total-claim').value);
+    var collateralValue = parseFloat(document.getElementById('case-fin-collateral-value').value);
+    var settlementAmount = parseFloat(document.getElementById('case-fin-settlement-amount').value);
+
+    if (loanAmount !== undefined && loanAmount !== null && isNaN(loanAmount) === false && loanAmount < 0) { showToast('贷款金额不能为负数'); return false; }
+    if (loanBalance !== undefined && loanBalance !== null && isNaN(loanBalance) === false && loanBalance < 0) { showToast('贷款余额不能为负数'); return false; }
+    if (loanRate !== undefined && loanRate !== null && isNaN(loanRate) === false && (loanRate < 0 || loanRate > 100)) { showToast('贷款利率应在0-100之间'); return false; }
+    if (penaltyRate !== undefined && penaltyRate !== null && isNaN(penaltyRate) === false && (penaltyRate < 0 || penaltyRate > 100)) { showToast('罚息利率应在0-100之间'); return false; }
+    if (overdueDays !== undefined && overdueDays !== null && isNaN(overdueDays) === false && overdueDays < 0) { showToast('逾期天数不能为负数'); return false; }
+
+    var startDate = document.getElementById('case-fin-start').value;
+    var dueDate = document.getElementById('case-fin-due').value;
+    if (startDate && dueDate && startDate > dueDate) { showToast('贷款到期日不能早于起始日'); return false; }
+
     return {
         loan_contract_number: document.getElementById('case-fin-contract').value.trim(),
-        loan_amount: parseFloat(document.getElementById('case-fin-amount').value) || null,
-        loan_balance: parseFloat(document.getElementById('case-fin-balance').value) || null,
-        loan_interest_rate: parseFloat(document.getElementById('case-fin-rate').value) || null,
-        loan_penalty_rate: parseFloat(document.getElementById('case-fin-penalty-rate').value) || null,
-        loan_start_date: document.getElementById('case-fin-start').value || null,
-        loan_due_date: document.getElementById('case-fin-due').value || null,
+        loan_amount: isNaN(loanAmount) ? null : loanAmount,
+        loan_balance: isNaN(loanBalance) ? null : loanBalance,
+        loan_interest_rate: isNaN(loanRate) ? null : loanRate,
+        loan_penalty_rate: isNaN(penaltyRate) ? null : penaltyRate,
+        loan_start_date: startDate || null,
+        loan_due_date: dueDate || null,
         loan_actual_end_date: document.getElementById('case-fin-actual-end').value || null,
         loan_term_months: parseInt(document.getElementById('case-fin-term').value) || null,
         loan_purpose: document.getElementById('case-fin-purpose').value.trim(),
         repayment_method: document.getElementById('case-fin-repayment').value || null,
         collateral_type: document.getElementById('case-fin-collateral').value || null,
         collateral_description: document.getElementById('case-fin-collateral-desc').value.trim(),
-        collateral_value: parseFloat(document.getElementById('case-fin-collateral-value').value) || null,
+        collateral_value: isNaN(collateralValue) ? null : collateralValue,
         guarantor_name: document.getElementById('case-fin-guarantor').value.trim(),
         guarantor_id_number: document.getElementById('case-fin-guarantor-id').value.trim(),
         guarantor_phone: document.getElementById('case-fin-guarantor-phone').value.trim(),
-        overdue_days: parseInt(document.getElementById('case-fin-overdue-days').value) || 0,
-        overdue_principal: parseFloat(document.getElementById('case-fin-overdue-principal').value) || 0,
-        overdue_interest: parseFloat(document.getElementById('case-fin-overdue-interest').value) || 0,
-        total_claim_amount: parseFloat(document.getElementById('case-fin-total-claim').value) || 0,
+        overdue_days: isNaN(overdueDays) ? 0 : Math.max(0, overdueDays),
+        overdue_principal: isNaN(overduePrincipal) ? 0 : Math.max(0, overduePrincipal),
+        overdue_interest: isNaN(overdueInterest) ? 0 : Math.max(0, overdueInterest),
+        total_claim_amount: isNaN(totalClaim) ? 0 : Math.max(0, totalClaim),
         interest_calculated_to: document.getElementById('case-fin-interest-to').value || null,
         litigation_stage: document.getElementById('case-fin-litigation').value || null,
         collection_status: document.getElementById('case-fin-collection').value || null,
@@ -4547,7 +4579,7 @@ function getCaseFinanceFromForm() {
         institution_contact_phone: document.getElementById('case-fin-inst-phone').value.trim(),
         risk_level: document.getElementById('case-fin-risk').value || null,
         write_off_status: document.getElementById('case-fin-writeoff').value || null,
-        settlement_amount: parseFloat(document.getElementById('case-fin-settlement-amount').value) || null,
+        settlement_amount: isNaN(settlementAmount) ? null : settlementAmount,
         settlement_date: document.getElementById('case-fin-settlement-date').value || null,
         remarks: document.getElementById('case-fin-remarks').value.trim()
     };
@@ -4562,10 +4594,15 @@ async function submitCase() {
     var status = document.getElementById('case-status').value;
     var description = document.getElementById('case-description').value.trim();
     var parties = getCasePartiesFromForm();
-    var finance = getCaseFinanceFromForm();
+    if (parties === null) return;
+    var financeResult = getCaseFinanceFromForm();
+    if (financeResult === false) return;
+    var finance = financeResult;
 
     if (!title) { showToast('请输入案件标题'); return; }
     if (!typeId) { showToast('请选择案件类型'); return; }
+    if (title.length > 200) { showToast('案件标题不能超过200个字符'); return; }
+    if (description && description.length > 2000) { showToast('案件描述不能超过2000个字符'); return; }
 
     try {
         if (editId) {
@@ -5125,6 +5162,8 @@ async function saveCaseStage(caseId) {
         result: document.getElementById('stage-result').value.trim()
     };
     if (!data.stage_name) { showToast('请输入阶段名称'); return; }
+    if (data.start_date && data.end_date && data.start_date > data.end_date) { showToast('结束日期不能早于开始日期'); return; }
+    if (data.amount_involved !== null && data.amount_involved < 0) { showToast('涉及金额不能为负数'); return; }
     try {
         if (editId) {
             await api.put('/cases/' + caseId + '/stages/' + editId, data);
@@ -5687,6 +5726,8 @@ async function submitArchive() {
 
     if (!title) { showToast('请输入档案标题'); return; }
     if (!categoryId) { showToast('请选择档案分类'); return; }
+    if (title.length > 200) { showToast('档案标题不能超过200个字符'); return; }
+    if (pages && (parseInt(pages) < 0 || isNaN(parseInt(pages)))) { showToast('页数必须为非负整数'); return; }
 
     var data = {
         title: title,
@@ -9910,6 +9951,7 @@ async function submitSchedule() {
     if (!title) { showToast('请输入日程标题', 'warning'); return; }
     if (!mediatorId) { showToast('请选择调解员', 'warning'); return; }
     if (!startTime || !endTime) { showToast('请选择开始和结束时间', 'warning'); return; }
+    if (startTime && endTime && new Date(startTime) >= new Date(endTime)) { showToast('结束时间必须晚于开始时间', 'warning'); return; }
 
     var data = {
         title: title,
@@ -10664,6 +10706,18 @@ async function submitUser() {
         showToast('请输入用户名、姓名和角色', 'info');
         return;
     }
+    if (!/^[a-zA-Z0-9_]{2,20}$/.test(username)) {
+        showToast('用户名只能包含字母、数字和下划线，长度2-20位', 'info');
+        return;
+    }
+    if (phone && !/^1[3-9]\d{9}$/.test(phone)) {
+        showToast('手机号格式不正确', 'info');
+        return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showToast('邮箱格式不正确', 'info');
+        return;
+    }
 
     try {
         if (editId) {
@@ -10681,6 +10735,10 @@ async function submitUser() {
         } else {
             if (!password) {
                 showToast('请输入密码', 'info');
+                return;
+            }
+            if (password.length < 6) {
+                showToast('密码长度不能少于6位', 'info');
                 return;
             }
             await api.post('/users', {
