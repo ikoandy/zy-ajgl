@@ -362,7 +362,7 @@ router.get('/stats', (req, res) => {
   `).all().reverse();
 
   const typeDistribution = db.prepare(`
-    SELECT ct.name, ct.color, COUNT(c.id) as count
+    SELECT ct.id, ct.name, ct.icon, ct.color, COUNT(c.id) as count
     FROM case_types ct LEFT JOIN cases c ON ct.id = c.type_id
     GROUP BY ct.id ORDER BY count DESC
   `).all();
@@ -412,6 +412,12 @@ router.get('/stats', (req, res) => {
     top_mediators: topMediators,
     unread_notifications: pendingCount
   }));
+});
+
+router.get('/types', (req, res) => {
+  const db = getDb();
+  const types = db.prepare('SELECT id, name, icon, color, sort_order FROM case_types ORDER BY sort_order ASC').all();
+  res.json(formatResponse(types));
 });
 
 router.get('/', (req, res) => {

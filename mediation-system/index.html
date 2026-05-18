@@ -4346,12 +4346,11 @@ var PARTY_TYPE_LABELS = { plaintiff: '申请方', defendant: '被申请方', wit
 async function loadCaseOptions() {
     try {
         var results = await Promise.all([
-            api.get('/cases', { pageSize: 1 }),
+            api.get('/cases/types'),
             api.get('/users', { pageSize: 100 })
         ]);
         if (!caseTypeCache) {
-            var statsRes = await api.get('/cases/stats');
-            caseTypeCache = statsRes.type_distribution || [];
+            caseTypeCache = results[0] || [];
         }
         if (!mediatorCache) {
             var usersData = results[1];
