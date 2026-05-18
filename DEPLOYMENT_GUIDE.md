@@ -1,257 +1,219 @@
-# 律师事务所管理系统部署指南
+# 调解机构管理平台 - 部署指南
 
-## 1. 项目概述
+## 服务器要求
+- Ubuntu 20.04+ / CentOS 7+
+- 开放端口: 3002 (后端API), 80/443 (Nginx)
+- 域名已解析到服务器IP
 
-律师事务所管理系统是一个基于Node.js + Vue 3 + TypeScript开发的全栈应用，包含三个前端项目和一个后端API服务。
+## 快速部署步骤
 
-### 1.1 项目结构
-
-```
-law-firm-management/
-├── admin-pc/          # 管理端（Vue 3 + TypeScript）
-├── lawyer-pc/         # 律师端（Vue 3 + TypeScript）
-├── mobile-h5/         # 移动端（Vue 3 + TypeScript）
-├── backend/           # 后端API（Node.js + Express + TypeScript）
-├── docker/            # Docker相关配置
-├── deploy.sh          # 部署脚本
-├── verify.sh          # 验证脚本
-└── docker-compose.yml # Docker Compose配置
-```
-
-### 1.2 技术栈
-
-| 组件 | 技术栈 | 版本 |
-|------|--------|------|
-| 后端 | Node.js + Express + TypeScript | Node.js 18 |
-| 前端 | Vue 3 + TypeScript + Element Plus | Vue 3.5 |
-| 数据库 | MySQL | 8.0 |
-| 容器化 | Docker + Docker Compose | 最新 |
-| 服务器 | Nginx | 最新 |
-
-## 2. 部署前准备
-
-### 2.1 云服务器配置
-
-| 配置项 | 要求 |
-|--------|------|
-| 云服务器地址 | 139.155.42.254 |
-| 操作系统 | CentOS 7+ |
-| CPU | 2核+ |
-| 内存 | 4GB+ |
-| 磁盘 | 50GB+ |
-| 网络 | 公网IP |
-
-### 2.2 云数据库配置
-
-| 配置项 | 要求 |
-|--------|------|
-| 数据库地址 | 10.6.0.17 |
-| 端口 | 3306 |
-| 数据库名 | law_firm_management |
-| 用户名 | root |
-| 密码 | ZY520117. |
-| 字符集 | utf8mb4 |
-| 排序规则 | utf8mb4_unicode_ci |
-
-### 2.3 本地构建结果
-
-所有前端和后端项目已经在本地成功构建，构建结果位于各项目的`dist`目录中。
-
-## 3. 部署步骤
-
-### 3.1 登录云服务器
-
-使用SSH登录云服务器：
+### 方式一：使用一键部署脚本
 
 ```bash
-ssh root@139.155.42.254
+# 1. 连接到服务器
+ssh ubuntu@139.155.148.99
+
+# 2. 下载部署脚本
+cd /home/ubuntu
+curl -O https://raw.githubusercontent.com/your-repo/main/deploy/quick-deploy.sh
+chmod +x quick-deploy.sh
+
+# 3. 上传项目文件
+# 在本地执行:
+scp -r /path/to/mediation-system/* ubuntu@139.155.148.99:/home/ubuntu/mediation-system/
+
+# 4. 运行部署脚本
+cd /home/ubuntu
+./quick-deploy.sh
 ```
 
-### 3.2 安装必要软件
+### 方式二：手动部署
 
+#### 步骤1：安装Node.js
 ```bash
-# 更新系统
-yum update -y
-
-# 安装Docker
-yum install -y yum-utils device-mapper-persistent-data lvm2
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-yum install -y docker-ce docker-ce-cli containerd.io
-systemctl start docker
-systemctl enable docker
-
-# 安装Docker Compose
-curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
-ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
-
-# 安装Git
-yum install -y git
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+node --version  # 应该显示 v18.x.x
 ```
 
-### 3.3 创建项目目录
-
+#### 步骤2：上传项目
 ```bash
-mkdir -p /app/law-firm-management
+# 在本地执行:
+scp -r /path/to/mediation-system ubuntu@139.155.148.99:/home/ubuntu/
 ```
 
-### 3.4 上传项目文件
-
-使用SCP或其他文件传输工具将本地项目文件上传到云服务器的`/app/law-firm-management`目录。
-
-### 3.5 执行部署脚本
-
+#### 步骤3：安装依赖
 ```bash
-# 进入项目目录
-cd /app/law-firm-management
-
-# 赋予执行权限
-chmod +x deploy.sh
-
-# 执行部署脚本
-./deploy.sh
+cd /home/ubuntu/mediation-system
+npm install
 ```
 
-### 3.6 手动部署步骤（备选）
-
-如果部署脚本执行失败，可以手动执行以下步骤：
-
-#### 3.6.1 构建Docker镜像
-
+#### 步骤4：初始化数据库
 ```bash
-# 构建后端镜像
-docker build -t law_firm_backend ./backend
-
-# 构建前端镜像
-docker build -t law_firm_frontend -f docker/Dockerfile.frontend .
+cd /home/ubuntu/mediation-system
+node init-admin.js
 ```
 
-#### 3.6.2 启动Docker容器
-
+#### 步骤5：创建系统服务
 ```bash
-# 启动所有容器
-docker-compose up -d
+sudo tee /etc/systemd/system/mediation.service > /dev/null <<EOF
+[Unit]
+Description=Mediation Platform Backend
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/mediation-system
+ExecStart=/usr/bin/node /home/ubuntu/mediation-system/server/index.js
+Restart=always
+RestartSec=10
+Environment=PORT=3002
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable mediation
+sudo systemctl start mediation
 ```
 
-## 4. 系统验证
-
-### 4.1 执行验证脚本
-
+#### 步骤6：验证后端服务
 ```bash
-# 赋予执行权限
-chmod +x verify.sh
+# 检查服务状态
+sudo systemctl status mediation
 
-# 执行验证脚本
-./verify.sh
+# 测试API
+curl http://localhost:3002/api/auth/login -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}'
 ```
 
-### 4.2 手动验证
+#### 步骤7：配置Nginx
 
-1. **检查容器状态**：
+**方案A：子路径部署 (推荐)**
+```bash
+sudo tee /etc/nginx/sites-available/mediation-subpath > /dev/null <<'EOF'
+server {
+    listen 80;
+    server_name www.zhfcy.cn zhfcy.cn _;
+
+    root /var/www/html;
+    index index.html;
+
+    # 调解平台 - /tiaojie 路径
+    location /tiaojie/ {
+        alias /home/ubuntu/mediation-system/;
+        try_files $uri $uri/ /tiaojie/index.html;
+    }
+
+    # 调解平台 API
+    location /tiaojie/api/ {
+        proxy_pass http://localhost:3002/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 100M;
+        proxy_read_timeout 300s;
+    }
+
+    # 其他路径...
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
+EOF
+
+sudo ln -sf /etc/nginx/sites-available/mediation-subpath /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+```
+
+**方案B：子域名部署**
+```bash
+sudo tee /etc/nginx/sites-available/mediation-domain > /dev/null <<'EOF'
+server {
+    listen 80;
+    server_name tiaojie.zhfcy.cn;
+
+    root /home/ubuntu/mediation-system;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://localhost:3002/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 100M;
+    }
+}
+EOF
+
+sudo ln -sf /etc/nginx/sites-available/mediation-domain /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+```
+
+#### 步骤8：配置SSL (可选但推荐)
+```bash
+# 使用 Let's Encrypt 免费证书
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d www.zhfcy.cn -d zhfcy.cn
+# 或
+sudo certbot --nginx -d tiaojie.zhfcy.cn
+```
+
+## 故障排除
+
+### 502 Bad Gateway
+1. 检查后端服务是否运行：
    ```bash
-   docker-compose ps
+   sudo systemctl status mediation
    ```
 
-2. **检查后端健康状态**：
+2. 检查端口是否监听：
    ```bash
-   curl http://localhost:3000/health
+   sudo netstat -tlnp | grep 3002
    ```
 
-3. **检查前端访问**：
+3. 查看Nginx错误日志：
    ```bash
-   curl -I http://localhost
+   sudo tail -f /var/log/nginx/error.log
    ```
 
-## 5. 访问地址
+4. 查看后端服务日志：
+   ```bash
+   sudo journalctl -u mediation -f
+   ```
 
-| 服务 | 访问地址 | 备注 |
-|------|----------|------|
-| 管理端 | http://139.155.42.254/admin | 管理员使用 |
-| 律师端 | http://139.155.42.254/lawyer | 律师使用 |
-| 移动端 | http://139.155.42.254/mobile | 移动端访问 |
-| 后端API | http://139.155.42.254:3000 | API服务 |
-| 健康检查 | http://139.155.42.254:3000/health | 系统健康状态 |
+### 无法登录
+1. 检查数据库是否初始化：
+   ```bash
+   ls -la /home/ubuntu/mediation-system/data/
+   ```
 
-## 6. 初始账户
+2. 重新初始化数据库：
+   ```bash
+   cd /home/ubuntu/mediation-system
+   node init-admin.js
+   ```
 
-| 用户名 | 密码 | 角色 | 备注 |
-|--------|------|------|------|
-| admin | admin123 | 管理员 | 系统管理员 |
-| lawyer1 | admin123 | 律师 | 测试律师账户 |
-| client1 | admin123 | 客户 | 测试客户账户 |
+3. 重启服务：
+   ```bash
+   sudo systemctl restart mediation
+   ```
 
-## 7. 系统管理
+## 访问地址
 
-### 7.1 查看容器日志
+- 子路径访问: https://www.zhfcy.cn/tiaojie
+- 子域名访问: https://tiaojie.zhfcy.cn
+- 直接访问: http://139.155.148.99
 
-```bash
-# 查看所有容器日志
-docker-compose logs -f
-
-# 查看后端日志
-docker-compose logs -f backend
-
-# 查看前端日志
-docker-compose logs -f frontend
-```
-
-### 7.2 停止和重启服务
-
-```bash
-# 停止所有服务
-docker-compose down
-
-# 重启所有服务
-docker-compose restart
-```
-
-### 7.3 升级服务
-
-```bash
-# 拉取最新代码
-git pull
-
-# 重新构建和启动服务
-docker-compose up -d --build
-```
-
-## 8. 故障排除
-
-### 8.1 数据库连接失败
-
-1. 检查数据库配置是否正确
-2. 检查云数据库是否允许来自云服务器的访问
-3. 检查数据库服务是否正常运行
-
-### 8.2 前端访问失败
-
-1. 检查Nginx配置是否正确
-2. 检查前端构建产物是否存在
-3. 检查端口80是否被占用
-
-### 8.3 后端服务失败
-
-1. 检查后端日志
-2. 检查数据库连接
-3. 检查端口3000是否被占用
-
-## 9. 安全建议
-
-1. **配置HTTPS**：为系统配置SSL证书，使用HTTPS访问
-2. **修改初始密码**：首次登录后立即修改初始密码
-3. **配置防火墙**：只开放必要的端口（22、80、443、3000）
-4. **定期备份**：定期备份数据库和重要数据
-5. **更新系统**：定期更新系统和软件版本
-
-## 10. 联系方式
-
-| 角色 | 联系方式 |
-|------|----------|
-| 技术支持 | tech@lawfirm.com |
-| 系统管理员 | admin@lawfirm.com |
-
----
-
-**部署完成时间**：2025-12-31
-**部署版本**：v1.0.0
-**部署人员**：系统自动部署
+## 默认登录信息
+- 用户名: admin
+- 密码: admin123
