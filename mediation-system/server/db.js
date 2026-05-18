@@ -56,6 +56,7 @@ function initDatabase() {
       title TEXT NOT NULL,
       type_id INTEGER NOT NULL,
       description TEXT,
+      type_details TEXT,
       status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'accepted', 'mediating', 'agreed', 'terminated', 'closed')),
       priority TEXT DEFAULT 'normal' CHECK(priority IN ('low', 'normal', 'high', 'urgent')),
       mediator_id INTEGER,

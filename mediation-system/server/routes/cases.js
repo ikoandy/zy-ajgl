@@ -453,7 +453,11 @@ router.get('/', (req, res) => {
     const parties = db.prepare(`
       SELECT id, party_type, name, id_number, phone FROM case_parties WHERE case_id = ?
     `).all(c.id);
-    return { ...c, parties };
+    var typeDetails = null;
+    if (c.type_details) {
+      try { typeDetails = JSON.parse(c.type_details); } catch(e) { typeDetails = null; }
+    }
+    return { ...c, type_details: typeDetails, parties };
   });
 
   res.json(formatResponse({
@@ -479,6 +483,10 @@ router.get('/:id', (req, res) => {
     return res.status(404).json(formatError('案件不存在'));
   }
 
+  if (caseData.type_details) {
+    try { caseData.type_details = JSON.parse(caseData.type_details); } catch(e) { caseData.type_details = null; }
+  }
+
   const parties = db.prepare('SELECT * FROM case_parties WHERE case_id = ?').all(req.params.id);
   const records = db.prepare(`
     SELECT mr.*, u.real_name as mediator_name FROM mediation_records mr
@@ -495,7 +503,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.post('/', roleMiddleware('super_admin', 'org_admin', 'senior_mediator'), (req, res) => {
-  const { title, type_id, description, priority, mediator_id, parties } = req.body;
+  const { title, type_id, description, priority, mediator_id, parties, type_details } = req.body;
 
   if (!title || !type_id) {
     return res.status(400).json(formatError('案件标题和类型不能为空'));
@@ -514,10 +522,12 @@ router.post('/', roleMiddleware('super_admin', 'org_admin', 'senior_mediator'), 
   }
   const caseNumber = `${new Date().getFullYear()}-${String(nextNum).padStart(4, '0')}`;
 
+  const typeDetailsJson = type_details ? JSON.stringify(type_details) : null;
+
   const result = db.prepare(`
-    INSERT INTO cases (case_number, title, type_id, description, status, priority, mediator_id, created_by, assigned_at)
-    VALUES (?, ?, ?, ?, 'pending', ?, ?, ?, ?)
-  `).run(caseNumber, title, type_id, description || '', priority || 'normal', mediator_id || null, req.user.id, mediator_id ? new Date().toISOString() : null);
+    INSERT INTO cases (case_number, title, type_id, description, type_details, status, priority, mediator_id, created_by, assigned_at)
+    VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
+  `).run(caseNumber, title, type_id, description || '', typeDetailsJson, priority || 'normal', mediator_id || null, req.user.id, mediator_id ? new Date().toISOString() : null);
 
   if (parties && Array.isArray(parties)) {
     const insertParty = db.prepare(
@@ -539,7 +549,7 @@ router.post('/', roleMiddleware('super_admin', 'org_admin', 'senior_mediator'), 
 });
 
 router.put('/:id', (req, res) => {
-  const { title, type_id, description, status, priority, mediator_id } = req.body;
+  const { title, type_id, description, status, priority, mediator_id, type_details } = req.body;
   const db = getDb();
 
   const existing = db.prepare('SELECT * FROM cases WHERE id = ?').get(req.params.id);
@@ -553,6 +563,7 @@ router.put('/:id', (req, res) => {
   if (type_id !== undefined) { updates.push('type_id = ?'); values.push(type_id); }
   if (description !== undefined) { updates.push('description = ?'); values.push(description); }
   if (priority !== undefined) { updates.push('priority = ?'); values.push(priority); }
+  if (type_details !== undefined) { updates.push('type_details = ?'); values.push(type_details ? JSON.stringify(type_details) : null); }
   if (mediator_id !== undefined) {
     updates.push('mediator_id = ?');
     values.push(mediator_id);
