@@ -2,7 +2,6 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { initDatabase } = require('./db');
-const { seed } = require('./seed');
 
 const authRoutes = require('./routes/auth');
 const caseRoutes = require('./routes/cases');
@@ -23,7 +22,7 @@ const reportRoutes = require('./routes/reports');
 const fileRoutes = require('./routes/files');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 app.use(cors());
 app.use(express.json());
@@ -67,7 +66,6 @@ app.use((err, req, res, next) => {
 function start() {
   console.log('Initializing database...');
   initDatabase();
-  seed();
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n  ⚖  和调 · 调解机构管理平台`);
