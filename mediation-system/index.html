@@ -2188,8 +2188,8 @@
             <div class="sidebar-user" onclick="showProfileModal()" style="cursor:pointer" title="点击查看个人信息">
                 <div class="avatar" id="user-avatar">--</div>
                 <div class="user-info">
-                    <span id="user-name">--</span>
-                    <small id="user-role">--</small>
+                    <span id="sidebar-user-name">--</span>
+                    <small id="sidebar-user-role">--</small>
                 </div>
             </div>
         </div>
@@ -3916,8 +3916,8 @@ function updateUserInfo() {
     var user = api.getUser();
     if (user) {
         var avatarEl = document.getElementById('user-avatar');
-        var nameEl = document.getElementById('user-name');
-        var roleEl = document.getElementById('user-role');
+        var nameEl = document.getElementById('sidebar-user-name');
+        var roleEl = document.getElementById('sidebar-user-role');
         var displayName = user.name || user.username || '';
         if (avatarEl) avatarEl.textContent = displayName.charAt(0) || '--';
         if (nameEl) nameEl.textContent = displayName || '--';
