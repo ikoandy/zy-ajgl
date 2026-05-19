@@ -2498,8 +2498,9 @@
                             <span class="material-icons-round" style="font-size:18px;color:var(--accent-teal)">folder_open</span>
                             <span style="font-size:13px;font-weight:600">关联案件</span>
                         </div>
-                        <div style="margin-bottom:10px">
-                            <input type="text" id="doc-case-search" placeholder="搜索案件编号或标题..." style="width:100%;padding:8px 12px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none" oninput="searchDocCases(this.value)">
+                        <div style="margin-bottom:10px;position:relative">
+                            <span class="material-icons-round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text-muted);pointer-events:none">search</span>
+                            <input type="text" id="doc-case-search" placeholder="输入案件编号、标题或当事人搜索..." style="width:100%;padding:8px 12px 8px 32px;background:var(--bg-tertiary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);color:var(--text-primary);font-size:12px;font-family:inherit;outline:none" oninput="searchDocCases(this.value)">
                         </div>
                         <div id="doc-case-list" style="max-height:260px;overflow-y:auto">
                             <p style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">请搜索并选择案件</p>
@@ -3449,12 +3450,16 @@
         </div>
         <div class="modal-field">
             <label>关联案件</label>
-            <div style="position:relative">
-                <input type="text" id="schedule-case-search" placeholder="搜索案件编号或标题..." oninput="searchScheduleCases(this.value)" autocomplete="off">
-                <div id="schedule-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>
-                <input type="hidden" id="schedule-case-id" value="">
+            <div style="position:relative" class="cs-wrapper">
+            <div style="position:relative;display:flex;align-items:center">
+            <span class="material-icons-round" style="position:absolute;left:8px;font-size:16px;color:var(--text-muted);pointer-events:none">search</span>
+            <input type="text" id="schedule-case-search" placeholder="输入案件编号、标题或当事人搜索..." autocomplete="off" oninput="CaseSearch.search('schedule-case',this.value)" onfocus="CaseSearch.search('schedule-case',this.value)" onkeydown="CaseSearch.onKeydown('schedule-case',event)" style="padding-left:30px;padding-right:28px;width:100%">
+            <span class="material-icons-round" style="position:absolute;right:6px;font-size:16px;color:var(--text-muted);cursor:pointer;display:none" id="schedule-case-clear-btn" onclick="CaseSearch.clear('schedule-case');document.getElementById('schedule-case-search').focus()">close</span>
             </div>
-            <div id="schedule-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;display:none"></div>
+            <div id="schedule-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>
+            <input type="hidden" id="schedule-case-id" value="">
+            </div>
+            <div id="schedule-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;align-items:center;gap:6px"></div>
         </div>
         <div class="modal-field">
             <label>调解员 *</label>
@@ -6354,39 +6359,50 @@ async function selectDocTemplate(templateId) {
     }
 }
 
+var _docSearchTimer = null;
 async function searchDocCases(keyword) {
     var listEl = document.getElementById('doc-case-list');
+    if (_docSearchTimer) clearTimeout(_docSearchTimer);
     if (!keyword || keyword.trim().length < 1) {
-        listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">请搜索案件编号或标题</p>';
+        listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">输入关键词搜索案件</p>';
         return;
     }
-    try {
-        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 10 });
-        var cases = data.data || data;
-        if (!Array.isArray(cases)) cases = cases.data || [];
-        if (cases.length === 0) {
-            listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">未找到匹配案件</p>';
-            return;
-        }
-        var html = '';
-        cases.forEach(function(c) {
-            var statusClass = c.status || 'pending';
+    _docSearchTimer = setTimeout(async function() {
+        try {
+            var data = await api.get('/cases', { search: keyword.trim(), pageSize: 10 });
+            var cases = data.data || data;
+            if (!Array.isArray(cases)) cases = cases.data || [];
+            if (cases.length === 0) {
+                listEl.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:12px;padding:20px">未找到匹配案件</p>';
+                return;
+            }
             var statusLabels = { pending: '待受理', accepted: '已受理', mediating: '调解中', agreed: '已达成协议', terminated: '已终止', closed: '已结案' };
-            html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);border-bottom:1px solid var(--border-subtle)" ' +
-                'onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" ' +
-                'onclick="selectDocCase(' + c.id + ')">' +
-                '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">gavel</span>' +
-                '<div style="flex:1;min-width:0">' +
-                '<div style="font-size:12px;font-weight:500;color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(c.case_number) + '</div>' +
-                '<div style="font-size:11px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(c.title) + '</div>' +
-                '</div>' +
-                '<span class="status-tag ' + statusClass + '" style="font-size:10px;padding:2px 6px">' + (statusLabels[c.status] || c.status) + '</span>' +
-                '</div>';
-        });
-        listEl.innerHTML = html;
-    } catch (err) {
-        listEl.innerHTML = '<p style="text-align:center;color:var(--accent-rose);font-size:12px;padding:20px">搜索失败</p>';
-    }
+            var statusColors = { pending: '#94a3b8', accepted: '#60a5fa', mediating: '#fbbf24', agreed: '#34d399', terminated: '#f472b6', closed: '#a78bfa' };
+            var html = '';
+            cases.forEach(function(c) {
+                var escapedKw = keyword.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                var re = new RegExp('(' + escapedKw + ')', 'gi');
+                var hlNumber = escapeHtml(c.case_number).replace(re, '<mark style="background:rgba(251,191,36,0.3);color:var(--accent-gold);padding:0 1px;border-radius:2px">$1</mark>');
+                var hlTitle = escapeHtml(c.title).replace(re, '<mark style="background:rgba(251,191,36,0.3);color:var(--accent-gold);padding:0 1px;border-radius:2px">$1</mark>');
+                html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:var(--transition);border-bottom:1px solid var(--border-subtle)" ' +
+                    'onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" ' +
+                    'onclick="selectDocCase(' + c.id + ')">' +
+                    '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold)">gavel</span>' +
+                    '<div style="flex:1;min-width:0">' +
+                    '<div style="display:flex;align-items:center;gap:6px">' +
+                    '<span style="font-size:12px;font-weight:600;color:var(--accent-gold)">' + hlNumber + '</span>' +
+                    (c.type_name ? '<span style="font-size:9px;padding:1px 5px;background:var(--bg-tertiary);border-radius:3px;color:var(--text-muted)">' + escapeHtml(c.type_name) + '</span>' : '') +
+                    (statusLabels[c.status] ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;color:' + (statusColors[c.status] || 'var(--text-muted)') + ';background:' + (statusColors[c.status] || 'var(--text-muted)') + '18">' + statusLabels[c.status] + '</span>' : '') +
+                    '</div>' +
+                    '<div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + hlTitle + '</div>' +
+                    '</div>' +
+                    '</div>';
+            });
+            listEl.innerHTML = html;
+        } catch (err) {
+            listEl.innerHTML = '<p style="text-align:center;color:var(--accent-rose);font-size:12px;padding:20px">搜索失败</p>';
+        }
+    }, 250);
 }
 
 async function selectDocCase(caseId) {
@@ -7220,10 +7236,16 @@ function showCreateVideoSessionModal() {
 
     var html = '<div style="padding:4px 0">' +
         '<div class="modal-field"><label>关联案件 *</label>' +
-        '<div style="position:relative"><input type="text" id="vs-case-search" placeholder="搜索案件编号或标题..." oninput="searchVideoCases(this.value)" autocomplete="off">' +
-        '<div id="vs-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
-        '<input type="hidden" id="vs-case-id" value=""></div>' +
-        '<div id="vs-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div style="position:relative" class="cs-wrapper">' +
+        '<div style="position:relative;display:flex;align-items:center">' +
+        '<span class="material-icons-round" style="position:absolute;left:8px;font-size:16px;color:var(--text-muted);pointer-events:none">search</span>' +
+        '<input type="text" id="vs-case-search" placeholder="输入案件编号、标题或当事人搜索..." autocomplete="off" oninput="CaseSearch.search(\'vs-case\',this.value)" onfocus="CaseSearch.search(\'vs-case\',this.value)" onkeydown="CaseSearch.onKeydown(\'vs-case\',event)" style="padding-left:30px;padding-right:28px;width:100%">' +
+        '<span class="material-icons-round" style="position:absolute;right:6px;font-size:16px;color:var(--text-muted);cursor:pointer;display:none" id="vs-case-clear-btn" onclick="CaseSearch.clear(\'vs-case\');document.getElementById(\'vs-case-search\').focus()">close</span>' +
+        '</div>' +
+        '<div id="vs-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>' +
+        '<input type="hidden" id="vs-case-id" value="">' +
+        '</div>' +
+        '<div id="vs-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;align-items:center;gap:6px"></div></div>' +
         '<div class="modal-field"><label>会话标题 *</label><input type="text" id="vs-title" placeholder="如：张某某与李某视频调解"></div>' +
         '<div class="modal-field"><label>调解员</label><select id="vs-mediator"><option value="">请选择调解员</option></select></div>' +
         '<div class="modal-field"><label>安排时间</label><input type="datetime-local" id="vs-scheduled-at"></div>' +
@@ -7250,31 +7272,12 @@ async function loadVideoMediatorOptions() {
 }
 
 async function searchVideoCases(keyword) {
-    var dropdown = document.getElementById('vs-case-dropdown');
-    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
-    try {
-        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 8 });
-        var cases = data.data || data;
-        if (!Array.isArray(cases)) cases = cases.data || [];
-        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
-        var html = '';
-        cases.forEach(function(c) {
-            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectVideoCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
-                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
-        });
-        dropdown.innerHTML = html;
-        dropdown.style.display = 'block';
-    } catch (err) { }
+    CaseSearch.search('vs-case', keyword);
 }
 
 function selectVideoCase(id, caseNumber, title) {
-    document.getElementById('vs-case-id').value = id;
-    document.getElementById('vs-case-search').value = caseNumber;
-    document.getElementById('vs-case-dropdown').style.display = 'none';
+    CaseSearch.select('vs-case', id, caseNumber, title);
     document.getElementById('vs-title').value = title + ' - 视频调解';
-    var selEl = document.getElementById('vs-case-selected');
-    selEl.style.display = 'block';
-    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
 }
 
 async function submitVideoSession() {
@@ -7882,10 +7885,16 @@ function showPushToPartyModal() {
 
     var html = '<div style="padding:4px 0">' +
         '<div class="modal-field"><label>关联案件 *</label>' +
-        '<div style="position:relative"><input type="text" id="push-case-search" placeholder="搜索案件编号或标题..." oninput="searchPushCases(this.value)" autocomplete="off">' +
-        '<div id="push-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
-        '<input type="hidden" id="push-case-id" value=""></div>' +
-        '<div id="push-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div style="position:relative" class="cs-wrapper">' +
+        '<div style="position:relative;display:flex;align-items:center">' +
+        '<span class="material-icons-round" style="position:absolute;left:8px;font-size:16px;color:var(--text-muted);pointer-events:none">search</span>' +
+        '<input type="text" id="push-case-search" placeholder="输入案件编号、标题或当事人搜索..." autocomplete="off" oninput="CaseSearch.search(\'push-case\',this.value)" onfocus="CaseSearch.search(\'push-case\',this.value)" onkeydown="CaseSearch.onKeydown(\'push-case\',event)" style="padding-left:30px;padding-right:28px;width:100%">' +
+        '<span class="material-icons-round" style="position:absolute;right:6px;font-size:16px;color:var(--text-muted);cursor:pointer;display:none" id="push-case-clear-btn" onclick="CaseSearch.clear(\'push-case\');document.getElementById(\'push-case-search\').focus()">close</span>' +
+        '</div>' +
+        '<div id="push-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>' +
+        '<input type="hidden" id="push-case-id" value="">' +
+        '</div>' +
+        '<div id="push-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;align-items:center;gap:6px"></div></div>' +
 
         '<div class="modal-field"><label>推送当事人 *</label>' +
         '<div id="push-party-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:8px;background:var(--bg-tertiary);border-radius:var(--radius-sm);min-height:40px">' +
@@ -7920,30 +7929,11 @@ function showPushToPartyModal() {
 }
 
 async function searchPushCases(keyword) {
-    var dropdown = document.getElementById('push-case-dropdown');
-    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
-    try {
-        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 8 });
-        var cases = data.data || data;
-        if (!Array.isArray(cases)) cases = cases.data || [];
-        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
-        var html = '';
-        cases.forEach(function(c) {
-            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectPushCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
-                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
-        });
-        dropdown.innerHTML = html;
-        dropdown.style.display = 'block';
-    } catch (err) { }
+    CaseSearch.search('push-case', keyword);
 }
 
 async function selectPushCase(id, caseNumber, title) {
-    document.getElementById('push-case-id').value = id;
-    document.getElementById('push-case-search').value = caseNumber;
-    document.getElementById('push-case-dropdown').style.display = 'none';
-    var selEl = document.getElementById('push-case-selected');
-    selEl.style.display = 'block';
-    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+    CaseSearch.select('push-case', id, caseNumber, title);
 
     try {
         var caseDetail = await api.get('/cases/' + id);
@@ -8449,10 +8439,16 @@ function showNewCallModal() {
         '<option value="mediation">调解</option><option value="followup">回访</option>' +
         '<option value="other">其他</option></select></div></div>' +
         '<div class="modal-field"><label>关联案件</label>' +
-        '<div style="position:relative"><input type="text" id="call-case-search" placeholder="搜索案件编号或标题..." oninput="searchCallCases(this.value)" autocomplete="off">' +
-        '<div id="call-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
-        '<input type="hidden" id="call-case-id" value=""></div>' +
-        '<div id="call-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div style="position:relative" class="cs-wrapper">' +
+        '<div style="position:relative;display:flex;align-items:center">' +
+        '<span class="material-icons-round" style="position:absolute;left:8px;font-size:16px;color:var(--text-muted);pointer-events:none">search</span>' +
+        '<input type="text" id="call-case-search" placeholder="输入案件编号、标题或当事人搜索..." autocomplete="off" oninput="CaseSearch.search(\'call-case\',this.value)" onfocus="CaseSearch.search(\'call-case\',this.value)" onkeydown="CaseSearch.onKeydown(\'call-case\',event)" style="padding-left:30px;padding-right:28px;width:100%">' +
+        '<span class="material-icons-round" style="position:absolute;right:6px;font-size:16px;color:var(--text-muted);cursor:pointer;display:none" id="call-case-clear-btn" onclick="CaseSearch.clear(\'call-case\');document.getElementById(\'call-case-search\').focus()">close</span>' +
+        '</div>' +
+        '<div id="call-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>' +
+        '<input type="hidden" id="call-case-id" value="">' +
+        '</div>' +
+        '<div id="call-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;align-items:center;gap:6px"></div></div>' +
         '<div class="modal-field"><label>备注</label><textarea id="new-call-note" rows="3" placeholder="通话备注..."></textarea></div>' +
         '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitNewCall()"><span class="material-icons-round" style="font-size:16px">call</span> 登记来电</button>' +
         '</div>';
@@ -8463,30 +8459,11 @@ function showNewCallModal() {
 }
 
 async function searchCallCases(keyword) {
-    var dropdown = document.getElementById('call-case-dropdown');
-    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
-    try {
-        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 6 });
-        var cases = data.data || data;
-        if (!Array.isArray(cases)) cases = cases.data || [];
-        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
-        var html = '';
-        cases.forEach(function(c) {
-            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectCallCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
-                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
-        });
-        dropdown.innerHTML = html;
-        dropdown.style.display = 'block';
-    } catch (err) { }
+    CaseSearch.search('call-case', keyword);
 }
 
 function selectCallCase(id, caseNumber, title) {
-    document.getElementById('call-case-id').value = id;
-    document.getElementById('call-case-search').value = caseNumber;
-    document.getElementById('call-case-dropdown').style.display = 'none';
-    var selEl = document.getElementById('call-case-selected');
-    selEl.style.display = 'block';
-    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+    CaseSearch.select('call-case', id, caseNumber, title);
 }
 
 async function submitNewCall() {
@@ -8530,10 +8507,16 @@ function showOutboundModal() {
         '<option value="mediation">调解</option><option value="followup">回访</option>' +
         '<option value="other">其他</option></select></div>' +
         '<div class="modal-field"><label>关联案件</label>' +
-        '<div style="position:relative"><input type="text" id="outbound-case-search" placeholder="搜索案件编号或标题..." oninput="searchOutboundCases(this.value)" autocomplete="off">' +
-        '<div id="outbound-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
-        '<input type="hidden" id="outbound-case-id" value=""></div>' +
-        '<div id="outbound-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div style="position:relative" class="cs-wrapper">' +
+        '<div style="position:relative;display:flex;align-items:center">' +
+        '<span class="material-icons-round" style="position:absolute;left:8px;font-size:16px;color:var(--text-muted);pointer-events:none">search</span>' +
+        '<input type="text" id="outbound-case-search" placeholder="输入案件编号、标题或当事人搜索..." autocomplete="off" oninput="CaseSearch.search(\'outbound-case\',this.value)" onfocus="CaseSearch.search(\'outbound-case\',this.value)" onkeydown="CaseSearch.onKeydown(\'outbound-case\',event)" style="padding-left:30px;padding-right:28px;width:100%">' +
+        '<span class="material-icons-round" style="position:absolute;right:6px;font-size:16px;color:var(--text-muted);cursor:pointer;display:none" id="outbound-case-clear-btn" onclick="CaseSearch.clear(\'outbound-case\');document.getElementById(\'outbound-case-search\').focus()">close</span>' +
+        '</div>' +
+        '<div id="outbound-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>' +
+        '<input type="hidden" id="outbound-case-id" value="">' +
+        '</div>' +
+        '<div id="outbound-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;align-items:center;gap:6px"></div></div>' +
         '<div class="modal-field"><label>呼叫备注</label><textarea id="outbound-note" rows="2" placeholder="外呼目的..."></textarea></div>' +
         '<button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitOutbound()"><span class="material-icons-round" style="font-size:16px">call_made</span> 发起外呼</button>' +
         '</div>';
@@ -8544,30 +8527,11 @@ function showOutboundModal() {
 }
 
 async function searchOutboundCases(keyword) {
-    var dropdown = document.getElementById('outbound-case-dropdown');
-    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
-    try {
-        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 6 });
-        var cases = data.data || data;
-        if (!Array.isArray(cases)) cases = cases.data || [];
-        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
-        var html = '';
-        cases.forEach(function(c) {
-            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectOutboundCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
-                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
-        });
-        dropdown.innerHTML = html;
-        dropdown.style.display = 'block';
-    } catch (err) { }
+    CaseSearch.search('outbound-case', keyword);
 }
 
 function selectOutboundCase(id, caseNumber, title) {
-    document.getElementById('outbound-case-id').value = id;
-    document.getElementById('outbound-case-search').value = caseNumber;
-    document.getElementById('outbound-case-dropdown').style.display = 'none';
-    var selEl = document.getElementById('outbound-case-selected');
-    selEl.style.display = 'block';
-    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+    CaseSearch.select('outbound-case', id, caseNumber, title);
 }
 
 async function submitOutbound() {
@@ -9802,44 +9766,15 @@ async function loadScheduleForEdit(id) {
 }
 
 async function searchScheduleCases(keyword) {
-    var dropdown = document.getElementById('schedule-case-dropdown');
-    if (!keyword || keyword.trim().length < 1) {
-        dropdown.style.display = 'none';
-        return;
-    }
-    try {
-        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 8 });
-        var cases = data.data || data;
-        if (!Array.isArray(cases)) cases = cases.data || [];
-        if (cases.length === 0) {
-            dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>';
-            dropdown.style.display = 'block';
-            return;
-        }
-        var html = '';
-        cases.forEach(function(c) {
-            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectScheduleCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
-                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
-        });
-        dropdown.innerHTML = html;
-        dropdown.style.display = 'block';
-    } catch (err) { }
+    CaseSearch.search('schedule-case', keyword);
 }
 
 function selectScheduleCase(id, caseNumber, title) {
-    document.getElementById('schedule-case-id').value = id;
-    document.getElementById('schedule-case-search').value = caseNumber;
-    document.getElementById('schedule-case-dropdown').style.display = 'none';
-    var selEl = document.getElementById('schedule-case-selected');
-    selEl.style.display = 'block';
-    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title) +
-        ' <span class="material-icons-round" style="font-size:12px;cursor:pointer;vertical-align:middle" onclick="clearScheduleCase()">close</span>';
+    CaseSearch.select('schedule-case', id, caseNumber, title);
 }
 
 function clearScheduleCase() {
-    document.getElementById('schedule-case-id').value = '';
-    document.getElementById('schedule-case-search').value = '';
-    document.getElementById('schedule-case-selected').style.display = 'none';
+    CaseSearch.clear('schedule-case');
 }
 
 async function checkScheduleConflict() {
@@ -10276,10 +10211,16 @@ function showFeedbackModal() {
 
     var html = '<div style="padding:4px 0">' +
         '<div class="modal-field"><label>关联案件 *</label>' +
-        '<div style="position:relative"><input type="text" id="fb-case-search" placeholder="搜索案件编号或标题..." oninput="searchFbCases(this.value)" autocomplete="off">' +
-        '<div id="fb-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:10;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:150px;overflow-y:auto;margin-top:2px"></div>' +
-        '<input type="hidden" id="fb-case-id" value=""></div>' +
-        '<div id="fb-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px"></div></div>' +
+        '<div style="position:relative" class="cs-wrapper">' +
+        '<div style="position:relative;display:flex;align-items:center">' +
+        '<span class="material-icons-round" style="position:absolute;left:8px;font-size:16px;color:var(--text-muted);pointer-events:none">search</span>' +
+        '<input type="text" id="fb-case-search" placeholder="输入案件编号、标题或当事人搜索..." autocomplete="off" oninput="CaseSearch.search(\'fb-case\',this.value)" onfocus="CaseSearch.search(\'fb-case\',this.value)" onkeydown="CaseSearch.onKeydown(\'fb-case\',event)" style="padding-left:30px;padding-right:28px;width:100%">' +
+        '<span class="material-icons-round" style="position:absolute;right:6px;font-size:16px;color:var(--text-muted);cursor:pointer;display:none" id="fb-case-clear-btn" onclick="CaseSearch.clear(\'fb-case\');document.getElementById(\'fb-case-search\').focus()">close</span>' +
+        '</div>' +
+        '<div id="fb-case-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>' +
+        '<input type="hidden" id="fb-case-id" value="">' +
+        '</div>' +
+        '<div id="fb-case-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;align-items:center;gap:6px"></div></div>' +
         '<div class="modal-field"><label>评价当事人 *</label><div id="fb-party-select" style="color:var(--text-muted);font-size:12px">请先选择案件</div></div>' +
         '<div class="modal-field"><label>综合评分 *</label>' +
         '<div id="fb-rating-stars" style="display:flex;gap:4px">' +
@@ -10310,30 +10251,11 @@ function showFeedbackModal() {
 }
 
 async function searchFbCases(keyword) {
-    var dropdown = document.getElementById('fb-case-dropdown');
-    if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
-    try {
-        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 6 });
-        var cases = data.data || data;
-        if (!Array.isArray(cases)) cases = cases.data || [];
-        if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
-        var html = '';
-        cases.forEach(function(c) {
-            html += '<div style="padding:6px 10px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border-subtle)" onmouseover="this.style.background=\'var(--accent-gold-dim)\'" onmouseout="this.style.background=\'transparent\'" onclick="selectFbCase(' + c.id + ',\'' + escapeHtml(c.case_number) + '\',\'' + escapeHtml(c.title).replace(/'/g, "\\'") + '\')">' +
-                '<span style="color:var(--accent-gold)">' + escapeHtml(c.case_number) + '</span> ' + escapeHtml(c.title) + '</div>';
-        });
-        dropdown.innerHTML = html;
-        dropdown.style.display = 'block';
-    } catch (err) { }
+    CaseSearch.search('fb-case', keyword);
 }
 
 async function selectFbCase(id, caseNumber, title) {
-    document.getElementById('fb-case-id').value = id;
-    document.getElementById('fb-case-search').value = caseNumber;
-    document.getElementById('fb-case-dropdown').style.display = 'none';
-    var selEl = document.getElementById('fb-case-selected');
-    selEl.style.display = 'block';
-    selEl.innerHTML = '<span style="color:var(--accent-teal)">' + escapeHtml(caseNumber) + '</span> ' + escapeHtml(title);
+    CaseSearch.select('fb-case', id, caseNumber, title);
 
     try {
         var parties = await api.get('/cases/' + id + '/parties');
@@ -11293,6 +11215,228 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+var CaseSearch = (function() {
+    var _cache = {};
+    var _debounceTimers = {};
+    var _activeDropdown = null;
+    var _highlightIndex = -1;
+    var _currentResults = [];
+
+    var STATUS_LABELS = { pending: '待受理', accepted: '已受理', mediating: '调解中', agreed: '已达成协议', terminated: '已终止', closed: '已结案' };
+    var STATUS_COLORS = { pending: '#94a3b8', accepted: '#60a5fa', mediating: '#fbbf24', agreed: '#34d399', terminated: '#f472b6', closed: '#a78bfa' };
+
+    function _highlightMatch(text, keyword) {
+        if (!keyword) return escapeHtml(text);
+        var escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        var re = new RegExp('(' + escaped + ')', 'gi');
+        return escapeHtml(text).replace(re, '<mark style="background:rgba(251,191,36,0.3);color:var(--accent-gold);padding:0 1px;border-radius:2px">$1</mark>');
+    }
+
+    function _renderItem(c, keyword, prefix) {
+        var statusLabel = STATUS_LABELS[c.status] || c.status || '';
+        var statusColor = STATUS_COLORS[c.status] || 'var(--text-muted)';
+        var typeName = c.type_name || '';
+        return '<div class="cs-item" data-id="' + c.id + '" data-number="' + escapeHtml(c.case_number) + '" data-title="' + escapeHtml(c.title || '') + '" style="display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--border-subtle);transition:background 0.15s" onmouseenter="this.style.background=\'var(--accent-gold-dim)\';this.classList.add(\'cs-active\')" onmouseleave="this.style.background=\'transparent\';this.classList.remove(\'cs-active\')">' +
+            '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold);flex-shrink:0">gavel</span>' +
+            '<div style="flex:1;min-width:0;overflow:hidden">' +
+            '<div style="display:flex;align-items:center;gap:6px">' +
+            '<span style="font-size:12px;font-weight:600;color:var(--accent-gold);white-space:nowrap">' + _highlightMatch(c.case_number, keyword) + '</span>' +
+            (typeName ? '<span style="font-size:9px;padding:1px 5px;background:var(--bg-tertiary);border-radius:3px;color:var(--text-muted);white-space:nowrap">' + escapeHtml(typeName) + '</span>' : '') +
+            (statusLabel ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;color:' + statusColor + ';background:' + statusColor + '18;white-space:nowrap">' + statusLabel + '</span>' : '') +
+            '</div>' +
+            '<div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">' + _highlightMatch(c.title || '', keyword) + '</div>' +
+            '</div>' +
+            '</div>';
+    }
+
+    function _renderDropdown(prefix, html, show) {
+        var dd = document.getElementById(prefix + '-dropdown');
+        if (!dd) return;
+        dd.innerHTML = html;
+        dd.style.display = show ? 'block' : 'none';
+        if (show) {
+            _activeDropdown = dd;
+            _highlightIndex = -1;
+            _currentResults = dd.querySelectorAll('.cs-item');
+        }
+    }
+
+    function _renderSelected(prefix, id, caseNumber, title, extra) {
+        var selEl = document.getElementById(prefix + '-selected');
+        if (!selEl) return;
+        if (!id) { selEl.style.display = 'none'; return; }
+        selEl.style.display = 'flex';
+        var statusLabel = '';
+        var html = '<span class="material-icons-round" style="font-size:14px;color:var(--accent-teal)">check_circle</span>' +
+            '<span style="color:var(--accent-teal);font-weight:600;font-size:12px">' + escapeHtml(caseNumber) + '</span>' +
+            '<span style="color:var(--text-secondary);font-size:12px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(title) + '</span>';
+        if (extra) html += extra;
+        html += '<span class="material-icons-round" style="font-size:14px;color:var(--text-muted);cursor:pointer;flex-shrink:0" onclick="CaseSearch.clear(\'' + prefix + '\')">close</span>';
+        selEl.innerHTML = html;
+    }
+
+    function _hideDropdown(prefix) {
+        var dd = document.getElementById(prefix + '-dropdown');
+        if (dd) dd.style.display = 'none';
+        if (_activeDropdown === dd) { _activeDropdown = null; _highlightIndex = -1; }
+    }
+
+    function search(prefix, keyword, opts) {
+        opts = opts || {};
+        var timerKey = prefix;
+        if (_debounceTimers[timerKey]) clearTimeout(_debounceTimers[timerKey]);
+
+        if (!keyword || keyword.trim().length < 1) {
+            _renderDropdown(prefix, _buildEmptyState('输入案件编号、标题或当事人姓名搜索', 'search'), true);
+            return;
+        }
+
+        _debounceTimers[timerKey] = setTimeout(async function() {
+            try {
+                var params = { search: keyword.trim(), pageSize: opts.pageSize || 10 };
+                if (opts.typeId) params.type_id = opts.typeId;
+                if (opts.status) params.status = opts.status;
+                var data = await api.get('/cases', params);
+                var cases = data.data || data;
+                if (!Array.isArray(cases)) cases = cases.data || [];
+                _cache[prefix] = cases;
+
+                if (cases.length === 0) {
+                    _renderDropdown(prefix, _buildEmptyState('未找到匹配的案件', 'search_off'), true);
+                    return;
+                }
+
+                var html = '';
+                cases.forEach(function(c) {
+                    html += '<div class="cs-item" data-id="' + c.id + '" data-number="' + escapeHtml(c.case_number) + '" data-title="' + escapeHtml(c.title || '') + '" style="display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--border-subtle);transition:background 0.15s" onmouseenter="this.style.background=\'var(--accent-gold-dim)\';this.classList.add(\'cs-active\')" onmouseleave="this.style.background=\'transparent\';this.classList.remove(\'cs-active\')" onclick="CaseSearch.select(\'' + prefix + '\',' + c.id + ',\'' + escapeHtml(c.case_number).replace(/'/g, "\\'") + '\',\'' + escapeHtml(c.title || '').replace(/'/g, "\\'") + '\')">' +
+                        '<span class="material-icons-round" style="font-size:16px;color:var(--accent-gold);flex-shrink:0">gavel</span>' +
+                        '<div style="flex:1;min-width:0;overflow:hidden">' +
+                        '<div style="display:flex;align-items:center;gap:6px">' +
+                        '<span style="font-size:12px;font-weight:600;color:var(--accent-gold);white-space:nowrap">' + _highlightMatch(c.case_number, keyword) + '</span>' +
+                        (c.type_name ? '<span style="font-size:9px;padding:1px 5px;background:var(--bg-tertiary);border-radius:3px;color:var(--text-muted);white-space:nowrap">' + escapeHtml(c.type_name) + '</span>' : '') +
+                        (STATUS_LABELS[c.status] ? '<span style="font-size:9px;padding:1px 5px;border-radius:3px;color:' + (STATUS_COLORS[c.status] || 'var(--text-muted)') + ';background:' + (STATUS_COLORS[c.status] || 'var(--text-muted)') + '18;white-space:nowrap">' + STATUS_LABELS[c.status] + '</span>' : '') +
+                        '</div>' +
+                        '<div style="font-size:11px;color:var(--text-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px">' + _highlightMatch(c.title || '', keyword) + '</div>' +
+                        '</div>' +
+                        '</div>';
+                });
+                _renderDropdown(prefix, html, true);
+            } catch (err) {
+                _renderDropdown(prefix, _buildEmptyState('搜索失败，请重试', 'error_outline'), true);
+            }
+        }, 250);
+    }
+
+    function _buildEmptyState(text, icon) {
+        return '<div style="padding:16px;text-align:center;color:var(--text-muted);font-size:12px;display:flex;flex-direction:column;align-items:center;gap:6px"><span class="material-icons-round" style="font-size:24px;opacity:0.5">' + icon + '</span>' + text + '</div>';
+    }
+
+    function select(prefix, id, caseNumber, title) {
+        var hiddenInput = document.getElementById(prefix + '-id');
+        var searchInput = document.getElementById(prefix + '-search');
+        if (hiddenInput) hiddenInput.value = id;
+        if (searchInput) searchInput.value = caseNumber;
+        _hideDropdown(prefix);
+        _renderSelected(prefix, id, caseNumber, title);
+        if (window._caseSearchCallbacks && window._caseSearchCallbacks[prefix]) {
+            window._caseSearchCallbacks[prefix](id, caseNumber, title);
+        }
+    }
+
+    function clear(prefix) {
+        var hiddenInput = document.getElementById(prefix + '-id');
+        var searchInput = document.getElementById(prefix + '-search');
+        if (hiddenInput) hiddenInput.value = '';
+        if (searchInput) searchInput.value = '';
+        var selEl = document.getElementById(prefix + '-selected');
+        if (selEl) selEl.style.display = 'none';
+        if (window._caseSearchClearCallbacks && window._caseSearchClearCallbacks[prefix]) {
+            window._caseSearchClearCallbacks[prefix]();
+        }
+    }
+
+    function onKeydown(prefix, e) {
+        var dd = document.getElementById(prefix + '-dropdown');
+        if (!dd || dd.style.display === 'none') return;
+        var items = dd.querySelectorAll('.cs-item');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            _highlightIndex = Math.min(_highlightIndex + 1, items.length - 1);
+            _updateHighlight(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            _highlightIndex = Math.max(_highlightIndex - 1, 0);
+            _updateHighlight(items);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (_highlightIndex >= 0 && _highlightIndex < items.length) {
+                items[_highlightIndex].click();
+            }
+        } else if (e.key === 'Escape') {
+            _hideDropdown(prefix);
+        }
+    }
+
+    function _updateHighlight(items) {
+        items.forEach(function(item, i) {
+            if (i === _highlightIndex) {
+                item.style.background = 'var(--accent-gold-dim)';
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.style.background = 'transparent';
+            }
+        });
+    }
+
+    function renderInput(prefix, opts) {
+        opts = opts || {};
+        var placeholder = opts.placeholder || '输入案件编号、标题或当事人搜索...';
+        var required = opts.required ? ' *' : '';
+        return '<div class="modal-field"><label>关联案件' + required + '</label>' +
+            '<div style="position:relative" class="cs-wrapper">' +
+            '<div style="position:relative;display:flex;align-items:center">' +
+            '<span class="material-icons-round" style="position:absolute;left:8px;font-size:16px;color:var(--text-muted);pointer-events:none">search</span>' +
+            '<input type="text" id="' + prefix + '-search" placeholder="' + placeholder + '" autocomplete="off" ' +
+            'oninput="CaseSearch.search(\'' + prefix + '\',this.value)" ' +
+            'onfocus="CaseSearch.search(\'' + prefix + '\',this.value)" ' +
+            'onkeydown="CaseSearch.onKeydown(\'' + prefix + '\',event)" ' +
+            'style="padding-left:30px;padding-right:28px;width:100%">' +
+            '<span class="material-icons-round" style="position:absolute;right:6px;font-size:16px;color:var(--text-muted);cursor:pointer;display:none" id="' + prefix + '-clear-btn" onclick="CaseSearch.clear(\'' + prefix + '\');document.getElementById(\'' + prefix + '-search\').focus()">close</span>' +
+            '</div>' +
+            '<div id="' + prefix + '-dropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:100;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:var(--radius-sm);max-height:240px;overflow-y:auto;margin-top:2px;box-shadow:0 8px 24px rgba(0,0,0,0.3)"></div>' +
+            '<input type="hidden" id="' + prefix + '-id" value="">' +
+            '</div>' +
+            '<div id="' + prefix + '-selected" style="display:none;margin-top:6px;padding:6px 10px;background:var(--accent-teal-dim);border:1px solid rgba(45,212,191,0.3);border-radius:var(--radius-sm);font-size:12px;align-items:center;gap:6px"></div>' +
+            '</div>';
+    }
+
+    function init(prefix, onSelect, onClear) {
+        if (!window._caseSearchCallbacks) window._caseSearchCallbacks = {};
+        if (!window._caseSearchClearCallbacks) window._caseSearchClearCallbacks = {};
+        window._caseSearchCallbacks[prefix] = onSelect || null;
+        window._caseSearchClearCallbacks[prefix] = onClear || null;
+
+        var searchInput = document.getElementById(prefix + '-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                var clearBtn = document.getElementById(prefix + '-clear-btn');
+                if (clearBtn) clearBtn.style.display = this.value ? 'block' : 'none';
+            });
+        }
+
+        document.addEventListener('click', function(e) {
+            var wrapper = document.getElementById(prefix + '-search');
+            if (wrapper && !wrapper.closest('.cs-wrapper') && !e.target.closest('.cs-wrapper')) {
+                _hideDropdown(prefix);
+            }
+        });
+    }
+
+    return { search: search, select: select, clear: clear, onKeydown: onKeydown, renderInput: renderInput, init: init };
+})();
 
 // ==================== CHART TABS ====================
 document.querySelectorAll('.chart-tabs').forEach(function(tabGroup) {
