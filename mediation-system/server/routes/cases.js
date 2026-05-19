@@ -596,6 +596,16 @@ router.delete('/:id', roleMiddleware('super_admin', 'org_admin'), (req, res) => 
   res.json(formatResponse(null, '案件删除成功'));
 });
 
+router.get('/:id/parties', (req, res) => {
+  const db = getDb();
+  const existing = db.prepare('SELECT id FROM cases WHERE id = ?').get(req.params.id);
+  if (!existing) {
+    return res.status(404).json(formatError('案件不存在'));
+  }
+  const parties = db.prepare('SELECT * FROM case_parties WHERE case_id = ?').all(req.params.id);
+  res.json(formatResponse(parties));
+});
+
 router.post('/:id/parties', (req, res) => {
   const { party_type, name, id_number, phone, email, address, description } = req.body;
   if (!party_type || !name) {

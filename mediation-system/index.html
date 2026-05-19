@@ -5574,10 +5574,8 @@ async function showArchiveModal(archiveId) {
         var categories = archiveCategoryCache || await api.get('/archives/categories');
         archiveCategoryCache = categories;
 
-        if (!archiveCaseCache) {
-            var casesRes = await api.get('/cases', { pageSize: 100 });
-            archiveCaseCache = (casesRes.data || []);
-        }
+        var casesRes = await api.get('/cases', { pageSize: 200 });
+        archiveCaseCache = (casesRes.data || []);
 
         var catSelect = document.getElementById('archive-category');
         catSelect.innerHTML = '<option value="">请选择分类</option>';
@@ -6363,7 +6361,7 @@ async function searchDocCases(keyword) {
         return;
     }
     try {
-        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=10');
+        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 10 });
         var cases = data.data || data;
         if (!Array.isArray(cases)) cases = cases.data || [];
         if (cases.length === 0) {
@@ -6543,7 +6541,7 @@ async function showDocRecordsModal() {
     if (!modal) return;
 
     try {
-        var data = await api.get('/documents/records?pageSize=50');
+        var data = await api.get('/documents/records', { pageSize: 50 });
         var records = data.data || data;
         if (!Array.isArray(records)) records = records.data || [];
 
@@ -6880,7 +6878,7 @@ async function loadVideoSessions() {
 
 async function loadVideoStats() {
     try {
-        var allSessions = await api.get('/video/sessions?pageSize=100');
+        var allSessions = await api.get('/video/sessions', { pageSize: 100 });
         var data = allSessions.data || allSessions;
         if (!Array.isArray(data)) data = data.data || [];
 
@@ -7255,7 +7253,7 @@ async function searchVideoCases(keyword) {
     var dropdown = document.getElementById('vs-case-dropdown');
     if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
     try {
-        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=8');
+        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 8 });
         var cases = data.data || data;
         if (!Array.isArray(cases)) cases = cases.data || [];
         if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
@@ -7925,7 +7923,7 @@ async function searchPushCases(keyword) {
     var dropdown = document.getElementById('push-case-dropdown');
     if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
     try {
-        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=8');
+        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 8 });
         var cases = data.data || data;
         if (!Array.isArray(cases)) cases = cases.data || [];
         if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
@@ -7967,7 +7965,7 @@ async function selectPushCase(id, caseNumber, title) {
         });
         partyList.innerHTML = phtml;
 
-        var docs = await api.get('/documents/records?case_id=' + id + '&pageSize=20');
+        var docs = await api.get('/documents/records', { case_id: id, pageSize: 20 });
         var docData = docs.data || docs;
         if (!Array.isArray(docData)) docData = docData.data || [];
         var docSelect = document.getElementById('push-document-id');
@@ -8468,7 +8466,7 @@ async function searchCallCases(keyword) {
     var dropdown = document.getElementById('call-case-dropdown');
     if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
     try {
-        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=6');
+        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 6 });
         var cases = data.data || data;
         if (!Array.isArray(cases)) cases = cases.data || [];
         if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
@@ -8549,7 +8547,7 @@ async function searchOutboundCases(keyword) {
     var dropdown = document.getElementById('outbound-case-dropdown');
     if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
     try {
-        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=6');
+        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 6 });
         var cases = data.data || data;
         if (!Array.isArray(cases)) cases = cases.data || [];
         if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
@@ -9566,7 +9564,7 @@ async function loadTodaySchedules() {
 
 async function loadUpcomingSchedules() {
     try {
-        var schedules = await api.get('/schedules/upcoming?days=7');
+        var schedules = await api.get('/schedules/upcoming', { days: 7 });
         var data = Array.isArray(schedules) ? schedules : (schedules.data || []);
         var container = document.getElementById('upcoming-schedule-list');
         if (!container) return;
@@ -9810,7 +9808,7 @@ async function searchScheduleCases(keyword) {
         return;
     }
     try {
-        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=8');
+        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 8 });
         var cases = data.data || data;
         if (!Array.isArray(cases)) cases = cases.data || [];
         if (cases.length === 0) {
@@ -9857,9 +9855,12 @@ async function checkScheduleConflict() {
     }
 
     try {
-        var params = 'mediator_id=' + mediatorId + '&start_time=' + encodeURIComponent(new Date(startTime).toISOString()) + '&end_time=' + encodeURIComponent(new Date(endTime).toISOString());
-        if (editId) params += '&exclude_id=' + editId;
-        var result = await api.get('/schedules/conflicts?' + params);
+        var result = await api.get('/schedules/conflicts', {
+            mediator_id: mediatorId,
+            start_time: new Date(startTime).toISOString(),
+            end_time: new Date(endTime).toISOString(),
+            exclude_id: editId || undefined
+        });
         if (result.has_conflict) {
             warningEl.style.display = 'block';
             warningEl.innerHTML = '<span class="material-icons-round" style="font-size:14px;vertical-align:middle">warning</span> 该调解员在此时段已有安排，存在时间冲突';
@@ -10312,7 +10313,7 @@ async function searchFbCases(keyword) {
     var dropdown = document.getElementById('fb-case-dropdown');
     if (!keyword || keyword.trim().length < 1) { dropdown.style.display = 'none'; return; }
     try {
-        var data = await api.get('/cases?search=' + encodeURIComponent(keyword.trim()) + '&pageSize=6');
+        var data = await api.get('/cases', { search: keyword.trim(), pageSize: 6 });
         var cases = data.data || data;
         if (!Array.isArray(cases)) cases = cases.data || [];
         if (cases.length === 0) { dropdown.innerHTML = '<div style="padding:8px;color:var(--text-muted);font-size:12px">未找到案件</div>'; dropdown.style.display = 'block'; return; }
