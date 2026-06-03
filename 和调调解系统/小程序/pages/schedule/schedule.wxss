@@ -1,0 +1,101 @@
+.page { display: flex; flex-direction: column; height: 100vh; background: var(--bg-page); }
+
+/* ---- 日期头部 ---- */
+.date-header {
+  display: flex; align-items: center; justify-content: center;
+  gap: 24rpx;
+  padding: 20rpx 32rpx;
+  background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border);
+}
+.date-nav {
+  width: 56rpx; height: 56rpx; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36rpx; color: var(--text-secondary);
+  background: var(--bg-page);
+}
+.date-range { font-size: 28rpx; font-weight: 600; color: var(--text-primary); min-width: 360rpx; text-align: center; }
+.today-btn {
+  padding: 8rpx 22rpx; border-radius: 30rpx;
+  font-size: 23rpx; color: var(--gold);
+  background: var(--gold-dim); font-weight: 500;
+}
+
+/* ---- 滚动区 ---- */
+.schedule-scroll { flex: 1; }
+
+/* ---- 日程分组 ---- */
+.day-group { padding: 0 32rpx; margin-top: 28rpx; }
+.day-label {
+  font-size: 26rpx; font-weight: 700; color: var(--text-secondary);
+  margin-bottom: 16rpx; display: block;
+}
+
+/* ---- 日程卡片 ---- */
+.sched-card {
+  display: flex; align-items: center; gap: 18rpx;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  padding: 24rpx;
+  margin-bottom: 14rpx;
+  border-left: 6rpx solid transparent;
+}
+.sched-pending { border-left-color: var(--gold); }
+.sched-ongoing { border-left-color: var(--teal); }
+.sched-completed { opacity: 0.55; }
+
+.sched-time {
+  font-size: 25rpx; color: var(--gold); font-weight: 600;
+  white-space: nowrap; width: 120rpx;
+  flex-shrink: 0;
+}
+.sched-body { flex: 1; min-width: 0; }
+.sched-title { font-size: 28rpx; font-weight: 600; color: var(--text-primary); display: block; }
+.sched-meta { font-size: 23rpx; color: var(--text-muted); margin-top: 4rpx; display: flex; gap: 12rpx; }
+.sched-status {
+  font-size: 21rpx; padding: 4rpx 12rpx; border-radius: 12rpx;
+  white-space: nowrap; flex-shrink: 0;
+}
+.status-pending { background: var(--gold-dim); color: var(--gold); }
+.status-ongoing { background: var(--teal-dim); color: var(--teal); }
+.status-completed { background: #f3f4f6; color: var(--text-muted); }
+
+/* ---- 悬浮按钮 ---- */
+.fab {
+  position: fixed; right: 40rpx; bottom: 100rpx;
+  width: 104rpx; height: 104rpx; border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(201,168,76,0.35);
+  z-index: 100;
+}
+.fab text { font-size: 48rpx; color: #fff; line-height: 1; margin-top: -4rpx; }
+
+/* ---- 弹窗 ---- */
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200;
+}
+.modal-panel {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: var(--bg-card);
+  border-radius: 32rpx 32rpx 0 0;
+  padding: 40rpx 32rpx calc(40rpx + env(safe-area-inset-bottom));
+  z-index: 201;
+  transform: translateY(100%); transition: transform 0.3s ease;
+}
+.modal-panel.show { transform: translateY(0); }
+.modal-title { font-size: 34rpx; font-weight: 700; display: block; margin-bottom: 32rpx; text-align: center; }
+
+.form-group { margin-bottom: 20rpx; }
+.form-label { font-size: 25rpx; color: var(--text-secondary); display: block; margin-bottom: 8rpx; }
+.form-input {
+  height: 80rpx; background: var(--bg-page); border-radius: var(--radius-sm);
+  padding: 0 24rpx; font-size: 28rpx; color: var(--text-primary);
+}
+.form-row { display: flex; gap: 16rpx; }
+.flex-1 { flex: 1; }
+.form-picker {
+  height: 80rpx; background: var(--bg-page); border-radius: var(--radius-sm);
+  padding: 0 24rpx; font-size: 27rpx; color: var(--text-secondary);
+  display: flex; align-items: center;
+}

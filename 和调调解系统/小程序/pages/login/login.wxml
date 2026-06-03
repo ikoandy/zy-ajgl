@@ -1,0 +1,65 @@
+<view class="login-page">
+  <!-- 背景装饰 -->
+  <view class="login-bg">
+    <view class="login-bg-circle c1"></view>
+    <view class="login-bg-circle c2"></view>
+    <view class="login-bg-circle c3"></view>
+  </view>
+
+  <!-- 品牌区域 -->
+  <view class="login-brand">
+    <view class="login-logo">
+      <text class="logo-icon">⚖</text>
+    </view>
+    <text class="login-title">和调</text>
+    <text class="login-subtitle">调解机构管理平台</text>
+  </view>
+
+  <!-- 登录表单 -->
+  <view class="login-form">
+    <view class="form-group">
+      <view class="form-icon">
+        <text class="iconfont">👤</text>
+      </view>
+      <input
+        class="form-input"
+        type="text"
+        placeholder="请输入账号"
+        value="{{username}}"
+        bindinput="onUsernameInput"
+        placeholder-class="placeholder"
+      />
+    </view>
+
+    <view class="form-group">
+      <view class="form-icon">
+        <text class="iconfont">🔒</text>
+      </view>
+      <input
+        class="form-input"
+        type="{{showPassword ? 'text' : 'password'}}"
+        placeholder="请输入密码"
+        value="{{password}}"
+        bindinput="onPasswordInput"
+        placeholder-class="placeholder"
+      />
+      <view class="form-eye" bindtap="togglePassword">
+        <text>{{showPassword ? '隐藏' : '显示'}}</text>
+      </view>
+    </view>
+
+    <button class="btn-gold login-btn" bindtap="doLogin" loading="{{loading}}" disabled="{{loading}}">
+      {{loading ? '登录中...' : '登录系统'}}
+    </button>
+
+    <view class="login-hint" wx:if="{{errorMsg}}">
+      <text>{{errorMsg}}</text>
+    </view>
+  </view>
+
+  <!-- 底部信息 -->
+  <view class="login-footer">
+    <text>和调 · 调解机构管理平台</text>
+    <text>移动端 v1.0.0</text>
+  </view>
+</view>

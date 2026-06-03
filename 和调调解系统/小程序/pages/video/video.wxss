@@ -1,0 +1,29 @@
+@import '/pages/schedule/schedule.wxss';
+
+/* ---- 统计栏 ---- */
+.video-stats {
+  display: flex; justify-content: space-around;
+  padding: 32rpx; background: var(--bg-card);
+  border-bottom: 1rpx solid var(--border-light);
+}
+.vs-stat { text-align: center; }
+.vs-num { font-size: 44rpx; font-weight: 700; color: var(--gold); display: block; }
+.vs-label { font-size: 24rpx; color: var(--text-muted); margin-top: 4rpx; }
+
+/* ---- 列表 ---- */
+.v-scroll { flex: 1; }
+.v-list { padding: 0 32rpx; padding-top: 20rpx; }
+.v-card {
+  background: var(--bg-card); border-radius: var(--radius-md);
+  padding: 28rpx; margin-bottom: 20rpx;
+}
+.v-card-header { display: flex; align-items: center; gap: 12rpx; margin-bottom: 16rpx; }
+.v-status-dot { width: 14rpx; height: 14rpx; border-radius: 50%; }
+.status-scheduled { background: var(--gold); box-shadow: 0 0 8rpx rgba(201,168,76,0.4); }
+.status-in_progress { background: var(--teal); box-shadow: 0 0 8rpx rgba(45,212,191,0.4); }
+.status-completed { background: #d1d5db; }
+.v-title { font-size: 30rpx; font-weight: 600; color: var(--text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v-card-body { margin-bottom: 18rpx; }
+.v-card-body text { display: block; font-size: 25rpx; color: var(--text-secondary); margin-bottom: 6rpx; }
+.v-btn { height: 72rpx !important; font-size: 26rpx !important; letter-spacing: 2rpx; }
+.v-btn[disabled] { opacity: 0.45; }

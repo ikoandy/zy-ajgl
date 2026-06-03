@@ -1,0 +1,52 @@
+<view class="page">
+  <!-- 用户信息卡片 -->
+  <view class="profile-header">
+    <view class="profile-bg"></view>
+    <view class="profile-info">
+      <view class="avatar-lg" style="background: {{userInfo.avatar_color || '#c9a84c'}}">{{nameInitial}}</view>
+      <text class="user-name">{{userInfo.real_name || '用户'}}</text>
+      <text class="user-role">{{roleDisplay || ''}}</text>
+    </view>
+  </view>
+
+  <!-- 功能列表 -->
+  <view class="menu-section">
+    <view class="menu-item" bindtap="goSettings">
+      <text class="menu-icon">⚙</text>
+      <text class="menu-text">系统设置</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="changePassword">
+      <text class="menu-icon">🔑</text>
+      <text class="menu-text">修改密码</text>
+      <text class="menu-arrow">›</text>
+    </view>
+    <view class="menu-item" bindtap="showAbout">
+      <text class="menu-icon">ℹ</text>
+      <text class="menu-text">关于系统</text>
+      <text class="menu-arrow">›</text>
+    </view>
+  </view>
+
+  <!-- 统计信息 -->
+  <view class="stat-section">
+    <view class="mini-stat">
+      <text class="mini-num">{{stats.cases || 0}}</text>
+      <text class="mini-label">经手案件</text>
+    </view>
+    <view class="mini-stat">
+      <text class="mini-num">{{stats.schedules || 0}}</text>
+      <text class="mini-label">日程安排</text>
+    </view>
+    <view class="mini-stat">
+      <text class="mini-num">{{stats.videos || 0}}</text>
+      <text class="mini-label">视频调解</text>
+    </view>
+  </view>
+
+  <!-- 登出按钮 -->
+  <button class="logout-btn" bindtap="doLogout">退出登录</button>
+
+  <!-- 版本信息 -->
+  <text class="version">和调 · 调解机构管理平台 v1.0.0</text>
+</view>

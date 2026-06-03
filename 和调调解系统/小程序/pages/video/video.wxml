@@ -1,0 +1,81 @@
+<view class="page">
+  <!-- 顶部统计 -->
+  <view class="video-stats">
+    <view class="vs-stat">
+      <text class="vs-num">{{stats.total || 0}}</text>
+      <text class="vs-label">全部</text>
+    </view>
+    <view class="vs-stat">
+      <text class="vs-num" style="color:var(--teal)">{{stats.active || 0}}</text>
+      <text class="vs-label">进行中</text>
+    </view>
+    <view class="vs-stat">
+      <text class="vs-num" style="color:var(--violet)">{{stats.completed || 0}}</text>
+      <text class="vs-label">已完成</text>
+    </view>
+  </view>
+
+  <!-- 视频列表 -->
+  <scroll-view scroll-y class="v-scroll" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh">
+    <view class="v-list" wx:if="{{sessions.length > 0}}">
+      <view class="v-card" wx:for="{{sessions}}" wx:key="id">
+        <view class="v-card-header">
+          <view class="v-status-dot status-{{item.status}}"></view>
+          <text class="v-title">{{item.title}}</text>
+          <view class="status-tag status-{{item.status}}">{{statusMap[item.status]}}</view>
+        </view>
+        <view class="v-card-body">
+          <text v-case>案件：{{item.case_number || '未关联'}}</text>
+          <text>时间：{{item.scheduled_at_text}}</text>
+          <text wx:if="{{item.duration}}">时长：{{item.duration}}分钟</text>
+        </view>
+        <button
+          class="btn-gold v-btn"
+          bindtap="joinSession"
+          data-id="{{item.id}}"
+          disabled="{{item.status !== 'scheduled'}}"
+        >
+          {{item.status === 'scheduled' ? '进入调解' : (item.status === 'completed' ? '已结束' : statusMap[item.status])}}
+        </button>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:else>
+      <text class="empty-state-text">暂无视频调解记录</text>
+    </view>
+  </scroll-view>
+
+  <!-- 新建按钮 -->
+  <view class="fab" bindtap="showCreate">
+    <text>+</text>
+  </view>
+
+  <!-- 创建弹窗 -->
+  <view class="modal-mask" wx:if="{{showCreate}}" bindtap="hideCreate"></view>
+  <view class="modal-panel {{showCreate ? 'show' : ''}}">
+    <text class="modal-title">发起视频调解</text>
+    <view class="form-group">
+      <text class="form-label">标题 *</text>
+      <input class="form-input" placeholder="如：张三与李四纠纷调解" value="{{form.title}}" bindinput="onFormInput" data-field="title"/>
+    </view>
+    <view class="form-group">
+      <text class="form-label">关联案件（可选）</text>
+      <input class="form-input" placeholder="搜索案件编号或标题" value="{{form.caseSearch}}" bindinput="onFormInput" data-field="caseSearch"/>
+    </view>
+    <view class="form-row">
+      <view class="form-group flex-1">
+        <text class="form-label">日期</text>
+        <picker mode="date" value="{{form.date}}" bindchange="onDateChange">
+          <view class="form-picker">{{form.date || '选择日期'}}</view>
+        </picker>
+      </view>
+      <view class="form-group flex-1">
+        <text class="form-label">时间</text>
+        <picker mode="time" value="{{form.time}}" bindchange="onTimeChange">
+          <view class="form-picker">{{form.time || '选择时间'}}</view>
+        </picker>
+      </view>
+    </view>
+    <button class="btn-gold" style="margin-top:24rpx;height:80rpx;font-size:28rpx;" bindtap="submitVideo" loading="{{submitting}}">创建视频调解</button>
+  </view>
+</view>

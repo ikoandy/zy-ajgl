@@ -1,0 +1,56 @@
+.page { padding: 24rpx 32rpx; }
+
+/* ---- 选择器 ---- */
+.case-selector {
+  background: var(--bg-card); border-radius: var(--radius-md);
+  padding: 28rpx 32rpx; font-size: 28rpx;
+}
+.ph { color: var(--text-muted); }
+
+.party-scroll { white-space: nowrap; margin-top: 16rpx; }
+.party-chip {
+  display: inline-block; padding: 14rpx 32rpx;
+  border-radius: 30rpx; font-size: 26rpx;
+  background: var(--bg-page); color: var(--text-secondary);
+  border: 2rpx solid var(--border); margin-right: 16rpx;
+}
+.party-chip.active {
+  background: var(--gold-dim); color: var(--gold);
+  border-color: rgba(201,168,76,0.3);
+}
+
+/* ---- 评分 ---- */
+.rating-block { text-align: center; padding: 20rpx 0; }
+.rating-label { font-size: 28rpx; font-weight: 600; display: block; margin-bottom: 16rpx; }
+.stars { display: flex; justify-content: center; gap: 12rpx; }
+.star { font-size: 56rpx; color: #e5e7eb; line-height: 1; }
+.star.filled { color: #f59e0b; }
+.rating-text { font-size: 26rpx; color: var(--text-muted); margin-top: 10rpx; display: block; }
+
+.sub-ratings { margin-top: 28rpx; }
+.sub-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 18rpx 0; border-bottom: 1rpx solid var(--border-light);
+}
+.sub-label { font-size: 27rpx; color: var(--text-secondary); }
+.stars-sm .star { font-size: 40rpx; }
+
+/* ---- 评论 ---- */
+.comment-area { position: relative; margin-top: 24rpx; }
+.comment-input {
+  width: 100%; min-height: 200rpx; background: var(--bg-page);
+  border-radius: var(--radius-md); padding: 24rpx;
+  font-size: 27rpx; color: var(--text-primary);
+  box-sizing: border-box;
+}
+.char-count {
+  position: absolute; right: 20rpx; bottom: 16rpx;
+  font-size: 22rpx; color: var(--text-muted);
+}
+
+.anon-row {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-top: 24rpx; font-size: 28rpx; color: var(--text-primary);
+}
+
+.submit-btn { margin-top: 32rpx; height: 88rpx !important; letter-spacing: 4rpx; }

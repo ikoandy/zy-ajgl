@@ -1,0 +1,75 @@
+<view class="page">
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <view class="search-input-wrap">
+      <text class="search-icon">🔍</text>
+      <input
+        class="search-input"
+        placeholder="搜索案件编号、标题..."
+        value="{{keyword}}"
+        bindinput="onSearchInput"
+        confirm-type="search"
+        bindconfirm="doSearch"
+        placeholder-class="ph"
+      />
+      <text class="search-clear" wx:if="{{keyword}}" bindtap="clearSearch">✕</text>
+    </view>
+  </view>
+
+  <!-- 状态筛选 -->
+  <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+    <view class="filter-list">
+      <view
+        class="filter-item {{activeStatus === item.key ? 'active' : ''}}"
+        wx:for="{{statusFilters}}"
+        wx:key="key"
+        bindtap="filterByStatus"
+        data-key="{{item.key}}"
+      >{{item.label}}</view>
+    </view>
+  </scroll-view>
+
+  <!-- 案件列表 -->
+  <scroll-view
+    class="case-scroll"
+    scroll-y
+    refresher-enabled
+    refresher-triggered="{{refreshing}}"
+    bindrefresherrefresh="onPullDownRefresh"
+    bindscrolltolower="loadMore"
+    lower-threshold="120"
+  >
+    <view class="case-list" wx:if="{{cases.length > 0}}">
+      <view class="case-card" wx:for="{{cases}}" wx:key="id" bindtap="goDetail" data-id="{{item.id}}">
+        <view class="card-header">
+          <view class="card-left">
+            <text class="case-no">{{item.case_number}}</text>
+            <view class="status-tag status-{{item.status}}">{{statusMap[item.status] || item.status}}</view>
+          </view>
+          <view class="priority-dot priority-{{item.priority || 'normal'}}"></view>
+        </view>
+        <text class="card-title">{{item.title}}</text>
+        <view class="card-row">
+          <text class="card-meta">类型：{{item.type_name || '未分类'}}</text>
+          <text class="card-meta">创建：{{item.created_at}}</text>
+        </view>
+        <view class="card-footer" wx:if="{{item.mediator_name}}">
+          <text>调解员：{{item.mediator_name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:elif="{{!loading}}">
+      <image class="empty-state-icon" src="/assets/empty-case.svg" mode="aspectFit"></image>
+      <text class="empty-state-text">暂无案件数据</text>
+      <button class="btn-outline" style="margin-top:32rpx;width:280rpx;height:72rpx;font-size:26rpx;" bindtap="onPullDownRefresh">刷新</button>
+    </view>
+
+    <!-- 加载更多 -->
+    <view class="load-more" wx:if="{{cases.length > 0}}">
+      <text wx:if="{{hasMore}}">加载中...</text>
+      <text wx:else>-- 已全部加载 --</text>
+    </view>
+  </scroll-view>
+</view>

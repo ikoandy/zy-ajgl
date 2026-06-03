@@ -1,0 +1,104 @@
+<view class="page">
+  <!-- 顶部问候 -->
+  <view class="header">
+    <view class="header-left">
+      <text class="greeting">{{greeting}}</text>
+      <text class="user-name">{{userInfo.real_name || '用户'}}</text>
+    </view>
+    <view class="header-right" bindtap="goProfile">
+      <view class="avatar-sm" style="background: {{avatarColor}}">{{nameInitial}}</view>
+    </view>
+  </view>
+
+  <!-- 统计卡片 -->
+  <view class="stats-grid">
+    <view class="stat-card" wx:for="{{stats}}" wx:key="label" bindtap="onStatTap" data-type="{{item.type}}">
+      <view class="stat-icon-wrap" style="background: {{item.bg}}; color: {{item.color}}">
+        <text>{{item.icon}}</text>
+      </view>
+      <text class="stat-number" style="color: {{item.color}}">{{item.value}}</text>
+      <text class="stat-label">{{item.label}}</text>
+      <view class="stat-trend {{item.trend >= 0 ? 'up' : 'down'}}" wx:if="{{item.trend !== null}}">
+        <text>{{item.trend > 0 ? '+' : ''}}{{item.trend}}%</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快捷操作 -->
+  <view class="quick-actions">
+    <view class="qa-item" bindtap="goCases">
+      <view class="qa-icon" style="background: var(--gold-dim); color: var(--gold)">⚖</view>
+      <text>案件管理</text>
+    </view>
+    <view class="qa-item" bindtap="goSchedule">
+      <view class="qa-icon" style="background: var(--teal-dim); color: var(--teal)">📅</view>
+      <text>日程安排</text>
+    </view>
+    <view class="qa-item" bindtap="goVideo">
+      <view class="qa-icon" style="background: var(--violet-dim); color: var(--violet)">📹</view>
+      <text>视频调解</text>
+    </view>
+    <view class="qa-item" bindtap="goFeedback">
+      <view class="qa-icon" style="background: var(--rose-dim); color: var(--rose)">⭐</view>
+      <text>调解评价</text>
+    </view>
+  </view>
+
+  <!-- 最近案件 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">最近案件</text>
+      <text class="section-more" bindtap="goCases">查看全部 ›</text>
+    </view>
+    <view class="case-list" wx:if="{{recentCases.length > 0}}">
+      <view
+        class="case-item"
+        wx:for="{{recentCases}}"
+        wx:key="id"
+        bindtap="goCaseDetail"
+        data-id="{{item.id}}"
+      >
+        <view class="case-info">
+          <view class="case-top">
+            <text class="case-number">{{item.case_number}}</text>
+            <view class="status-tag status-{{item.status}}">{{statusMap[item.status] || item.status}}</view>
+          </view>
+          <text class="case-title">{{item.title}}</text>
+          <view class="case-meta">
+            <text>{{item.type_name || '未分类'}}</text>
+            <text class="meta-divider">·</text>
+            <text>{{item.created_at}}</text>
+          </view>
+        </view>
+        <text class="case-arrow">›</text>
+      </view>
+    </view>
+    <view class="empty-state" wx:else>
+      <text class="empty-state-text">暂无案件数据</text>
+    </view>
+  </view>
+
+  <!-- 今日日程 -->
+  <view class="section">
+    <view class="section-header">
+      <text class="section-title">今日日程</text>
+      <text class="section-more" bindtap="goSchedule">查看全部 ›</text>
+    </view>
+    <view class="schedule-list" wx:if="{{todaySchedules.length > 0}}">
+      <view class="schedule-item" wx:for="{{todaySchedules}}" wx:key="id">
+        <view class="schedule-dot" style="background: {{item.status === 'completed' ? '#d1d5db' : item.status === 'ongoing' ? 'var(--teal)' : 'var(--gold)'}}"></view>
+        <view class="schedule-body">
+          <text class="schedule-title">{{item.title}}</text>
+          <view class="schedule-time">
+            <text>{{item.timeRange}}</text>
+            <text class="schedule-loc" wx:if="{{item.location}}"> · {{item.location}}</text>
+          </view>
+        </view>
+        <view class="status-dot status-{{item.status}}" wx:if="{{item.status}}"></view>
+      </view>
+    </view>
+    <view class="empty-state" wx:else>
+      <text class="empty-state-text">今日暂无日程安排</text>
+    </view>
+  </view>
+</view>
