@@ -1,0 +1,105 @@
+<view class="page" wx:if="{{caseData.id}}">
+  <!-- 顶部状态栏 -->
+  <view class="detail-header">
+    <view class="header-top">
+      <text class="case-no">{{caseData.case_number}}</text>
+      <view class="status-tag status-{{caseData.status}} status-lg">{{statusMap[caseData.status] || caseData.status}}</view>
+    </view>
+    <text class="case-title">{{caseData.title}}</text>
+    <view class="header-meta">
+      <text>{{caseData.type_name || '未分类'}}</text>
+      <text class="meta-dot">·</text>
+      <text>创建于 {{caseData.created_at}}</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-bar">
+    <button class="action-btn" bindtap="changeStatus" wx:if="{{canTransition}}">
+      <text class="action-icon">🔄</text>
+      <text>状态流转</text>
+    </button>
+    <button class="action-btn" bindtap="viewParties">
+      <text class="action-icon">👥</text>
+      <text>当事人</text>
+    </button>
+    <button class="action-btn" bindtap="viewTimeline">
+      <text class="action-icon">📋</text>
+      <text>时间线</text>
+    </button>
+  </view>
+
+  <!-- 基本信息 -->
+  <view class="section">
+    <text class="section-title">基本信息</text>
+    <view class="info-grid">
+      <view class="info-item">
+        <text class="info-label">案件类型</text>
+        <text class="info-value">{{caseData.type_name || '未分类'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">优先级</text>
+        <text class="info-value priority-{{caseData.priority || 'normal'}}">{{priorityMap[caseData.priority] || '普通'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">调解员</text>
+        <text class="info-value">{{caseData.mediator_name || '未分配'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">当前阶段</text>
+        <text class="info-value">{{currentStage || '待受理'}}</text>
+      </view>
+    </view>
+
+    <!-- 案件描述 -->
+    <view class="desc-block" wx:if="{{caseData.description}}">
+      <text class="desc-label">案件描述</text>
+      <text class="desc-text">{{caseData.description}}</text>
+    </view>
+  </view>
+
+  <!-- 当事人信息 -->
+  <view class="section" wx:if="{{parties.length > 0}}">
+    <view class="section-header-row">
+      <text class="section-title">当事人 ({{parties.length}})</text>
+    </view>
+    <view class="party-card" wx:for="{{parties}}" wx:key="id">
+      <view class="party-avatar" style="background: {{item.role === 'plaintiff' ? 'var(--gold-dim)' : item.role === 'defendant' ? 'var(--teal-dim)' : 'var(--violet-dim)'}}; color: {{item.role === 'plaintiff' ? 'var(--gold)' : item.role === 'defendant' ? 'var(--teal)' : 'var(--violet)'}}">
+        {{item.name ? item.name.charAt(0) : '?'}}
+      </view>
+      <view class="party-info">
+        <view class="party-name-row">
+          <text class="party-name">{{item.name || '未填写'}}</text>
+          <view class="role-tag role-{{item.role}}">{{roleMap[item.role] || item.role}}</view>
+        </view>
+        <text class="party-phone" wx:if="{{item.phone}}">📱 {{item.phone}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 时间线 -->
+  <view class="section" wx:if="{{timeline.length > 0}}">
+    <view class="section-header-row">
+      <text class="section-title">案件时间线</text>
+    </view>
+    <view class="timeline">
+      <view class="timeline-item" wx:for="{{timeline}}" wx:key="id">
+        <view class="tl-dot" style="background: {{item.color || 'var(--gold)'}}"></view>
+        <view class="tl-body">
+          <text class="tl-action">{{item.action || item.content}}</text>
+          <text class="tl-time">{{item.created_at}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-state" wx:else>
+    <text class="empty-state-text">暂无详细信息</text>
+  </view>
+</view>
+
+<!-- 加载中 -->
+<view class="loading-full" wx:if="{{!caseData.id}}">
+  <text>加载中...</text>
+</view>

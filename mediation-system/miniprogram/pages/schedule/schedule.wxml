@@ -1,0 +1,72 @@
+<view class="page">
+  <!-- 日期选择 -->
+  <view class="date-header">
+    <view class="date-nav" bindtap="prevWeek">‹</view>
+    <text class="date-range">{{dateRange}}</text>
+    <view class="date-nav" bindtap="nextWeek">›</view>
+    <view class="today-btn" bindtap="goToday">今天</view>
+  </view>
+
+  <!-- 日程列表 -->
+  <scroll-view scroll-y class="schedule-scroll" refresher-enabled refresher-triggered="{{refreshing}}" bindrefresherrefresh="onRefresh">
+    <view wx:for="{{groupedSchedules}}" wx:key="date" class="day-group">
+      <text class="day-label">{{item.dateLabel}}</text>
+      <view class="day-list">
+        <view
+          class="sched-card sched-{{item.status}}"
+          wx:for="{{item.items}}"
+          wx:key="id"
+          wx:for-item="s"
+        >
+          <view class="sched-time">{{s.timeRange}}</view>
+          <view class="sched-body">
+            <text class="sched-title">{{s.title}}</text>
+            <view class="sched-meta">
+              <text wx:if="{{s.location}}">📍 {{s.location}}</text>
+              <text wx:if="{{s.case_number}}">⚖ {{s.case_number}}</text>
+            </view>
+          </view>
+          <view class="sched-status status-{{s.status}}">{{statusMap[s.status] || ''}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-state" wx:if="{{!loading && groupedSchedules.length === 0}}">
+      <text class="empty-state-text">暂无日程安排</text>
+    </view>
+  </scroll-view>
+
+  <!-- 悬浮添加按钮 -->
+  <view class="fab" bindtap="showAdd">
+    <text>+</text>
+  </view>
+
+  <!-- 新增弹窗 -->
+  <view class="modal-mask" wx:if="{{showAddModal}}" bindtap="hideAdd"></view>
+  <view class="modal-panel {{showAddModal ? 'show' : ''}}">
+    <text class="modal-title">新增日程</text>
+    <view class="form-group">
+      <text class="form-label">标题 *</text>
+      <input class="form-input" placeholder="日程标题" value="{{form.title}}" bindinput="onFormInput" data-field="title"/>
+    </view>
+    <view class="form-row">
+      <view class="form-group flex-1">
+        <text class="form-label">开始时间</text>
+        <picker mode="time" value="{{form.startTime}}" bindchange="onStartTimeChange">
+          <view class="form-picker">{{form.startTime || '选择时间'}}</view>
+        </picker>
+      </view>
+      <view class="form-group flex-1">
+        <text class="form-label">结束时间</text>
+        <picker mode="time" value="{{form.endTime}}" bindchange="onEndTimeChange">
+          <view class="form-picker">{{form.endTime || '选择时间'}}</view>
+        </picker>
+      </view>
+    </view>
+    <view class="form-group">
+      <text class="form-label">地点</text>
+      <input class="form-input" placeholder="调解室/会议室" value="{{form.location}}" bindinput="onFormInput" data-field="location"/>
+    </view>
+    <button class="btn-gold" style="margin-top:24rpx;height:80rpx;font-size:28rpx;" bindtap="submitSchedule" loading="{{submitting}}">创建日程</button>
+  </view>
+</view>

@@ -1,0 +1,131 @@
+.login-page {
+  min-height: 100vh;
+  background: var(--dark);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- 背景装饰 ---- */
+.login-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.login-bg-circle {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.06;
+}
+.c1 {
+  width: 600rpx; height: 600rpx;
+  background: var(--gold);
+  top: -200rpx; right: -150rpx;
+}
+.c2 {
+  width: 400rpx; height: 400rpx;
+  background: var(--teal);
+  bottom: 10%; left: -120rpx;
+}
+.c3 {
+  width: 300rpx; height: 300rpx;
+  background: var(--violet);
+  bottom: -80rpx; right: 20%;
+}
+
+/* ---- 品牌 ---- */
+.login-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 180rpx;
+  padding-bottom: 80rpx;
+  z-index: 1;
+}
+.login-logo {
+  width: 128rpx; height: 128rpx;
+  border-radius: 28rpx;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 40rpx rgba(201,168,76,0.30);
+  margin-bottom: 32rpx;
+}
+.logo-icon { font-size: 56rpx; }
+.login-title {
+  font-size: 56rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 16rpx;
+  margin-bottom: 8rpx;
+}
+.login-subtitle {
+  font-size: 26rpx;
+  color: rgba(255,255,255,0.45);
+  letter-spacing: 4rpx;
+}
+
+/* ---- 表单 ---- */
+.login-form {
+  flex: 1;
+  padding: 0 56rpx;
+  z-index: 1;
+}
+.form-group {
+  display: flex;
+  align-items: center;
+  background: rgba(255,255,255,0.07);
+  border-radius: var(--radius-md);
+  border: 2rpx solid rgba(255,255,255,0.08);
+  margin-bottom: 24rpx;
+  padding: 0 24rpx;
+  height: 96rpx;
+  transition: all 0.2s;
+}
+.form-group:focus-within {
+  border-color: var(--gold);
+  background: rgba(201,168,76,0.06);
+}
+.form-icon {
+  width: 48rpx; text-align: center;
+  margin-right: 16rpx; font-size: 28rpx;
+}
+.form-input {
+  flex: 1;
+  color: #fff;
+  font-size: 30rpx;
+  height: 96rpx;
+}
+.placeholder { color: rgba(255,255,255,0.3); }
+.form-eye {
+  padding: 8rpx 16rpx;
+  color: rgba(255,255,255,0.35);
+  font-size: 24rpx;
+}
+
+/* ---- 按钮 ---- */
+.login-btn {
+  margin-top: 20rpx;
+  width: 100%;
+  letter-spacing: 6rpx;
+}
+.login-btn[disabled] {
+  opacity: 0.5;
+}
+
+/* ---- 错误提示 ---- */
+.login-hint {
+  margin-top: 24rpx;
+  text-align: center;
+  color: var(--rose);
+  font-size: 26rpx;
+  min-height: 40rpx;
+}
+
+/* ---- 底部 ---- */
+.login-footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 40rpx 56rpx calc(40rpx + env(safe-area-inset-bottom));
+  z-index: 1;
+  color: rgba(255,255,255,0.18);
+  font-size: 22rpx;
+}

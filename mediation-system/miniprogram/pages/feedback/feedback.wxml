@@ -1,0 +1,92 @@
+<view class="page">
+  <!-- 案件选择 -->
+  <view class="section">
+    <text class="section-title">选择案件</text>
+    <view class="case-selector" bindtap="selectCase">
+      <text wx:if="{{selectedCase}}" style="color:var(--text-primary)">{{selectedCase.case_number}} - {{selectedCase.title}}</text>
+      <text wx:else class="ph">点击选择要评价的案件</text>
+    </view>
+  </view>
+
+  <!-- 当事人选择 -->
+  <view class="section" wx:if="{{parties.length > 0}}">
+    <text class="section-title">选择当事人</text>
+    <scroll-view scroll-x class="party-scroll">
+      <view
+        class="party-chip {{selectedPartyId === item.id ? 'active' : ''}}"
+        wx:for="{{parties}}"
+        wx:key="id"
+        bindtap="selectParty"
+        data-id="{{item.id}}"
+        data-name="{{item.name}}"
+      >{{item.name}}</view>
+    </scroll-view>
+  </view>
+
+  <!-- 评分区域 -->
+  <view class="section" wx:if="{{selectedPartyId}}">
+    <text class="section-title">调解评价</text>
+
+    <!-- 总体评分 -->
+    <view class="rating-block">
+      <text class="rating-label">总体满意度</text>
+      <view class="stars">
+        <text
+          class="star {{i < rating ? 'filled' : ''}}"
+          wx:for="{{5}}"
+          wx:key="*this"
+          data-idx="{{index+1}}"
+          bindtap="setRating"
+        >★</text>
+      </view>
+      <text class="rating-text">{{ratingTexts[rating] || '请评分'}}</text>
+    </view>
+
+    <!-- 分项评分 -->
+    <view class="sub-ratings">
+      <view class="sub-item">
+        <text class="sub-label">服务态度</text>
+        <view class="stars-sm">
+          <text class="star {{i < attitude ? 'filled' : ''}}" wx:for="{{5}}" wx:key="a{{index}}" data-field="attitude" data-val="{{index+1}}" bindtap="setSubRating">★</text>
+        </view>
+      </view>
+      <view class="sub-item">
+        <text class="sub-label">处理效率</text>
+        <view class="stars-sm">
+          <text class="star {{i < efficiency ? 'filled' : ''}}" wx:for="{{5}}" wx:key="e{{index}}" data-field="efficiency" data-val="{{index+1}}" bindtap="setSubRating">★</text>
+        </view>
+      </view>
+      <view class="sub-item">
+        <text class="sub-label">公平公正</text>
+        <view class="stars-sm">
+          <text class="star {{i < fairness ? 'filled' : ''}}" wx:for="{{5}}" wx:key="f{{index}}" data-field="fairness" data-val="{{index+1}}" bindtap="setSubRating">★</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 评语 -->
+    <view class="comment-area">
+      <textarea
+        class="comment-input"
+        placeholder="请输入您的意见和建议（选填）..."
+        value="{{comment}}"
+        bindinput="onCommentInput"
+        maxlength="500"
+      />
+      <text class="char-count">{{comment.length}}/500</text>
+    </view>
+
+    <!-- 匿名选项 -->
+    <view class="anon-row">
+      <text>匿名提交</text>
+      <switch checked="{{isAnonymous}}" bindchange="onAnonChange" color="#c9a84c"/>
+    </view>
+
+    <button class="btn-gold submit-btn" bindtap="submitFeedback" loading="{{submitting}}">提交评价</button>
+  </view>
+
+  <!-- 提示 -->
+  <view class="empty-state" wx:if="{{!selectedPartyId && parties.length === 0}}">
+    <text class="empty-state-text">请先选择案件和当事人进行评价</text>
+  </view>
+</view>
