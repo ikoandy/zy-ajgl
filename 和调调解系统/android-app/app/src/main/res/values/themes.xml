@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Hejiao" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="colorPrimary">#C9A84C</item>
+        <item name="colorPrimaryDark">#070B14</item>
+        <item name="colorAccent">#C9A84C</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+    </style>
+
+    <style name="Theme.Hejiao.Splash" parent="Theme.Hejiao">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

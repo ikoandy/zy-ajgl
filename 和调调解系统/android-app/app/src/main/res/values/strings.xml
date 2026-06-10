@@ -1,0 +1,111 @@
+<resources>
+    <string name="app_name">和调</string>
+    <string name="app_subtitle">调解机构管理平台</string>
+    <string name="login_title">和调</string>
+    <string name="login_subtitle">调解机构管理平台</string>
+    <string name="hint_username">请输入账号</string>
+    <string name="hint_password">请输入密码</string>
+    <string name="btn_login">登录系统</string>
+    <string name="btn_logining">登录中…</string>
+    <string name="greeting_morning">上午好</string>
+    <string name="greeting_afternoon">下午好</string>
+    <string name="greeting_evening">晚上好</string>
+
+    <!-- 底部导航 -->
+    <string name="nav_home">首页</string>
+    <string name="nav_cases">案件</string>
+    <string name="nav_schedule">日程</string>
+    <string name="nav_profile">我的</string>
+
+    <!-- 首页 -->
+    <string name="stat_all">全部案件</string>
+    <string name="stat_pending">待处理</string>
+    <string name="stat_mediating">调解中</string>
+    <string name="stat_closed">已结案</string>
+    <string name="quick_case">案件管理</string>
+    <string name="quick_schedule">日程安排</string>
+    <string name="quick_video">视频调解</string>
+    <string name="quick_feedback">调解评价</string>
+    <string name="recent_cases">最近案件</string>
+    <string name="view_all">查看全部 ›</string>
+    <string name="today_schedule">今日日程</string>
+    <string name="no_schedules_today">今日暂无日程安排</string>
+    <string name="no_cases">暂无案件数据</string>
+
+    <!-- 案件 -->
+    <string name="case_search_hint">搜索案件编号、标题…</string>
+    <string name="case_filter_all">全部</string>
+    <string name="case_detail">案件详情</string>
+    <string name="case_type">案件类型</string>
+    <string name="case_priority">优先级</string>
+    <string name="case_mediator">调解员</string>
+    <string name="case_stage">当前阶段</string>
+    <string name="case_desc">案件描述</string>
+    <string name="case_parties">当事人</string>
+    <string name="case_timeline">案件时间线</string>
+    <string name="action_status_change">状态流转</string>
+    <string name="action_parties">当事人</string>
+    <string name="action_timeline">时间线</string>
+
+    <!-- 日程 -->
+    <string name="schedule_title">日程管理</string>
+    <string name="new_schedule">新增日程</string>
+    <string name="schedule_title_hint">日程标题</string>
+    <string name="schedule_location_hint">地点（如：调解室）</string>
+    <string name="schedule_start_time">开始时间</string>
+    <string name="schedule_end_time">结束时间</string>
+    <string name="create_schedule">创建日程</string>
+    <string name="select_time">选择时间</string>
+    <string name="select_date">选择日期</string>
+
+    <!-- 视频 -->
+    <string name="video_title">视频调解</string>
+    <string name="video_join">进入调解</string>
+    <string name="video_create">发起视频调解</string>
+    <string name="video_title_hint">标题（如：张三与李四纠纷调解）</string>
+    <string name="video_case_hint">关联案件（可选）</string>
+    <string name="video_ended">已结束</string>
+
+    <!-- 评价 -->
+    <string name="feedback_title">调解评价</string>
+    <string name="feedback_select_case">选择要评价的案件</string>
+    <string name="feedback_select_party">选择当事人</string>
+    <string name="feedback_overall">总体满意度</string>
+    <string name="feedback_attitude">服务态度</string>
+    <string name="feedback_efficiency">处理效率</string>
+    <string name="feedback_fairness">公平公正</string>
+    <string name="feedback_comment_hint">请输入您的意见和建议（选填）…</string>
+    <string name="feedback_anonymous">匿名提交</string>
+    <string name="submit_feedback">提交评价</string>
+    <string name="rating_please">请评分</string>
+    <string name="rating_very_bad">非常不满意</string>
+    <string name="rating_bad">不满意</string>
+    <string name="rating_normal">一般</string>
+    <string name="rating_good">满意</string>
+    <string name="rating_very_good">非常满意</string>
+
+    <!-- 个人中心 -->
+    <string name="profile_title">我的</string>
+    <string name="settings">系统设置</string>
+    <string name="change_pwd">修改密码</string>
+    <string name="about">关于系统</string>
+    <string name="logout">退出登录</string>
+    <string name="logout_confirm_title">确认退出</string>
+    <string name="logout_confirm_msg">退出登录后将无法使用系统功能</string>
+    <string name="my_cases">经手案件</string>
+    <string name="my_schedules">日程安排</string>
+    <string name="my_videos">视频调解</string>
+
+    <!-- 通用 -->
+    <string name="loading">加载中…</string>
+    <string name="refreshing">刷新中…</string>
+    <string name="no_data">暂无数据</string>
+    <string name="network_error">网络异常，请重试</string>
+    <string name="token_expired">登录已过期</string>
+    <string name="operation_success">操作成功</string>
+    <string name="operation_failed">操作失败</string>
+    <string name="confirm">确定</string>
+    <string name="cancel">取消</string>
+    <string name="today">今天</string>
+    <string name="version_info">和调 · 调解机构管理平台 v1.0.0</string>
+</resources>
