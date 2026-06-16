@@ -1,13 +1,13 @@
-import express from 'express';
-import jwt from 'jsonwebtoken';
+const express = require('express');
+const jwt = require('jsonwebtoken');
 
 const router = express.Router();
 
 // JWT密钥
-const JWT_SECRET = 'law-firm-system-secret-key';
+const JWT_SECRET = 'suzhuang-generator-secret-key';
 
 // 用户数据，内存存储
-let users: Array<any> = [
+let users = [
   {
     id: 1,
     username: 'admin',
@@ -31,7 +31,6 @@ router.post('/login', (req, res) => {
   const user = users.find(u => u.username === username && u.password === password);
 
   if (user) {
-    // 生成JWT token
     const token = jwt.sign(
       { id: user.id, username: user.username },
       JWT_SECRET,
@@ -67,7 +66,6 @@ router.post('/register', (req, res) => {
     });
   }
 
-  // 检查用户名是否已存在
   const existingUser = users.find(u => u.username === username);
   if (existingUser) {
     return res.status(400).json({
@@ -77,7 +75,6 @@ router.post('/register', (req, res) => {
     });
   }
 
-  // 生成唯一ID
   const id = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
 
   const newUser = {
@@ -114,8 +111,7 @@ router.get('/check', (req, res) => {
   const token = authHeader.substring(7);
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; username: string };
-
+    const decoded = jwt.verify(token, JWT_SECRET);
     return res.json({
       code: 200,
       message: 'Token有效',
@@ -132,4 +128,4 @@ router.get('/check', (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

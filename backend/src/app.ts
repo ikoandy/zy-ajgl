@@ -21,6 +21,9 @@ import todoRoutes from './routes/todos';
 import messageRoutes from './routes/messages';
 import dashboardRoutes from './routes/dashboard';
 import lawyerRoutes from './routes/lawyers';
+import templateRoutes from './routes/templates';
+import settingsRoutes from './routes/settings';
+import calculatorRoutes from './routes/calculator';
 
 dotenv.config();
 
@@ -108,6 +111,9 @@ app.use('/api/todos', todoRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/lawyers', lawyerRoutes);
+app.use('/api/templates', templateRoutes);
+app.use('/api/settings', settingsRoutes);
+app.use('/api/calculator', calculatorRoutes);
 
 // 404处理
 app.use('*', (req, res) => {
